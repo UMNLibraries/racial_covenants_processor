@@ -130,3 +130,5 @@ dmypy.json
 
 # IDE
 .idea/
+
+racial_covenants_processor/data/*
