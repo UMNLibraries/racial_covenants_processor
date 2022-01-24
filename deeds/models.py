@@ -43,15 +43,17 @@ class ZooniverseResponseFlat(models.Model):
     user = models.ForeignKey(ZooniverseUser, null=True, on_delete=models.SET_NULL)
     classification_id = models.IntegerField()
 
-    bool_covenant = models.BooleanField()
+    bool_covenant = models.BooleanField(null=True)
     bool_outlier = models.BooleanField(default=False)
     covenant_text = models.TextField(blank=True)
-    addition = models.CharField(max_length=100, blank=True)
-    lot = models.CharField(max_length=100, blank=True)
-    block = models.CharField(max_length=100, blank=True)
+    addition = models.CharField(max_length=500, blank=True)
+    lot = models.TextField(blank=True)
+    block = models.CharField(max_length=500, blank=True)
     seller = models.CharField(max_length=100, blank=True)
     buyer = models.CharField(max_length=100, blank=True)
-    deed_date = models.CharField(max_length=100, blank=True)
+    deed_date = models.DateField(null=True)
 
     dt_created = models.DateTimeField()
-    dt_retired = models.DateTimeField()
+    dt_retired = models.DateTimeField(null=True)
+
+    raw_match = models.ForeignKey(ZooniverseResponseRaw, null=True, on_delete=models.CASCADE)

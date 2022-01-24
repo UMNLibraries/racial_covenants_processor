@@ -1,4 +1,5 @@
 import os
+import datetime
 
 from deeds.models import ZooniverseResponseRaw, Workflow, PotentialMatch, ZooniverseUser, ZooniverseResponseFlat
 from django.core.management.base import BaseCommand
@@ -16,9 +17,12 @@ class Command(BaseCommand):
         'block': 'T7',
         'seller': None,
         'buyer': None,
-        'deed_date_year': 'T15',
-        'deed_date_month': 'T16',
-        'deed_date_day': 'T17',
+        'deed_date': {
+            'root_q': 'T18',
+            'year': 'T15',
+            'month': 'T16',
+            'day': 'T17',
+        }
     }
 
     def load_csv(self):
@@ -29,13 +33,15 @@ class Command(BaseCommand):
         import_csv = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports', 'mapping-prejudice-classifications_2_23_2021.csv')
 
         # Make custom mapping from model fields to drop IP column
-        mapping = {f.name: f.name for f in ZooniverseResponseRaw._meta.get_fields() if f.name != 'id'}
+        mapping = {f.name: f.name for f in ZooniverseResponseRaw._meta.get_fields() if f.name not in ['id', 'subject_data_flat', 'zooniverseresponseflat']}
 
         insert_count = ZooniverseResponseRaw.objects.from_csv(import_csv, mapping=mapping)
         print("{} records inserted".format(insert_count))
 
     def create_new_subjects(self, workflow, responses) -> dict:
         '''Creates any non-existant subject records in bulk, and returns a lookup table of zooniverse subject ids to django db pks for us in fast creation of flat classification records'''
+        print('Creating missing matches ...')
+
         existing_match_ids = PotentialMatch.objects.filter(workflow=workflow).values_list('zoon_subject_id', flat=True)
 
         import_match_ids = responses.values_list('subject_ids', flat=True)
@@ -56,6 +62,7 @@ class Command(BaseCommand):
 
     def create_new_users(self, responses) -> dict:
         '''Creates any non-existant user records in bulk, and returns a lookup table of zooniverse usr ids to django db pks for us in fast creation of flat classification records'''
+        print('Creating missing users ...')
 
         existing_user_ids = ZooniverseUser.objects.all().values_list('zoon_id', flat=True)
 
@@ -78,6 +85,7 @@ class Command(BaseCommand):
         return {b['zoon_id']: b['id'] for b in batch_users}
 
     def answer_finder(self, annotations, field):
+        '''Returns boolean or string depending on answer type'''
         if self.question_lookup[field] is not None:
             try:
                 answer = [a['value'] for a in annotations if a['task'] == self.question_lookup[field]][0]
@@ -88,11 +96,35 @@ class Command(BaseCommand):
                 return answer
             except:
                 print(annotations)
-                return None
-        return None
+                return ''
+        return ''
+
+    def zooniverse_combo_attr(self, combo_response, q_name):
+        return [a for a in combo_response if a['task'] == q_name][0]['value'][0]['label']
+
+    def zooniverse_date_parser(self, annotations, date_lookup):
+        '''Pastes together a date from Zooniverse response, assuming a "3-task combo" in the Zooniverse workflow with separate pulldowns for year, month, day'''
+        try:
+            date_answers =  [a['value'] for a in annotations if a['task'] == date_lookup['root_q']][0]
+        except:
+            print("Couldn't find date object in expected format.")
+            return None
+
+        year = self.zooniverse_combo_attr(date_answers, date_lookup['year'])
+        month = self.zooniverse_combo_attr(date_answers, date_lookup['month'])
+        day = self.zooniverse_combo_attr(date_answers, date_lookup['day'])
+
+        month_value = int(month.split(' - ')[0])
+        try:
+            return datetime.datetime(int(year), month_value, int(day)).date()
+        except ValueError as error:
+            print('Could not parse final date.')
+            return None
+
 
     def normalize_responses(self, workflow_name:str):
-        responses = ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name)
+        # Only get retired subjects
+        responses = ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name).exclude(subject_data_flat__retired=None)
 
         try:
             workflow, w_created = Workflow.objects.get_or_create(
@@ -112,27 +144,32 @@ class Command(BaseCommand):
         user_lookup = self.create_new_users(responses)
 
         flat_responses = []
-        for r in responses[0:1000]:
+        for r in responses:
             bool_covenant_text = self.answer_finder(r.annotations, 'bool_covenant')
 
             if bool_covenant_text == "I can't figure this one out":
                 bool_covenant = None
                 bool_outlier = True
                 covenant_text = addition = lot = block = seller = buyer = ''
+                deed_date = dt_retired = None
             elif bool_covenant_text is True:
                 bool_covenant = True
                 bool_outlier = False
                 covenant_text = self.answer_finder(r.annotations, 'covenant_text')
                 addition = self.answer_finder(r.annotations, 'addition')
-                print(addition)
                 lot = self.answer_finder(r.annotations, 'lot')
                 block = self.answer_finder(r.annotations, 'block')
                 seller = self.answer_finder(r.annotations, 'seller')
                 buyer = self.answer_finder(r.annotations, 'buyer')
+                deed_date = self.zooniverse_date_parser(r.annotations, self.question_lookup['deed_date'])
+                dt_retired = r.subject_data_flat['retired']['retired_at']
             elif bool_covenant_text is False:
                 bool_covenant = False
                 bool_outlier = False
                 covenant_text = addition = lot = block = seller = buyer = ''
+                deed_date = dt_retired = None
+
+            # TODO: Handle "partial"
 
             response = ZooniverseResponseFlat(
                 workflow_id=workflow.id,
@@ -148,14 +185,17 @@ class Command(BaseCommand):
                 block=block,
                 seller=seller,
                 buyer=buyer,
-                # TODO: deed_date=self.answer_finder(r.annotations, 'deed_date'),
+                deed_date=deed_date,
 
-                dt_created=r.created_at
-                # TODO: dt_retired=?
+                dt_created=r.created_at,
+                dt_retired=dt_retired,
+
+                raw_match_id=r.id
             )
 
             flat_responses.append(response)
 
+        print('Saving normalized objects to DB...')
         ZooniverseResponseFlat.objects.bulk_create(flat_responses, 10000)
 
     def flatten_subject_data(self):
@@ -171,9 +211,31 @@ class Command(BaseCommand):
 
         ZooniverseResponseRaw.objects.bulk_update(responses, ['subject_data_flat'], 10000)  # Batches of 10,000 records at a time
 
-    def handle(self, *args, **kwargs):
-        # self.load_csv()
-        # Get rid of subject_id lookup on subject_data to make querying in Django easier
-        # self.flatten_subject_data()
+    def check_import(self, workflow_name:str):
+        '''Make sure no raw subjects in this batch didn't make it to the ZooniverseResponseFlat model, excluding un-retired subjects'''
+        print('Checking for missing subjects ...')
+        missing_subjects = ZooniverseResponseRaw.objects.filter(
+            workflow_name=workflow_name,
+            zooniverseresponseflat__isnull=True
+        ).exclude(subject_data_flat__retired=None)
+
+        print(f'Found {missing_subjects.count()} missing subjects.')
+
+        for zr in missing_subjects:
+            print(zr.id)
+            print(zr.annotations)
+
+    def clear_all_tables(self):
+        print('WARNING: Clearing all tables before import...')
+        ZooniverseResponseRaw.objects.all().delete()
+        Workflow.objects.all().delete()
+        PotentialMatch.objects.all().delete()
+        ZooniverseUser.objects.all().delete()
         ZooniverseResponseFlat.objects.all().delete()
+
+    def handle(self, *args, **kwargs):
+        # self.clear_all_tables()
+        self.load_csv()
+        self.flatten_subject_data()
         self.normalize_responses('Ramsey County')
+        self.check_import('Ramsey County')
