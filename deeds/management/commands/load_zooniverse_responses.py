@@ -72,12 +72,13 @@ class Command(BaseCommand):
         user_ids_to_create = list(set(import_user_ids) - set(existing_user_ids))
 
         new_users = []
-        for u in user_ids_to_create:
-            user = ZooniverseUser(
-                zoon_id=u,
-                zoon_name=[u['user_name'] for u in import_users][0]
-            )
-            new_users.append(user)
+        for nu in user_ids_to_create:
+            if nu:
+                user = ZooniverseUser(
+                    zoon_id=nu,
+                    zoon_name=[u['user_name'] for u in import_users if u['user_id'] == nu][0]
+                )
+                new_users.append(user)
         ZooniverseUser.objects.bulk_create(new_users, 10000)
 
         batch_users = ZooniverseUser.objects.filter(zoon_id__in=import_user_ids).values('id', 'zoon_id')
@@ -123,6 +124,7 @@ class Command(BaseCommand):
 
 
     def normalize_responses(self, workflow_name:str):
+        print('Created normalized records for retired subject responses...')
         # Only get retired subjects
         responses = ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name).exclude(subject_data_flat__retired=None)
 
@@ -166,8 +168,9 @@ class Command(BaseCommand):
             elif bool_covenant_text is False:
                 bool_covenant = False
                 bool_outlier = False
+                dt_retired = r.subject_data_flat['retired']['retired_at']
                 covenant_text = addition = lot = block = seller = buyer = ''
-                deed_date = dt_retired = None
+                deed_date = None
 
             # TODO: Handle "partial"
 
@@ -227,15 +230,15 @@ class Command(BaseCommand):
 
     def clear_all_tables(self):
         print('WARNING: Clearing all tables before import...')
-        ZooniverseResponseRaw.objects.all().delete()
-        Workflow.objects.all().delete()
+        # ZooniverseResponseRaw.objects.all().delete()
+        # Workflow.objects.all().delete()
         PotentialMatch.objects.all().delete()
         ZooniverseUser.objects.all().delete()
         ZooniverseResponseFlat.objects.all().delete()
 
     def handle(self, *args, **kwargs):
-        # self.clear_all_tables()
-        self.load_csv()
-        self.flatten_subject_data()
+        self.clear_all_tables()
+        # self.load_csv()
+        # self.flatten_subject_data()
         self.normalize_responses('Ramsey County')
         self.check_import('Ramsey County')
