@@ -9,6 +9,7 @@ pandas = "*"
 django = "*"
 psycopg2-binary = "*"
 django-postgres-copy = "*"
+scikit-learn = "*"
 
 [dev-packages]
 
