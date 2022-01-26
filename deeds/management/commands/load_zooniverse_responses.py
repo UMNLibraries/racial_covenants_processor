@@ -8,22 +8,7 @@ from django.conf import settings
 
 class Command(BaseCommand):
     '''Bulk load raw Zooniverse export data for further processing'''
-
-    question_lookup = {
-        'bool_covenant': 'T0',
-        'covenant_text': 'T2',
-        'addition': 'T9',
-        'lot': 'T5',
-        'block': 'T7',
-        'seller': None,
-        'buyer': None,
-        'deed_date': {
-            'root_q': 'T18',
-            'year': 'T15',
-            'month': 'T16',
-            'day': 'T17',
-        }
-    }
+    question_lookup = None  # Set in handle
 
     def load_csv(self):
         '''
@@ -61,29 +46,34 @@ class Command(BaseCommand):
         return {b['zoon_subject_id']: b['id'] for b in batch_matches}
 
     def create_new_users(self, responses) -> dict:
-        '''Creates any non-existant user records in bulk, and returns a lookup table of zooniverse usr ids to django db pks for us in fast creation of flat classification records'''
+        '''Creates any non-existant user records in bulk, and returns a lookup table of zooniverse usr names to django db pks for us in fast creation of flat classification records. Using names because some zooniverse users are not logged in so their user id is null'''
         print('Creating missing users ...')
 
-        existing_user_ids = ZooniverseUser.objects.all().values_list('zoon_id', flat=True)
+        # existing_user_ids = ZooniverseUser.objects.all().values_list('zoon_id', flat=True)
+        existing_user_names = ZooniverseUser.objects.all().values_list('zoon_name', flat=True)
 
         import_users = responses.values('user_id', 'user_name').distinct()
-        import_user_ids = [u['user_id'] for u in import_users]
+        # import_user_ids = [u['user_id'] for u in import_users]
+        import_user_names = [u['user_name'] for u in import_users]
 
-        user_ids_to_create = list(set(import_user_ids) - set(existing_user_ids))
+        # user_ids_to_create = list(set(import_user_ids) - set(existing_user_ids))
+        user_names_to_create = list(set(import_user_names) - set(existing_user_names))
 
         new_users = []
-        for nu in user_ids_to_create:
+        for nu in user_names_to_create:
             if nu:
                 user = ZooniverseUser(
-                    zoon_id=nu,
-                    zoon_name=[u['user_name'] for u in import_users if u['user_id'] == nu][0]
+                    # zoon_id=nu,
+                    # zoon_name=[u['user_name'] for u in import_users if u['user_id'] == nu][0]
+                    zoon_id=[u['user_id'] for u in import_users if u['user_name'] == nu][0],
+                    zoon_name=nu
                 )
                 new_users.append(user)
         ZooniverseUser.objects.bulk_create(new_users, 10000)
 
-        batch_users = ZooniverseUser.objects.filter(zoon_id__in=import_user_ids).values('id', 'zoon_id')
+        batch_users = ZooniverseUser.objects.filter(zoon_name__in=import_user_names).values('id', 'zoon_name')
 
-        return {b['zoon_id']: b['id'] for b in batch_users}
+        return {b['zoon_name']: b['id'] for b in batch_users}
 
     def answer_finder(self, annotations, field):
         '''Returns boolean or string depending on answer type'''
@@ -145,6 +135,8 @@ class Command(BaseCommand):
         # Create any missing user instances
         user_lookup = self.create_new_users(responses)
 
+        print('Parsing classification records ...')
+
         flat_responses = []
         for r in responses:
             bool_covenant_text = self.answer_finder(r.annotations, 'bool_covenant')
@@ -153,7 +145,8 @@ class Command(BaseCommand):
                 bool_covenant = None
                 bool_outlier = True
                 covenant_text = addition = lot = block = seller = buyer = ''
-                deed_date = dt_retired = None
+                deed_date = None
+                dt_retired = r.subject_data_flat['retired']['retired_at']
             elif bool_covenant_text is True:
                 bool_covenant = True
                 bool_outlier = False
@@ -177,7 +170,8 @@ class Command(BaseCommand):
             response = ZooniverseResponseFlat(
                 workflow_id=workflow.id,
                 subject_id=match_lookup[r.subject_ids],
-                user_id=user_lookup[r.user_id] if r.user_id else None,
+                # user_id=user_lookup[r.user_id] if r.user_id else None,
+                user_id=user_lookup[r.user_name],
                 classification_id=r.classification_id,
 
                 bool_covenant=bool_covenant,
@@ -237,6 +231,8 @@ class Command(BaseCommand):
         ZooniverseResponseFlat.objects.all().delete()
 
     def handle(self, *args, **kwargs):
+        self.question_lookup = settings.ZOONIVERSE_QUESTION_LOOKUP['Ramsey County']
+
         self.clear_all_tables()
         # self.load_csv()
         # self.flatten_subject_data()
