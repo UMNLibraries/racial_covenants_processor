@@ -51,8 +51,7 @@ class Command(BaseCommand):
 
         qs = ZooniverseResponseFlat.objects.filter(
             workflow__workflow_name=workflow_name,
-            dt_retired__isnull=False,
-            user__isnull=False
+            dt_retired__isnull=False
         ).values('subject__id', 'user__id', 'bool_covenant', 'dt_created')
         df = pd.DataFrame(qs)
 
@@ -65,8 +64,8 @@ class Command(BaseCommand):
         }, inplace=True)
 
         # Tweak "match" indicators so it's not booleans and nulls
+        df.loc[df['Match'].isna(), 'Match'] = '?'
         df.loc[df['Match'] == True, 'Match'] = 'Yes'
-        df.loc[df['Match'] == None, 'Match'] = '?'
         df.loc[df['Match'] == False, 'Match'] = 'No'
 
         df['User_Name'] = df['User_Name'].astype(int)
@@ -135,7 +134,7 @@ class Command(BaseCommand):
                     # print(user_vector, other_user_vector)
                     # cohen_kappa = cohen_kappa_score(user_vector, other_user_vector)
                     if len(set(user_vector).union(other_user_vector)) == 1:
-                        cohen_kappa = 1
+                        cohen_kappa = np.nan
                     else:
                         cohen_kappa = cohen_kappa_score(user_vector, other_user_vector)
                         print(cohen_kappa)
