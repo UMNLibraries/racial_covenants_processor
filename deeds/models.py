@@ -26,7 +26,16 @@ class Workflow(models.Model):
     workflow_name = models.CharField(max_length=100, db_index=True)
 
 
+BOOL_COVENANT_CHOICES = (
+    ('Yes', 'No'),
+    ('No', 'No'),
+    ('Unclear', 'Unclear'),
+    ('Unprocessed', 'Unprocessed'),
+)
+
+
 class PotentialMatch(models.Model):
+    '''Future: Assign an id to correspond to a deed image pre-Zooniverse'''
     workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE)
     zoon_subject_id = models.IntegerField(db_index=True)
     bool_covenant = models.BooleanField(null=True)
@@ -57,3 +66,12 @@ class ZooniverseResponseFlat(models.Model):
     dt_retired = models.DateTimeField(null=True)
 
     raw_match = models.ForeignKey(ZooniverseResponseRaw, null=True, on_delete=models.CASCADE)
+
+
+class ZooniverseUserRating(models.Model):
+    workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE)
+    user = models.ForeignKey(ZooniverseUser, on_delete=models.CASCADE)
+    cohen_kappa = models.FloatField(null=True)
+    n_clfs = models.IntegerField(null=True)
+    reliability_score = models.FloatField(null=True)
+    rank = models.IntegerField(null=True)
