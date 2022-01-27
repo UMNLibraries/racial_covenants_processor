@@ -1,0 +1,22 @@
+DB_CONNECTION_URL = 'postgresql+psycopg2://racial_covenants_processor:racial_covenants_processor@localhost:5432/racial_covenants_processor'
+
+ZOONIVERSE_QUESTION_LOOKUP = {
+    'Ramsey County': {
+        'bool_covenant': 'T0',
+        'covenant_text': 'T2',
+        'addition': 'T9',
+        'lot': 'T5',
+        'block': 'T7',
+        'seller': None,
+        'buyer': None,
+        'deed_date': {
+            'root_q': 'T18',
+            'year': 'T15',
+            'month': 'T16',
+            'day': 'T17',
+        }
+    },
+    'King County': {
+
+    }
+}

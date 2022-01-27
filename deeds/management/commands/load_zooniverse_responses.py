@@ -224,8 +224,8 @@ class Command(BaseCommand):
 
     def clear_all_tables(self):
         print('WARNING: Clearing all tables before import...')
-        # ZooniverseResponseRaw.objects.all().delete()
-        # Workflow.objects.all().delete()
+        ZooniverseResponseRaw.objects.all().delete()
+        Workflow.objects.all().delete()
         PotentialMatch.objects.all().delete()
         ZooniverseUser.objects.all().delete()
         ZooniverseResponseFlat.objects.all().delete()
@@ -234,7 +234,7 @@ class Command(BaseCommand):
         self.question_lookup = settings.ZOONIVERSE_QUESTION_LOOKUP['Ramsey County']
 
         self.clear_all_tables()
-        # self.load_csv()
-        # self.flatten_subject_data()
+        self.load_csv()
+        self.flatten_subject_data()
         self.normalize_responses('Ramsey County')
         self.check_import('Ramsey County')
