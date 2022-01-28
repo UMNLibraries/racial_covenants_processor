@@ -39,14 +39,15 @@ class Command(BaseCommand):
             right_on="task_num"
         )
 
+        # Find all possible answers in the spreadsheet for all questions
         all_task_answer_cols = []
-        for question in df['answers'].drop_duplicates().tolist():
-            for answer in question:
-                 all_task_answer_cols.append(answer['value_column'])
+        for columns in df['answer_columns'].drop_duplicates().tolist():
+            all_task_answer_cols += columns
 
         # Drop all rows from df with no answers for any of the possible questions. Not sure if this happens or not.
         df = df.dropna(subset=all_task_answer_cols, how='all')
 
+        # Each question-type task will have a unique set of answer columns, all in the same spreadsheet. So we loop through each questions to grab the correct columns and data about which answer won.
         for task_num in df['task_num'].drop_duplicates().to_list():
             answer_columns = df[df['task_num'] == task_num]['answer_columns'].values[0]
 
@@ -79,10 +80,9 @@ class Command(BaseCommand):
 
         print(df)
 
-        sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
-        print('Sending reducer QUESTION results to Django ...')
-
-        df.to_sql('zoon_reducedresponse_question', if_exists='append', index=False, con=sa_engine)
+        # print('Sending reducer QUESTION results to Django ...')
+        # sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
+        # df.to_sql('zoon_reducedresponse_question', if_exists='append', index=False, con=sa_engine)
 
 
     def handle(self, *args, **kwargs):
