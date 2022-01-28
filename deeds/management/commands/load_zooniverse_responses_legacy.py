@@ -10,9 +10,14 @@ class Command(BaseCommand):
     '''Bulk load raw Zooniverse export data for further processing'''
     question_lookup = None  # Set in handle
 
+    def add_arguments(self, parser):
+        parser.add_argument('-w', '--workflow', type=str, help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
+
     def load_csv(self):
         '''
         Implements a django-postgres-copy loader to bulk load raw Zooniverse responses into the ZooniverseResponseRaw model.
+
+        TK: Move CSV path to question lookup in local settings
         '''
         print("Loading raw Zooniverse export data...")
         import_csv = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports', 'mapping-prejudice-classifications_2_23_2021.csv')
@@ -195,12 +200,12 @@ class Command(BaseCommand):
         print('Saving normalized objects to DB...')
         ZooniverseResponseFlat.objects.bulk_create(flat_responses, 10000)
 
-    def flatten_subject_data(self):
+    def flatten_subject_data(self, workflow_name:str):
         '''
         The raw "subject_data" coming back from Zooniverse is a JSON object with the key of the "subject_id". The data being stored behind this key cannot easily be queried by Django, but if we flatten it, we can. This creates a flattened copy of the subject_data field to make querying easier, and updates the raw responses in bulk.
         '''
         print("Creating flattened version of subject_data...")
-        responses = ZooniverseResponseRaw.objects.all().only('subject_data')
+        responses = ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name).only('subject_data')
 
         for response in responses:
             first_key = next(iter(response.subject_data))
@@ -222,19 +227,23 @@ class Command(BaseCommand):
             print(zr.id)
             print(zr.annotations)
 
-    def clear_all_tables(self):
+    def clear_all_tables(self, workflow_name:str):
         print('WARNING: Clearing all tables before import...')
-        ZooniverseResponseRaw.objects.all().delete()
-        Workflow.objects.all().delete()
-        PotentialMatch.objects.all().delete()
-        ZooniverseUser.objects.all().delete()
-        ZooniverseResponseFlat.objects.all().delete()
+        ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name).delete()
+        Workflow.objects.filter(workflow_name=workflow_name).delete()
+        PotentialMatch.objects.filter(workflow__workflow_name=workflow_name).delete()
+        # ZooniverseUser.objects.all().delete()
+        ZooniverseResponseFlat.objects.filter(workflow__workflow_name=workflow_name).delete()
 
     def handle(self, *args, **kwargs):
-        self.question_lookup = settings.ZOONIVERSE_QUESTION_LOOKUP['Ramsey County']
+        workflow_name = kwargs['workflow']
+        if not workflow_name:
+            print('Missing workflow name. Please specify with --workflow.')
+        else:
+            self.question_lookup = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
 
-        self.clear_all_tables()
-        self.load_csv()
-        self.flatten_subject_data()
-        self.normalize_responses('Ramsey County')
-        self.check_import('Ramsey County')
+            self.clear_all_tables(workflow_name)
+            self.load_csv()
+            self.flatten_subject_data(workflow_name)
+            self.normalize_responses(workflow_name)
+            self.check_import(workflow_name)
