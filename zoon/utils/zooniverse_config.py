@@ -61,16 +61,13 @@ def parse_config_yaml(infile):
         # questions
         for task in extractor_types['question_extractor']:
             master_config.append(parse_labels_question_type(task['task'], label_config))
-            # master_config[task['task']] = parse_labels_question_type(task['task'], label_config)
 
         # text
         for task in extractor_types['text_extractor']:
             master_config.append(parse_labels_text_type(task['task'], label_config))
-            # master_config[task['task']] = parse_labels_text_type(task['task'], label_config)
 
         # dropdowns
         for task in extractor_types['dropdown_extractor']:
             master_config.append(parse_labels_dropdown_type(task['task'], label_config))
-            # master_config[task['task']] = parse_labels_dropdown_type(task['task'], label_config)
 
         return master_config
