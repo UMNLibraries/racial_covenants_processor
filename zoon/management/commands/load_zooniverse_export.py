@@ -1,11 +1,13 @@
 import os
+import ast
+import json
 import pandas as pd
 from sqlalchemy import create_engine
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from zoon.models import ReducedResponse_Question
+from zoon.models import ReducedResponse_Question, ReducedResponse_Text
 from zoon.utils.zooniverse_config import parse_config_yaml
 
 
@@ -20,6 +22,58 @@ class Command(BaseCommand):
         '''Find out which answer for this particular task has the most votes'''
         return answer_lookup[column_name]
 
+    def round_user_ids(self, input):
+        '''Not sure if .0s at the end of user_ids are a product of being opened or Excel or a Zoom thing, but trimming them to ints, with -1 for None values'''
+        return json.dumps([int(u) for u in json.loads(input.replace('nan', '-1'))])
+
+    def jsonify(self, input):
+        '''json.loads doesn't play nice with the output from Zooniverse here, possibly because of single quotes. Those are hard to replace without killing apostrophes, so we're using literal_eval'''
+        return json.dumps(ast.literal_eval(input))
+
+
+    def load_texts_reduced(self, batch_dir: str, master_config: dict):
+        df = pd.read_csv(os.path.join(batch_dir, 'text_reducer_texts.csv'))
+        config_df = pd.DataFrame(master_config)
+
+        # We're not really doing anything with the config data for text-type questions, but just to maintain parallel structure...
+        df = df.merge(
+            config_df,
+            how="left",
+            left_on="task",
+            right_on="task_num"
+        )
+
+        df.columns = df.columns.str.replace("data.", "", regex=False)
+
+        # Drop all rows from df with no text input.
+        df = df.dropna(subset=['aligned_text', 'consensus_text'], how='all')
+
+        # Parse user_ids as int to drop weirdo .zero
+        df['user_ids'] = df['user_ids'].apply(lambda x: self.round_user_ids(x))
+        df['aligned_text'] = df['aligned_text'].apply(lambda x: self.jsonify(x))
+
+        df = df.rename(columns={
+            'subject_id': 'zoon_subject_id',
+            'workflow_id': 'zoon_workflow_id',
+            'task': 'task_id',
+            'number_views': 'total_votes',
+        })[[
+            'zoon_subject_id',
+            'zoon_workflow_id',
+            'task_id',
+            'aligned_text',
+            'total_votes',
+            'consensus_text',
+            'consensus_score',
+            'user_ids',
+        ]]
+
+        print(df)
+
+        print('Sending reducer TEXT results to Django ...')
+        sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
+        df.to_sql('zoon_reducedresponse_text', if_exists='append', index=False, con=sa_engine)
+
     def load_questions_reduced(self, batch_dir: str, master_config: dict):
         '''Process reduced responses from the question reducer
         Arguments:
@@ -28,7 +82,6 @@ class Command(BaseCommand):
         '''
 
         df = pd.read_csv(os.path.join(batch_dir, 'question_reducer_questions.csv'))
-
         config_df = pd.DataFrame(master_config)
 
         # Join responses to config so we know the possible answers to each question
@@ -80,9 +133,9 @@ class Command(BaseCommand):
 
         print(df)
 
-        # print('Sending reducer QUESTION results to Django ...')
-        # sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
-        # df.to_sql('zoon_reducedresponse_question', if_exists='append', index=False, con=sa_engine)
+        print('Sending reducer QUESTION results to Django ...')
+        sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
+        df.to_sql('zoon_reducedresponse_question', if_exists='append', index=False, con=sa_engine)
 
 
     def handle(self, *args, **kwargs):
@@ -98,3 +151,4 @@ class Command(BaseCommand):
             master_config = parse_config_yaml(self.config_yaml)
 
             self.load_questions_reduced(self.batch_dir, master_config)
+            self.load_texts_reduced(self.batch_dir, master_config)
