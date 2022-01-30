@@ -21,3 +21,5 @@ class ReducedResponse_Text(models.Model):
     consensus_text = models.TextField()
     consensus_score = models.IntegerField()
     user_ids = models.JSONField()
+
+    # TODO: Need to get individual "something is wrong" responses direct from classifier, since reduce won't handle these well. Or use a different reducer that doesn't, um, reduce
