@@ -1,10 +1,17 @@
 from django.db import models
 
+QUESTION_TYPE_CHOICES = (
+    ('q', 'question'),
+    ('d', 'dropdown')
+)
+
 class ReducedResponse_Question(models.Model):
+    '''Used for both question and dropdown types'''
     zoon_subject_id = models.IntegerField(db_index=True)
     zoon_workflow_id = models.IntegerField(db_index=True)
     # TODO: add batch or date
     task_id = models.CharField(db_index=True, max_length=4)
+    question_type = models.CharField(max_length=1, db_index=True, choices=QUESTION_TYPE_CHOICES)
     best_answer = models.TextField()
     best_answer_score = models.FloatField()
     total_votes = models.IntegerField()
