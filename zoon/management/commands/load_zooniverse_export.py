@@ -1,13 +1,15 @@
 import os
 import ast
 import json
+import datetime
 import pandas as pd
 from sqlalchemy import create_engine
 
 from django.core.management.base import BaseCommand
+from django.core import management
 from django.conf import settings
 
-from zoon.models import ReducedResponse_Question, ReducedResponse_Text
+from zoon.models import ZooniverseResponseRaw, ZooniverseWorkflow, ZooniverseSubject, ReducedResponse_Question, ReducedResponse_Text
 from zoon.utils.zooniverse_config import parse_config_yaml
 
 
@@ -18,185 +20,168 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str, help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
-    def find_best_answer(self, column_name, answer_lookup):
-        '''Find out which answer for this particular task has the most votes'''
-        return answer_lookup[column_name]
-
-    def round_user_ids(self, input):
-        '''Not sure if .0s at the end of user_ids are a product of being opened or Excel or a Zoom thing, but trimming them to ints, with -1 for None values'''
-        return json.dumps([int(u) for u in json.loads(input.replace('nan', '-1'))])
-
-    def jsonify(self, input):
-        '''json.loads doesn't play nice with the output from Zooniverse from TEXT reducers, possibly because of single quotes. Those are hard to replace without killing apostrophes, so we're using literal_eval'''
-        return json.dumps(ast.literal_eval(input))
-
-    def join_answers(self, row):
-        '''For dropdown reductions. Get rid of hashes for choices, and restructure slightly so the results can be sorted in descending order by number of votes for that answer'''
-
-        values = json.loads(row['data.value'].replace("'", '"'))
-        joined = []
-        for v in values:
-            for key, value in v.items():
-                joined.append({'choice': row['options'][key], 'votes': value})
-
-        return sorted(joined, key = lambda i: i['votes'], reverse=True)
-
-    def load_questions_reduced(self, batch_dir: str, master_config: dict):
-        '''Process reduced responses from the question reducer
-        Arguments:
-            batch_dir: Path to the export files for this batch
-            master_config: Question text and label lookup object
+    def load_csv(self, infile: str):
         '''
-
-        df = pd.read_csv(os.path.join(batch_dir, 'question_reducer_questions.csv'))
-        config_df = pd.DataFrame(master_config)
-
-        # Join responses to config so we know the possible answers to each question
-        df = df.merge(
-            config_df,
-            how="left",
-            left_on="task",
-            right_on="task_num"
-        )
-
-        # Find all possible answers in the spreadsheet for all questions
-        all_task_answer_cols = []
-        for columns in df['answer_columns'].drop_duplicates().tolist():
-            all_task_answer_cols += columns
-
-        # Drop all rows from df with no answers for any of the possible questions. Not sure if this happens or not.
-        df = df.dropna(subset=all_task_answer_cols, how='all')
-
-        # Each question-type task will have a unique set of answer columns, all in the same spreadsheet. So we loop through each questions to grab the correct columns and data about which answer won.
-        for task_num in df['task_num'].drop_duplicates().to_list():
-            answer_columns = df[df['task_num'] == task_num]['answer_columns'].values[0]
-
-            answers = df[df['task_num'] == task_num]['answers'].values[0]
-            answers_lookup = {answer['value_column']: answer['value'] for answer in answers}
-
-            df.loc[df['task_num'] == task_num, 'best_answer_column'] = df[answer_columns].idxmax(axis=1)
-
-            df.loc[df['task_num'] == task_num, 'best_answer_score'] = df[answer_columns].max(axis=1)
-
-            df.loc[df['task_num'] == task_num, 'best_answer'] = df['best_answer_column'].apply(lambda x: self.find_best_answer(x, answers_lookup))
-
-            df.loc[df['task_num'] == task_num, 'total_votes'] = df[answer_columns].sum(axis=1)
-
-            df.loc[df['task_num'] == task_num, 'answer_scores'] = df[answer_columns].to_json(orient='records', lines=True).splitlines()
-
-        df = df.rename(columns={
-            'subject_id': 'zoon_subject_id',
-            'workflow_id': 'zoon_workflow_id',
-            'task': 'task_id'
-        })[[
-            'zoon_subject_id',
-            'zoon_workflow_id',
-            'task_id',
-            'best_answer',
-            'best_answer_score',
-            'total_votes',
-            'answer_scores',
-        ]]
-        df['question_type'] = 'q'
-
-        print(df)
-
-        print('Sending reducer QUESTION results to Django ...')
-        sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
-        df.to_sql('zoon_reducedresponse_question', if_exists='append', index=False, con=sa_engine)
-
-    def load_dropdowns_reduced(self, batch_dir: str, master_config: dict):
-        '''Process reduced responses from the dropdown reducer. In at least some versions, you need to look up hashes for fields.
-        Example: [{'adbad85a7b5ce': 1, '2b3caf88e1ee6': 2}] (In this case, 1 person chose the first, 2 people the second)
+        Implements a django-postgres-copy loader to bulk load raw Zooniverse responses into the ZooniverseResponseRaw model.
 
         Arguments:
-            batch_dir: Path to the export files for this batch
-            master_config: Question text and label lookup object
+            infile: path to raw classifications CSV
         '''
+        print("Loading raw Zooniverse export data...")
+        import_csv = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports', 'mapping-prejudice-classifications_2_23_2021.csv')
 
-        df = pd.read_csv(os.path.join(batch_dir, 'dropdown_reducer_dropdowns.csv'))
-        config_df = pd.DataFrame(master_config)
+        # Make custom mapping from model fields to drop IP column
+        mapping = {f.name: f.name for f in ZooniverseResponseRaw._meta.get_fields() if f.name not in ['id', 'subject_data_flat', 'zooniverseresponseflat']}
 
-        # Join responses to config so we know the possible answers to each question
-        df = df.merge(
-            config_df,
-            how="left",
-            left_on="task",
-            right_on="task_num"
+        insert_count = ZooniverseResponseRaw.objects.from_csv(import_csv, mapping=mapping)
+        print("{} records inserted".format(insert_count))
+
+    def flatten_subject_data(self, workflow_name:str):
+        '''
+        The raw "subject_data" coming back from Zooniverse is a JSON object with the key of the "subject_id". The data being stored behind this key cannot easily be queried by Django, but if we flatten it, we can. This creates a flattened copy of the subject_data field to make querying easier, and updates the raw responses in bulk.
+        '''
+        print("Creating flattened version of subject_data...")
+        responses = ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name).only('subject_data')
+
+        for response in responses:
+            first_key = next(iter(response.subject_data))
+            response.subject_data_flat = response.subject_data[first_key]
+
+        ZooniverseResponseRaw.objects.bulk_update(responses, ['subject_data_flat'], 10000)  # Batches of 10,000 records at a time
+
+    def clear_all_tables(self, workflow_name:str):
+        print('WARNING: Clearing all tables before import...')
+
+        ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name).delete()
+        ZooniverseSubject.objects.filter(workflow__workflow_name=workflow_name).delete()
+
+    def create_workflow(self, workflow_name:str):
+        # Check if this name exists in raw responses
+        matches = ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name).values('workflow_id').distinct()
+        if matches.count() > 0:
+            workflow, w_created = ZooniverseWorkflow.objects.get_or_create(
+                zoon_id=matches[0]['workflow_id'],
+                workflow_name=workflow_name
+            )
+            if w_created:
+                print(f"New workflow record created for {workflow_name}.")
+            else:
+                print(f"Existing workflow record found for {workflow_name}.")
+            return workflow
+        else:
+            print("No matching workflow found in Zooniverse responses.")
+            raise
+
+    def sql_df_writer(self, conn, var_name, question_lookup):
+        '''Help pandas return a sensible response for each question that can be joined back to a unique subject id. Scores are put into percentages to handle possible changes to what's required to retire.'''
+        return pd.read_sql(f"SELECT zoon_subject_id, best_answer AS {var_name}, cast(best_answer_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_question WHERE task_id = '{question_lookup[var_name]}'",
+            conn)
+        # , id AS {var_name}_reducer_db_id
+
+    def sql_df_writer_text(self, conn, var_name, question_lookup):
+        '''Help pandas return a sensible response for each question that can be joined back to a unique subject id. Scores are put into percentages to handle possible changes to what's required to retire.'''
+        return pd.read_sql(f"SELECT zoon_subject_id, consensus_text AS {var_name}, cast(consensus_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_text WHERE task_id = '{question_lookup[var_name]}'",
+            conn)
+        # , id AS {var_name}_reducer_db_id
+
+    def parse_deed_date(self, row, month_lookup):
+        try:
+            month = month_lookup[row['month']]
+            return datetime.datetime(int(row['year']), month, int(row['day'])).date()
+        except:
+            return None
+
+    def consolidate_responses(self, workflow, question_lookup: dict):
+        print('Bring together reducer answers to a final results for this subject...')
+
+        # Only get retired subjects
+        subject_df = pd.DataFrame(ZooniverseResponseRaw.objects.filter(
+            workflow_name=workflow.workflow_name
+        ).exclude(
+            subject_data_flat__retired=None  # Only loading retired subjects for now
+        ).values(
+            'subject_ids',
+            'subject_data_flat__retired__retired_at'
+        ).distinct())
+        subject_df.rename(columns={
+            'subject_ids': 'zoon_subject_id',
+            'subject_data_flat__retired__retired_at': 'dt_retired'
+        }, inplace=True)
+        print(subject_df)
+
+        sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
+
+        # Make a DF for each question, then left join to subject IDs to create subject records
+        bool_covenant_df = self.sql_df_writer(sa_engine, 'bool_covenant', question_lookup)
+        print(bool_covenant_df)
+        covenant_text_df = self.sql_df_writer_text(sa_engine, 'covenant_text', question_lookup)
+        addition_df = self.sql_df_writer_text(sa_engine, 'addition', question_lookup)
+        lot_df = self.sql_df_writer_text(sa_engine, 'lot', question_lookup)
+        block_df = self.sql_df_writer_text(sa_engine, 'block', question_lookup)
+        seller_df = self.sql_df_writer_text(sa_engine, 'seller', question_lookup)
+        buyer_df = self.sql_df_writer_text(sa_engine, 'buyer', question_lookup)
+
+        # deed_date
+        deed_date_year_df = self.sql_df_writer(sa_engine, 'year', question_lookup['deed_date'])
+        deed_date_month_df = self.sql_df_writer(sa_engine, 'month', question_lookup['deed_date'])
+        deed_date_day_df = self.sql_df_writer(sa_engine, 'day', question_lookup['deed_date'])
+
+        # Join back to subject ids/retired dates
+        final_df = subject_df.merge(
+            bool_covenant_df, how="left", on="zoon_subject_id"
+        ).merge(
+            covenant_text_df, how="left", on="zoon_subject_id"
+        ).merge(
+            addition_df, how="left", on="zoon_subject_id"
+        ).merge(
+            lot_df, how="left", on="zoon_subject_id"
+        ).merge(
+            block_df, how="left", on="zoon_subject_id"
+        ).merge(
+            seller_df, how="left", on="zoon_subject_id"
+        ).merge(
+            buyer_df, how="left", on="zoon_subject_id"
+        ).merge(
+            deed_date_year_df, how="left", on="zoon_subject_id"
+        ).merge(
+            deed_date_month_df, how="left", on="zoon_subject_id"
+        ).merge(
+            deed_date_day_df, how="left", on="zoon_subject_id"
         )
 
-        # Drop all rows from df with no answers.
-        df = df.dropna(subset=['data.value'], how='all')
+        # Make overall and individual scores for deed date components
+        final_df['deed_date_overall_score'] = final_df[['year_score', 'month_score', 'day_score']].sum(axis=1) / 3
+        final_df.rename(columns={
+            'year_score': 'deed_date_year_score',
+            'month_score': 'deed_date_month_score',
+            'day_score': 'deed_date_day_score',
+        }, inplace=True)
 
-        df['answer_scores'] = df.apply(lambda row: self.join_answers(row), axis=1)
-        df['best_answer'] = df['answer_scores'].apply(lambda x: x[0]['choice'])
-        df['best_answer_score'] = df['answer_scores'].apply(lambda x: x[0]['votes'])
-        df['total_votes'] = df['answer_scores'].apply(lambda x: sum([r['votes'] for r in x]))
+        # Parse final deed_date
+        month_lookup = question_lookup['month_lookup']
+        final_df['deed_date'] = final_df.apply(lambda row: self.parse_deed_date(row, month_lookup), axis=1)
 
-        df = df.rename(columns={
-            'subject_id': 'zoon_subject_id',
-            'workflow_id': 'zoon_workflow_id',
-            'task': 'task_id'
-        })[[
-            'zoon_subject_id',
-            'zoon_workflow_id',
-            'task_id',
-            'best_answer',
-            'best_answer_score',
-            'total_votes',
-            'answer_scores',
-        ]]
-        df['question_type'] = 'd'
-        df['answer_scores'] = df['answer_scores'].apply(lambda x: json.dumps(x))
+        # Parse bool_covenant and "I can't figure this out"
+        final_df['bool_problem'] = False
+        final_df.loc[final_df['bool_covenant'] == "I can't figure this one out", 'bool_problem'] = True
+        final_df.loc[final_df['bool_covenant'] == "I can't figure this one out", 'bool_covenant'] = None
+        final_df.loc[final_df['bool_covenant'] == "Yes", 'bool_covenant'] = True
+        final_df.loc[final_df['bool_covenant'] == "No", 'bool_covenant'] = False
 
-        print(df)
+        # Fill NAs in text fields with empty strings
+        string_fields = ['covenant_text', 'addition', 'lot', 'block', 'seller', 'buyer']
+        final_df[string_fields] = final_df[string_fields].fillna('')
 
-        print('Sending reducer DROPDOWN results to Django ...')
-        sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
-        df.to_sql('zoon_reducedresponse_question', if_exists='append', index=False, con=sa_engine)
+        final_df.drop(columns=['year', 'month', 'day'], inplace=True)
+        final_df['workflow_id'] = workflow.id
 
-    def load_texts_reduced(self, batch_dir: str, master_config: dict):
-        df = pd.read_csv(os.path.join(batch_dir, 'text_reducer_texts.csv'))
-        config_df = pd.DataFrame(master_config)
+        print(final_df[final_df['bool_covenant'] == 'Yes'])
 
-        # We're not really doing anything with the config data for text-type questions, but just to maintain parallel structure...
-        df = df.merge(
-            config_df,
-            how="left",
-            left_on="task",
-            right_on="task_num"
-        )
+        print('Sending consolidated subject results to Django ...')
+        final_df.to_sql('zoon_zooniversesubject', if_exists='append', index=False, con=sa_engine)
 
-        df.columns = df.columns.str.replace("data.", "", regex=False)
-
-        # Drop all rows from df with no text input.
-        df = df.dropna(subset=['aligned_text', 'consensus_text'], how='all')
-
-        # Parse user_ids as int to drop weirdo .zero
-        df['user_ids'] = df['user_ids'].apply(lambda x: self.round_user_ids(x))
-        df['aligned_text'] = df['aligned_text'].apply(lambda x: self.jsonify(x))
-
-        df = df.rename(columns={
-            'subject_id': 'zoon_subject_id',
-            'workflow_id': 'zoon_workflow_id',
-            'task': 'task_id',
-            'number_views': 'total_votes',
-        })[[
-            'zoon_subject_id',
-            'zoon_workflow_id',
-            'task_id',
-            'aligned_text',
-            'total_votes',
-            'consensus_text',
-            'consensus_score',
-            'user_ids',
-        ]]
-
-        print(df)
-
-        print('Sending reducer TEXT results to Django ...')
-        sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
-        df.to_sql('zoon_reducedresponse_text', if_exists='append', index=False, con=sa_engine)
+        # TODO: Associate subject with reduced answers after the fact?
+        # TODO: Associate raw zooniverse records to ZooniverseSubject
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -206,10 +191,18 @@ class Command(BaseCommand):
             self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
             self.batch_dir = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
-            self.config_yaml = os.path.join(self.batch_dir, self.batch_config['config_yaml'])
+            raw_classifications_csv = os.path.join(self.batch_dir, self.batch_config['raw_classifications_csv'])
 
-            master_config = parse_config_yaml(self.config_yaml)
+            question_lookup = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
 
-            self.load_questions_reduced(self.batch_dir, master_config)
-            self.load_dropdowns_reduced(self.batch_dir, master_config)
-            self.load_texts_reduced(self.batch_dir, master_config)
+            self.clear_all_tables(workflow_name)
+            self.load_csv(raw_classifications_csv)
+            workflow = self.create_workflow(workflow_name)
+            self.flatten_subject_data(workflow_name)
+
+            # Handle reducer output to develop consensus answers
+            management.call_command('load_zooniverse_reductions', workflow=workflow_name)
+
+            # After you have loaded the zooniverse reducer output, bring everything together
+            self.consolidate_responses(workflow, question_lookup)
+            # TODO: self.check_import(workflow_name)
