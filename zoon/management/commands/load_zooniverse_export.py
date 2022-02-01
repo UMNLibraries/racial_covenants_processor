@@ -188,6 +188,7 @@ class Command(BaseCommand):
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
+            # This config info comes from local_settings, generally.
             self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
             self.batch_dir = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
