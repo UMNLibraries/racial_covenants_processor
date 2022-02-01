@@ -20,10 +20,10 @@ Current collaborators include Nicholas Boren, Michael Corey and Justin Schell.
 1. Upload images of positive matches to S3? Zooniverse?
 1. Upload batch of records to Zooniverse for community confirmation
 1. Export batch results from Zooniverse
-  ```
-  python manage.py load_zooniverse_export
-  ```
 1. Reshape responses into individual property matches
+```
+python manage.py load_zooniverse_export
+```
   - Side effect: Stats on hit rate, false positives, etc.
 1. Automated join of matches to modern parcel map
 1. Export list of unmatched confirmed covenants
