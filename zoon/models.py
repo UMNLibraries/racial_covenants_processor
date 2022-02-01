@@ -1,4 +1,67 @@
 from django.db import models
+from postgres_copy import CopyManager
+
+class ZooniverseResponseRaw(models.Model):
+    classification_id = models.IntegerField()
+    user_name = models.CharField(max_length=100, blank=True, db_index=True)
+    user_id = models.IntegerField(null=True, db_index=True)
+    # user_ip = models.CharField(max_length=10, blank=True)  # Removed from import in order to reduce personal info stored in database
+    workflow_id = models.IntegerField(null=True)
+    workflow_name = models.CharField(max_length=100, blank=True, db_index=True)
+    workflow_version = models.FloatField()
+    created_at = models.DateTimeField()
+    gold_standard = models.BooleanField(null=True)
+    expert = models.BooleanField(null=True)
+    metadata = models.JSONField()
+    annotations = models.JSONField()
+    subject_data = models.JSONField()
+    subject_ids = models.IntegerField(db_index=True)
+    subject_data_flat = models.JSONField(null=True)
+    objects = CopyManager()
+
+
+class ZooniverseWorkflow(models.Model):
+    zoon_id = models.IntegerField(null=True, db_index=True)
+    workflow_name = models.CharField(max_length=100, db_index=True)
+
+
+class ZooniverseSubject(models.Model):
+    '''Future: Assign an id to correspond to a deed image pre-Zooniverse'''
+    workflow = models.ForeignKey(ZooniverseWorkflow, on_delete=models.CASCADE)
+    zoon_subject_id = models.IntegerField(db_index=True)
+    dt_retired = models.DateTimeField(null=True)
+
+    # This part comes from the reducers
+    bool_covenant = models.BooleanField(null=True)
+    bool_problem = models.BooleanField(default=False)
+    covenant_text = models.TextField(blank=True)
+    addition = models.CharField(max_length=500, blank=True)
+    lot = models.TextField(blank=True)
+    block = models.CharField(max_length=500, blank=True)
+    seller = models.CharField(max_length=100, blank=True)
+    buyer = models.CharField(max_length=100, blank=True)
+    deed_date = models.DateField(null=True)
+
+    # Scores, also from the reducers
+    bool_covenant_score = models.FloatField(null=True)
+    covenant_text_score = models.FloatField(null=True)
+    addition_score = models.FloatField(null=True)
+    lot_score = models.FloatField(null=True)
+    block_score = models.FloatField(null=True)
+    seller_score = models.FloatField(null=True)
+    buyer_score = models.FloatField(null=True)
+
+    deed_date_overall_score = models.FloatField(null=True)
+    deed_date_year_score = models.FloatField(null=True)
+    deed_date_month_score = models.FloatField(null=True)
+    deed_date_day_score = models.FloatField(null=True)
+
+
+class ZooniverseUser(models.Model):
+    '''Temp: duplicated from deeds.models. May or may not be needed later, but not actually doing anything on this app currently.'''
+    zoon_id = models.IntegerField(null=True, db_index=True)
+    zoon_name = models.CharField(max_length=100, blank=True, db_index=True)
+
 
 QUESTION_TYPE_CHOICES = (
     ('q', 'question'),
