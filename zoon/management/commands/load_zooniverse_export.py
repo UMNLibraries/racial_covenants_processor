@@ -14,7 +14,7 @@ from zoon.utils.zooniverse_config import parse_config_yaml
 
 
 class Command(BaseCommand):
-    '''Bulk load raw Zooniverse export data for further processing'''
+    '''This is the main loader for a Zooniverse export and set of reduced output into the Django app.'''
     batch_config = None  # Set in handle
 
     def add_arguments(self, parser):

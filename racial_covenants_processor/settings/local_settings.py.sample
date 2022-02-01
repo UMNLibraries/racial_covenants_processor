@@ -4,6 +4,7 @@ ZOONIVERSE_QUESTION_LOOKUP = {
     'Ramsey County': {
         'panoptes_folder': 'mn_ramsey',  # relative to data/aggregation folder
         'config_yaml': 'Extractor_config_workflow_13143_V4.10.yaml',
+        'raw_classifications_csv': 'ramsey-county-classifications.csv',
 
         # Legacy workflow version starts here ...
         'bool_covenant': 'T0',
@@ -18,6 +19,20 @@ ZOONIVERSE_QUESTION_LOOKUP = {
             'year': 'T15',
             'month': 'T16',
             'day': 'T17',
+        },
+        'month_lookup': {
+            '1 - January': 1,
+            '2 - February': 2,
+            '3 - March': 3,
+            '4 - April': 4,
+            '5 - May': 5,
+            '6 - June': 6,
+            '7 - July': 7,
+            '8 - August': 8,
+            '9 - September': 9,
+            '10 - October': 10,
+            '11 - November': 11,
+            '12 - December': 12,
         }
     },
     'King County': {

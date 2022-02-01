@@ -12,7 +12,8 @@ from zoon.utils.zooniverse_config import parse_config_yaml
 
 
 class Command(BaseCommand):
-    '''Bulk load raw Zooniverse export data for further processing'''
+    '''This script loads the output of the Zooniverse reducer commands/functions into Django models for each reduced answer, and gets for each question a best or consensus answer, the number of people who agreed with that answer, and any additional metadata Zooniverse provides about the reducer output'''
+    
     batch_config = None  # Set in handle
 
     def add_arguments(self, parser):
