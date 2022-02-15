@@ -1,6 +1,5 @@
 import os
-import ast
-import json
+import re
 import datetime
 import pandas as pd
 from sqlalchemy import create_engine
@@ -46,6 +45,9 @@ class Command(BaseCommand):
         for response in responses:
             first_key = next(iter(response.subject_data))
             response.subject_data_flat = response.subject_data[first_key]
+
+            # In some workflows the key for the match number is just a number, which will throw off querying of it later, so fix that
+            response.subject_data_flat = {re.sub(r'^(\d+)$', r'image_\1', key): value for key, value in response.subject_data_flat.items()}
 
         ZooniverseResponseRaw.objects.bulk_update(responses, ['subject_data_flat'], 10000)  # Batches of 10,000 records at a time
 
@@ -101,11 +103,13 @@ class Command(BaseCommand):
             subject_data_flat__retired=None  # Only loading retired subjects for now
         ).values(
             'subject_ids',
-            'subject_data_flat__retired__retired_at'
+            'subject_data_flat__retired__retired_at',
+            'subject_data_flat__image_1'
         ).distinct())
         subject_df.rename(columns={
             'subject_ids': 'zoon_subject_id',
-            'subject_data_flat__retired__retired_at': 'dt_retired'
+            'subject_data_flat__retired__retired_at': 'dt_retired',
+            'subject_data_flat__image_1': 'image_id',  # This may or may not be a _match png, which is something we will want to standardize with an actual ID from the earlier stages of the process that will carry through Zooniverse for joining back
         }, inplace=True)
         print(subject_df)
 
@@ -175,7 +179,7 @@ class Command(BaseCommand):
         final_df.drop(columns=['year', 'month', 'day'], inplace=True)
         final_df['workflow_id'] = workflow.id
 
-        print(final_df[final_df['bool_covenant'] == 'Yes'])
+        print(final_df)
 
         print('Sending consolidated subject results to Django ...')
         final_df.to_sql('zoon_zooniversesubject', if_exists='append', index=False, con=sa_engine)
@@ -196,13 +200,13 @@ class Command(BaseCommand):
 
             question_lookup = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
 
-            self.clear_all_tables(workflow_name)
-            self.load_csv(raw_classifications_csv)
+            # self.clear_all_tables(workflow_name)
+            # self.load_csv(raw_classifications_csv)
             workflow = self.create_workflow(workflow_name)
-            self.flatten_subject_data(workflow_name)
-
-            # Handle reducer output to develop consensus answers
-            management.call_command('load_zooniverse_reductions', workflow=workflow_name)
+            # self.flatten_subject_data(workflow_name)
+            #
+            # # Handle reducer output to develop consensus answers
+            # management.call_command('load_zooniverse_reductions', workflow=workflow_name)
 
             # After you have loaded the zooniverse reducer output, bring everything together
             self.consolidate_responses(workflow, question_lookup)

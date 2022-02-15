@@ -29,6 +29,7 @@ class ZooniverseSubject(models.Model):
     '''Future: Assign an id to correspond to a deed image pre-Zooniverse'''
     workflow = models.ForeignKey(ZooniverseWorkflow, on_delete=models.CASCADE)
     zoon_subject_id = models.IntegerField(db_index=True)
+    image_id = models.CharField(max_length=100, db_index=True)
     dt_retired = models.DateTimeField(null=True)
 
     # This part comes from the reducers
