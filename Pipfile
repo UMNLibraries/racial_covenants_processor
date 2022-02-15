@@ -12,6 +12,7 @@ django-postgres-copy = "*"
 scikit-learn = "*"
 sqlalchemy = "*"
 pyyaml = "*"
+psycopg2 = "*"
 
 [dev-packages]
 
