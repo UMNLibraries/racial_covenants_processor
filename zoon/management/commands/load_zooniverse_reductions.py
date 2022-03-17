@@ -13,11 +13,12 @@ from zoon.utils.zooniverse_config import parse_config_yaml
 
 class Command(BaseCommand):
     '''This script loads the output of the Zooniverse reducer commands/functions into Django models for each reduced answer, and gets for each question a best or consensus answer, the number of people who agreed with that answer, and any additional metadata Zooniverse provides about the reducer output'''
-    
+
     batch_config = None  # Set in handle
 
     def add_arguments(self, parser):
-        parser.add_argument('-w', '--workflow', type=str, help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
+        parser.add_argument('-w', '--workflow', type=str,
+                            help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
     def find_best_answer(self, column_name, answer_lookup):
         '''Find out which answer for this particular task has the most votes'''
@@ -40,7 +41,7 @@ class Command(BaseCommand):
             for key, value in v.items():
                 joined.append({'choice': row['options'][key], 'votes': value})
 
-        return sorted(joined, key = lambda i: i['votes'], reverse=True)
+        return sorted(joined, key=lambda i: i['votes'], reverse=True)
 
     def load_questions_reduced(self, batch_dir: str, master_config: dict):
         '''Process reduced responses from the question reducer
@@ -49,7 +50,8 @@ class Command(BaseCommand):
             master_config: Question text and label lookup object
         '''
 
-        df = pd.read_csv(os.path.join(batch_dir, 'question_reducer_questions.csv'))
+        df = pd.read_csv(os.path.join(
+            batch_dir, 'question_reducer_questions.csv'))
         config_df = pd.DataFrame(master_config)
 
         # Join responses to config so we know the possible answers to each question
@@ -70,20 +72,28 @@ class Command(BaseCommand):
 
         # Each question-type task will have a unique set of answer columns, all in the same spreadsheet. So we loop through each questions to grab the correct columns and data about which answer won.
         for task_num in df['task_num'].drop_duplicates().to_list():
-            answer_columns = df[df['task_num'] == task_num]['answer_columns'].values[0]
+            answer_columns = df[df['task_num']
+                                == task_num]['answer_columns'].values[0]
 
             answers = df[df['task_num'] == task_num]['answers'].values[0]
-            answers_lookup = {answer['value_column']: answer['value'] for answer in answers}
+            answers_lookup = {answer['value_column']                              : answer['value'] for answer in answers}
 
-            df.loc[df['task_num'] == task_num, 'best_answer_column'] = df[answer_columns].idxmax(axis=1)
+            df.loc[df['task_num'] == task_num,
+                   'best_answer_column'] = df[answer_columns].idxmax(axis=1)
 
-            df.loc[df['task_num'] == task_num, 'best_answer_score'] = df[answer_columns].max(axis=1)
+            df.loc[df['task_num'] == task_num,
+                   'best_answer_score'] = df[answer_columns].max(axis=1)
 
-            df.loc[df['task_num'] == task_num, 'best_answer'] = df['best_answer_column'].apply(lambda x: self.find_best_answer(x, answers_lookup))
+            df.loc[df['task_num'] == task_num, 'best_answer'] = df['best_answer_column'].apply(
+                lambda x: self.find_best_answer(x, answers_lookup))
 
-            df.loc[df['task_num'] == task_num, 'total_votes'] = df[answer_columns].sum(axis=1)
+            # df.loc[df['task_num'] == task_num,
+            #        'total_votes'] = df[answer_columns].sum(axis=1)
+            # df.loc[df['task_num'] == task_num,
+            #        'total_votes'] = self.batch_config['num_to_retire']
 
-            df.loc[df['task_num'] == task_num, 'answer_scores'] = df[answer_columns].to_json(orient='records', lines=True).splitlines()
+            df.loc[df['task_num'] == task_num, 'answer_scores'] = df[answer_columns].to_json(
+                orient='records', lines=True).splitlines()
 
         df = df.rename(columns={
             'subject_id': 'zoon_subject_id',
@@ -95,16 +105,18 @@ class Command(BaseCommand):
             'task_id',
             'best_answer',
             'best_answer_score',
-            'total_votes',
+            # 'total_votes',
             'answer_scores',
         ]]
+        df['total_votes'] = self.batch_config['num_to_retire']
         df['question_type'] = 'q'
 
         print(df)
 
         print('Sending reducer QUESTION results to Django ...')
         sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
-        df.to_sql('zoon_reducedresponse_question', if_exists='append', index=False, con=sa_engine)
+        df.to_sql('zoon_reducedresponse_question',
+                  if_exists='append', index=False, con=sa_engine)
 
     def load_dropdowns_reduced(self, batch_dir: str, master_config: dict):
         '''Process reduced responses from the dropdown reducer. In at least some versions, you need to look up hashes for fields.
@@ -115,7 +127,8 @@ class Command(BaseCommand):
             master_config: Question text and label lookup object
         '''
 
-        df = pd.read_csv(os.path.join(batch_dir, 'dropdown_reducer_dropdowns.csv'))
+        df = pd.read_csv(os.path.join(
+            batch_dir, 'dropdown_reducer_dropdowns.csv'))
         config_df = pd.DataFrame(master_config)
 
         # Join responses to config so we know the possible answers to each question
@@ -129,10 +142,14 @@ class Command(BaseCommand):
         # Drop all rows from df with no answers.
         df = df.dropna(subset=['data.value'], how='all')
 
-        df['answer_scores'] = df.apply(lambda row: self.join_answers(row), axis=1)
+        df['answer_scores'] = df.apply(
+            lambda row: self.join_answers(row), axis=1)
         df['best_answer'] = df['answer_scores'].apply(lambda x: x[0]['choice'])
-        df['best_answer_score'] = df['answer_scores'].apply(lambda x: x[0]['votes'])
-        df['total_votes'] = df['answer_scores'].apply(lambda x: sum([r['votes'] for r in x]))
+        df['best_answer_score'] = df['answer_scores'].apply(
+            lambda x: x[0]['votes'])
+        # This is not right, because not everyone answers every question
+        # df['total_votes'] = df['answer_scores'].apply(
+        #     lambda x: sum([r['votes'] for r in x]))
 
         df = df.rename(columns={
             'subject_id': 'zoon_subject_id',
@@ -144,17 +161,20 @@ class Command(BaseCommand):
             'task_id',
             'best_answer',
             'best_answer_score',
-            'total_votes',
+            # 'total_votes',
             'answer_scores',
         ]]
+        df['total_votes'] = self.batch_config['num_to_retire']
         df['question_type'] = 'd'
-        df['answer_scores'] = df['answer_scores'].apply(lambda x: json.dumps(x))
+        df['answer_scores'] = df['answer_scores'].apply(
+            lambda x: json.dumps(x))
 
         print(df)
 
         print('Sending reducer DROPDOWN results to Django ...')
         sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
-        df.to_sql('zoon_reducedresponse_question', if_exists='append', index=False, con=sa_engine)
+        df.to_sql('zoon_reducedresponse_question',
+                  if_exists='append', index=False, con=sa_engine)
 
     def load_texts_reduced(self, batch_dir: str, master_config: dict):
         df = pd.read_csv(os.path.join(batch_dir, 'text_reducer_texts.csv'))
@@ -175,29 +195,32 @@ class Command(BaseCommand):
 
         # Parse user_ids as int to drop weirdo .zero
         df['user_ids'] = df['user_ids'].apply(lambda x: self.round_user_ids(x))
-        df['aligned_text'] = df['aligned_text'].apply(lambda x: self.jsonify(x))
+        df['aligned_text'] = df['aligned_text'].apply(
+            lambda x: self.jsonify(x))
 
         df = df.rename(columns={
             'subject_id': 'zoon_subject_id',
             'workflow_id': 'zoon_workflow_id',
             'task': 'task_id',
-            'number_views': 'total_votes',
+            # 'number_views': 'total_votes',  # Not everyone enters, so this is wrong
         })[[
             'zoon_subject_id',
             'zoon_workflow_id',
             'task_id',
             'aligned_text',
-            'total_votes',
+            # 'total_votes',
             'consensus_text',
             'consensus_score',
             'user_ids',
         ]]
+        df['total_votes'] = self.batch_config['num_to_retire']
 
         print(df)
 
         print('Sending reducer TEXT results to Django ...')
         sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
-        df.to_sql('zoon_reducedresponse_text', if_exists='append', index=False, con=sa_engine)
+        df.to_sql('zoon_reducedresponse_text',
+                  if_exists='append', index=False, con=sa_engine)
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -205,9 +228,11 @@ class Command(BaseCommand):
             print('Missing workflow name. Please specify with --workflow.')
         else:
             self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
-            self.batch_dir = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
+            self.batch_dir = os.path.join(
+                settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
-            self.config_yaml = os.path.join(self.batch_dir, self.batch_config['config_yaml'])
+            self.config_yaml = os.path.join(
+                self.batch_dir, self.batch_config['config_yaml'])
 
             master_config = parse_config_yaml(self.config_yaml)
 
