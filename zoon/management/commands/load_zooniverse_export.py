@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import yaml
 import datetime
 import pandas as pd
 from itertools import chain
@@ -42,13 +43,15 @@ class Command(BaseCommand):
             import_csv, mapping=mapping)
         print("{} records inserted".format(insert_count))
 
-    def flatten_subject_data(self, workflow_name: str):
+    def flatten_subject_data(self, workflow):
         '''
         The raw "subject_data" coming back from Zooniverse is a JSON object with the key of the "subject_id". The data being stored behind this key cannot easily be queried by Django, but if we flatten it, we can. This creates a flattened copy of the subject_data field to make querying easier, and updates the raw responses in bulk.
         '''
         print("Creating flattened version of subject_data...")
         responses = ZooniverseResponseRaw.objects.filter(
-            workflow_name=workflow_name).only('subject_data')
+            workflow_name=workflow.workflow_name,
+            workflow_version=workflow.version
+        ).only('subject_data')
 
         for response in responses:
             first_key = next(iter(response.subject_data))
@@ -71,23 +74,35 @@ class Command(BaseCommand):
         ZooniverseResponseProcessed.objects.filter(
             workflow__workflow_name=workflow_name).delete()
 
-        workflow = ZooniverseWorkflow.objects.get(workflow_name=workflow_name)
+        try:
+            workflow = ZooniverseWorkflow.objects.get(
+                workflow_name=workflow_name)
 
-        ReducedResponse_Question.objects.filter(
-            zoon_workflow_id=workflow.zoon_id
-        ).delete()
-        ReducedResponse_Text.objects.filter(
-            zoon_workflow_id=workflow.zoon_id
-        ).delete()
+            ReducedResponse_Question.objects.filter(
+                zoon_workflow_id=workflow.zoon_id
+            ).delete()
+            ReducedResponse_Text.objects.filter(
+                zoon_workflow_id=workflow.zoon_id
+            ).delete()
+        except:
+            print("Can't find matching workflow, deleting all orphaned reducer output")
+            all_workflow_ids = ZooniverseWorkflow.objects.all().values('zoon_id').distinct()
+            ReducedResponse_Question.objects.exclude(
+                zoon_workflow_id__in=all_workflow_ids
+            ).delete()
+            ReducedResponse_Text.objects.exclude(
+                zoon_workflow_id__in=all_workflow_ids
+            ).delete()
 
-    def create_workflow(self, workflow_name: str):
+    def create_workflow(self, workflow_name: str, workflow_version: str):
         # Check if this name exists in raw responses
         matches = ZooniverseResponseRaw.objects.filter(
             workflow_name=workflow_name).values('workflow_id').distinct()
         if matches.count() > 0:
             workflow, w_created = ZooniverseWorkflow.objects.get_or_create(
                 zoon_id=matches[0]['workflow_id'],
-                workflow_name=workflow_name
+                workflow_name=workflow_name,
+                version=workflow_version
             )
             if w_created:
                 print(f"New workflow record created for {workflow_name}.")
@@ -122,7 +137,8 @@ class Command(BaseCommand):
 
         # Only get retired subjects
         subject_df = pd.DataFrame(ZooniverseResponseRaw.objects.filter(
-            workflow_name=workflow.workflow_name
+            workflow_name=workflow.workflow_name,
+            workflow_version=workflow.version
         ).exclude(
             subject_data_flat__retired=None  # Only loading retired subjects for now
         ).values(
@@ -331,12 +347,20 @@ class Command(BaseCommand):
             raw_classifications_csv = os.path.join(
                 self.batch_dir, self.batch_config['raw_classifications_csv'])
 
+            # Get workflow version from config yaml
+            config_yaml = os.path.join(
+                self.batch_dir, self.batch_config['config_yaml'])
+            with open(config_yaml, 'r') as base_file:
+                workflow_version = float(yaml.full_load(
+                    base_file)['workflow_version'])
+                print(workflow_version)
+
             question_lookup = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
 
             self.clear_all_tables(workflow_name)
             self.load_csv(raw_classifications_csv)
-            workflow = self.create_workflow(workflow_name)
-            self.flatten_subject_data(workflow_name)
+            workflow = self.create_workflow(workflow_name, workflow_version)
+            self.flatten_subject_data(workflow)
 
             # Handle reducer output to develop consensus answers
             management.call_command(

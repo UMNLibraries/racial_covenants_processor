@@ -5,9 +5,10 @@ from postgres_copy import CopyManager
 class ZooniverseWorkflow(models.Model):
     zoon_id = models.IntegerField(null=True, db_index=True)
     workflow_name = models.CharField(max_length=100, db_index=True)
+    version = models.FloatField(null=True)
 
     def __str__(self):
-        return self.workflow_name
+        return f"{self.workflow_name} ({self.version})"
 
 
 class ZooniverseSubject(models.Model):
