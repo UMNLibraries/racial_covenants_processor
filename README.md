@@ -12,6 +12,9 @@ Current collaborators include Nicholas Boren, Michael Corey and Justin Schell.
 - pipenv
 - PostGIS/PostgreSQL
 
+## Note on legacy code
+The "deeds" app is currently not being used, except to port over the legacy classification system for comparison with the new Zooniverse-native methods
+
 ## High-level workflow
 
 1. Identify deed image folder structure
@@ -21,8 +24,8 @@ Current collaborators include Nicholas Boren, Michael Corey and Justin Schell.
   - Side effect: Create analyzable statistics on which language found
 1. Upload images of positive matches to S3? Zooniverse?
 1. Upload batch of records to Zooniverse for community confirmation
-1. Export batch results from Zooniverse
-1. Reshape responses into individual property matches
+1. Export batch results from Zooniverse (Using command line tools)
+1. Load raw and aggregated Zooniverse responses into individual property matches
 ```
 python manage.py load_zooniverse_export
 ```
@@ -54,8 +57,21 @@ CREATE EXTENSION postgis;
 pipenv install
 ```
 
-### 3. Sync Django with your database
+### 3. Create a Postgresql service to connect between Django and the DB
+```
+(.pg_service.conf)
+[deeds_service]
+host=localhost
+user=racial_covenants_processor
+dbname=racial_covenants_processor
+port=5432
+```
+
+### 4. Sync Django with your database
 ```
 pipenv shell
 python manage.py migrate
 ```
+
+### 5. To be able to view the admin pages, create a superuser
+```python manage.py createsuperuser```

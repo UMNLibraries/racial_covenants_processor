@@ -16,6 +16,7 @@ psycopg2 = "*"
 django-admin-rangefilter = "*"
 
 [dev-packages]
+csvkit = "*"
 
 [requires]
 python_version = "3.9"

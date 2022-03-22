@@ -23,13 +23,14 @@ class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['zoon_subject_id',
                      'addition', 'covenant_text', 'image_id']
 
-    list_display = ('__str__', 'bool_covenant', 'bool_problem',
+    list_display = ('__str__', 'bool_covenant', 'median_score', 'bool_problem',
                     'addition', 'lot', 'block', 'deed_date',)
 
     list_filter = (
         'workflow__workflow_name',
         'bool_covenant',
         'bool_problem',
+        'median_score',
         ('deed_date', DateRangeFilter)
     )
 
@@ -41,6 +42,7 @@ class SubjectAdmin(admin.ModelAdmin):
         (None, {
             'fields': (
                 'zoon_subject_id', 'image_id', 'dt_retired',
+                'median_score',
                 ('bool_covenant', 'bool_covenant_score'),
                 ('covenant_text', 'covenant_text_score'),
             )
@@ -61,7 +63,7 @@ class SubjectAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ['workflow', 'zoon_subject_id', 'dt_retired',
-                       'image_id', 'bool_covenant_score', 'covenant_text_score', 'addition_score', 'block_score', 'lot_score', 'deed_date_overall_score', 'deed_date_year_score', 'deed_date_month_score', 'deed_date_day_score', ]
+                       'image_id', 'median_score', 'bool_covenant_score', 'covenant_text_score', 'addition_score', 'block_score', 'lot_score', 'deed_date_overall_score', 'deed_date_year_score', 'deed_date_month_score', 'deed_date_day_score', ]
 
     # If you would like to add a default range filter
     # method pattern "get_rangefilter_{field_name}_default"

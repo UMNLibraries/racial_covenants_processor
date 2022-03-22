@@ -211,6 +211,21 @@ class Command(BaseCommand):
             'day_score': 'deed_date_day_score',
         }, inplace=True)
 
+        # Calculate median score
+        score_cols = [
+            'bool_covenant_score',
+            'covenant_text_score',
+            'addition_score',
+            'lot_score',
+            'block_score',
+            'seller_score',
+            'buyer_score',
+            'deed_date_year_score',
+            'deed_date_month_score',
+            'deed_date_day_score',
+        ]
+        final_df['median_score'] = final_df[score_cols].median(axis=1)
+
         # Parse final deed_date
         month_lookup = question_lookup['month_lookup']
         final_df['deed_date'] = final_df.apply(
@@ -290,6 +305,10 @@ class Command(BaseCommand):
             'id': 'response_raw_id'
         })
 
+        # print(df[df['zoon_subject_id'] == 49988787])
+        # df[df['zoon_subject_id'] == 49988787].to_csv(
+        #     'subject_match_test.csv', index=False)
+
         df['bool_covenant'] = df['annotations'].apply(
             lambda x: self.anno_accessor(x, question_lookup['bool_covenant']))
         df['covenant_text'] = df['annotations'].apply(
@@ -344,8 +363,10 @@ class Command(BaseCommand):
             self.batch_dir = os.path.join(
                 settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
+            workflow_slug = workflow_name.lower().replace(" ", "-")
+
             raw_classifications_csv = os.path.join(
-                self.batch_dir, self.batch_config['raw_classifications_csv'])
+                self.batch_dir, f"{workflow_slug}-classifications.csv")
 
             # Get workflow version from config yaml
             config_yaml = os.path.join(

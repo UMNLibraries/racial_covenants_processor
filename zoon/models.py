@@ -43,6 +43,8 @@ class ZooniverseSubject(models.Model):
     deed_date_month_score = models.FloatField(null=True)
     deed_date_day_score = models.FloatField(null=True)
 
+    median_score = models.FloatField(null=True)
+
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"
 
