@@ -1,6 +1,8 @@
 from django.db import models
 from postgres_copy import CopyManager
 
+'''NOTE: THIS IS MOSTLY LEGACY CODE. ACTIVE WORK IS ALL IN THE "ZOON" APP'''
+
 
 class ZooniverseResponseRaw(models.Model):
     classification_id = models.IntegerField()
@@ -49,7 +51,8 @@ class ZooniverseUser(models.Model):
 class ZooniverseResponseFlat(models.Model):
     workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE)
     subject = models.ForeignKey(PotentialMatch, on_delete=models.CASCADE)
-    user = models.ForeignKey(ZooniverseUser, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(ZooniverseUser, null=True,
+                             on_delete=models.SET_NULL)
     classification_id = models.IntegerField()
 
     bool_covenant = models.BooleanField(null=True)
@@ -65,7 +68,8 @@ class ZooniverseResponseFlat(models.Model):
     dt_created = models.DateTimeField()
     dt_retired = models.DateTimeField(null=True)
 
-    raw_match = models.ForeignKey(ZooniverseResponseRaw, null=True, on_delete=models.CASCADE)
+    raw_match = models.ForeignKey(
+        ZooniverseResponseRaw, null=True, on_delete=models.CASCADE)
 
 
 class ZooniverseUserRating(models.Model):

@@ -43,15 +43,16 @@ class Command(BaseCommand):
 
         return sorted(joined, key=lambda i: i['votes'], reverse=True)
 
-    def load_questions_reduced(self, batch_dir: str, master_config: dict):
+    def load_questions_reduced(self, batch_dir: str, workflow_slug: str, master_config: dict):
         '''Process reduced responses from the question reducer
         Arguments:
             batch_dir: Path to the export files for this batch
+            workflow_slug: The name of the workflow, lowercase with spaces replaced with hyphens
             master_config: Question text and label lookup object
         '''
 
         df = pd.read_csv(os.path.join(
-            batch_dir, 'question_reducer_questions.csv'))
+            batch_dir, f'question_reducer_{workflow_slug}_questions.csv'))
         config_df = pd.DataFrame(master_config)
 
         # Join responses to config so we know the possible answers to each question
@@ -76,7 +77,7 @@ class Command(BaseCommand):
                                 == task_num]['answer_columns'].values[0]
 
             answers = df[df['task_num'] == task_num]['answers'].values[0]
-            answers_lookup = {answer['value_column']                              : answer['value'] for answer in answers}
+            answers_lookup = {answer['value_column']: answer['value'] for answer in answers}
 
             df.loc[df['task_num'] == task_num,
                    'best_answer_column'] = df[answer_columns].idxmax(axis=1)
@@ -118,17 +119,18 @@ class Command(BaseCommand):
         df.to_sql('zoon_reducedresponse_question',
                   if_exists='append', index=False, con=sa_engine)
 
-    def load_dropdowns_reduced(self, batch_dir: str, master_config: dict):
+    def load_dropdowns_reduced(self, batch_dir: str, workflow_slug: str, master_config: dict):
         '''Process reduced responses from the dropdown reducer. In at least some versions, you need to look up hashes for fields.
         Example: [{'adbad85a7b5ce': 1, '2b3caf88e1ee6': 2}] (In this case, 1 person chose the first, 2 people the second)
 
         Arguments:
             batch_dir: Path to the export files for this batch
+            workflow_slug: The name of the workflow, lowercase with spaces replaced with hyphens
             master_config: Question text and label lookup object
         '''
 
         df = pd.read_csv(os.path.join(
-            batch_dir, 'dropdown_reducer_dropdowns.csv'))
+            batch_dir, f'dropdown_reducer_{workflow_slug}_dropdowns.csv'))
         config_df = pd.DataFrame(master_config)
 
         # Join responses to config so we know the possible answers to each question
@@ -176,8 +178,18 @@ class Command(BaseCommand):
         df.to_sql('zoon_reducedresponse_question',
                   if_exists='append', index=False, con=sa_engine)
 
-    def load_texts_reduced(self, batch_dir: str, master_config: dict):
-        df = pd.read_csv(os.path.join(batch_dir, 'text_reducer_texts.csv'))
+    def load_texts_reduced(self, batch_dir: str, workflow_slug: str, master_config: dict):
+        '''Process reduced responses from the text reducer.
+
+        Arguments:
+            batch_dir: Path to the export files for this batch
+            workflow_slug: The name of the workflow, lowercase
+            with spaces replaced with hyphens
+            master_config: Question text and label lookup object
+        '''
+
+        df = pd.read_csv(os.path.join(
+            batch_dir, f'text_reducer_{workflow_slug}_texts.csv'))
         config_df = pd.DataFrame(master_config)
 
         # We're not really doing anything with the config data for text-type questions, but just to maintain parallel structure...
@@ -236,6 +248,11 @@ class Command(BaseCommand):
 
             master_config = parse_config_yaml(self.config_yaml)
 
-            self.load_questions_reduced(self.batch_dir, master_config)
-            self.load_dropdowns_reduced(self.batch_dir, master_config)
-            self.load_texts_reduced(self.batch_dir, master_config)
+            workflow_slug = workflow_name.lower().replace(" ", "-")
+
+            self.load_questions_reduced(
+                self.batch_dir, workflow_slug, master_config)
+            self.load_dropdowns_reduced(
+                self.batch_dir, workflow_slug, master_config)
+            self.load_texts_reduced(
+                self.batch_dir, workflow_slug, master_config)

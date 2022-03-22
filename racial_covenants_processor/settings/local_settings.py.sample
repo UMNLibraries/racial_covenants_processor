@@ -1,12 +1,13 @@
+GDAL_LIBRARY_PATH = '/opt/homebrew/opt/gdal/lib/libgdal.dylib'
+GEOS_LIBRARY_PATH = '/opt/homebrew/opt/geos/lib/libgeos_c.dylib'
+
 SQL_ALCHEMY_DB_CONNECTION_URL = 'postgresql+psycopg2://racial_covenants_processor:racial_covenants_processor@localhost:5432/racial_covenants_processor'
 
 ZOONIVERSE_QUESTION_LOOKUP = {
     'Ramsey County': {
         'panoptes_folder': 'mn_ramsey',  # relative to data/aggregation folder
         'config_yaml': 'Extractor_config_workflow_13143_V4.10.yaml',
-        'raw_classifications_csv': 'ramsey-county-classifications.csv',
-
-        # Legacy workflow version starts here ...
+        'num_to_retire': 5,
         'bool_covenant': 'T0',
         'covenant_text': 'T2',
         'addition': 'T9',
