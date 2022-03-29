@@ -1,5 +1,7 @@
+import os
 import re
 import yaml
+
 
 def parse_labels_question_type(task_num, label_config):
     answer_nodes = []
@@ -10,7 +12,8 @@ def parse_labels_question_type(task_num, label_config):
             answer_nodes.append({
                 'key': key,
                 'value': value,
-                'value_column': f'data.{slugified_value}',  # Use to access answer columns in reducer output csv
+                # Use to access answer columns in reducer output csv
+                'value_column': f'data.{slugified_value}',
                 'index': re.match(label_regex, key).group(1)
             })
 
@@ -18,9 +21,10 @@ def parse_labels_question_type(task_num, label_config):
         'task_num': task_num,
         'task_type': 'question',
         'question_text': label_config[f"{task_num}.question"],
-        'answers': sorted(answer_nodes, key = lambda i: i['index']),
+        'answers': sorted(answer_nodes, key=lambda i: i['index']),
         'answer_columns': [answer['value_column'] for answer in answer_nodes]
     }
+
 
 def parse_labels_text_type(task_num, label_config):
     return {
@@ -28,6 +32,7 @@ def parse_labels_text_type(task_num, label_config):
         'task_type': 'text',
         'question_text': label_config[f"{task_num}.instruction"],
     }
+
 
 def parse_labels_dropdown_type(task_num, label_config):
     options_regex = fr'{task_num}\.selects\.0\.options\.\*\.(\d+)\.label'
@@ -45,6 +50,18 @@ def parse_labels_dropdown_type(task_num, label_config):
         'options': options
     }
 
+
+def get_workflow_version(batch_dir, yaml_filename):
+    # Get workflow version from config yaml
+    config_yaml = os.path.join(batch_dir, yaml_filename)
+
+    with open(config_yaml, 'r') as base_file:
+        workflow_version = float(yaml.full_load(
+            base_file)['workflow_version'])
+        return workflow_version
+    return False
+
+
 def parse_config_yaml(infile):
     '''In order to load data coming back from the reducers, we need to know what columns match which answer. The master config tells us which task/question is which type, and the "Task_labels" yaml has the answers to each question.'''
 
@@ -60,14 +77,17 @@ def parse_config_yaml(infile):
 
         # questions
         for task in extractor_types['question_extractor']:
-            master_config.append(parse_labels_question_type(task['task'], label_config))
+            master_config.append(parse_labels_question_type(
+                task['task'], label_config))
 
         # text
         for task in extractor_types['text_extractor']:
-            master_config.append(parse_labels_text_type(task['task'], label_config))
+            master_config.append(parse_labels_text_type(
+                task['task'], label_config))
 
         # dropdowns
         for task in extractor_types['dropdown_extractor']:
-            master_config.append(parse_labels_dropdown_type(task['task'], label_config))
+            master_config.append(parse_labels_dropdown_type(
+                task['task'], label_config))
 
         return master_config

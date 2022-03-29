@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils.text import slugify
+
 from postgres_copy import CopyManager
 
 
@@ -10,12 +12,21 @@ class ZooniverseWorkflow(models.Model):
     def __str__(self):
         return f"{self.workflow_name} ({self.version})"
 
+    @property
+    def slug(self):
+        return slugify(self.workflow_name)
+
 
 class ZooniverseSubject(models.Model):
     '''Future: Assign an id to correspond to a deed image pre-Zooniverse'''
     workflow = models.ForeignKey(ZooniverseWorkflow, on_delete=models.CASCADE)
     zoon_subject_id = models.IntegerField(db_index=True)
-    image_id = models.CharField(max_length=100, db_index=True)
+
+    image_ids = models.JSONField(blank=True)
+
+    # image_id_1 = models.CharField(max_length=100, db_index=True, blank=True)
+    # image_id_2 = models.CharField(max_length=100, db_index=True, blank=True)
+    # image_id_3 = models.CharField(max_length=100, db_index=True, blank=True)
     dt_retired = models.DateTimeField(null=True)
 
     # This part comes from the reducers

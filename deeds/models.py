@@ -1,7 +1,34 @@
 from django.db import models
+from django.utils.html import mark_safe
 from postgres_copy import CopyManager
 
-'''NOTE: THIS IS MOSTLY LEGACY CODE. ACTIVE WORK IS ALL IN THE "ZOON" APP'''
+from racial_covenants_processor.storage_backends import PrivateMediaStorage
+from zoon.models import ZooniverseWorkflow, ZooniverseSubject
+
+
+class DeedPage(models.Model):
+    workflow = models.ForeignKey(
+        ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
+    doc_num = models.CharField(blank=True, max_length=100)
+    page_num = models.IntegerField(null=True)
+    doc_date = models.DateField(null=True)
+    page_image_web = models.ImageField(
+        storage=PrivateMediaStorage(), null=True)
+    page_ocr_text = models.FileField(
+        storage=PrivateMediaStorage(), null=True)
+    bool_match = models.BooleanField(default=False)
+
+    zooniverse_subject = models.ForeignKey(
+        ZooniverseSubject, on_delete=models.SET_NULL, null=True)
+
+    @property
+    def thumbnail_preview(self):
+        if self.page_image_web:
+            return mark_safe('<img src="{}" width="300" height="300" />'.format(self.page_image_web.url))
+        return ""
+
+
+'''NOTE: BELOW HERE THIS IS MOSTLY LEGACY CODE. ACTIVE WORK IS ALL IN THE "ZOON" APP'''
 
 
 class ZooniverseResponseRaw(models.Model):

@@ -13,7 +13,7 @@ from django.conf import settings
 from django.db.models import Subquery, OuterRef, F
 
 from zoon.models import ZooniverseResponseRaw, ZooniverseResponseProcessed, ZooniverseWorkflow, ZooniverseSubject, ReducedResponse_Question, ReducedResponse_Text
-from zoon.utils.zooniverse_config import parse_config_yaml
+from zoon.utils.zooniverse_config import parse_config_yaml, get_workflow_version
 
 
 class Command(BaseCommand):
@@ -144,14 +144,29 @@ class Command(BaseCommand):
         ).values(
             'subject_ids',
             'subject_data_flat__retired__retired_at',
-            'subject_data_flat__image_1'
+            'subject_data_flat__image_1',
+            'subject_data_flat__image_2',
+            'subject_data_flat__image_3',
+            'subject_data_flat__image_4',
         ).distinct())
+
+        # Make a list of image ids associated with this subject
+        # This may or may not be a _match png, which is something we will want to standardize with an actual ID from the earlier stages of the process that will carry through Zooniverse for joining back
+        image_cols = [
+            'subject_data_flat__image_1',
+            'subject_data_flat__image_2',
+            'subject_data_flat__image_3',
+            'subject_data_flat__image_4'
+        ]
+        subject_df['image_ids'] = subject_df[image_cols].values.tolist()
+        subject_df['image_ids'] = subject_df['image_ids'].apply(
+            lambda x: json.dumps(x))
+
+        subject_df.drop(columns=image_cols, inplace=True)
 
         subject_df.rename(columns={
             'subject_ids': 'zoon_subject_id',
             'subject_data_flat__retired__retired_at': 'dt_retired',
-            # This may or may not be a _match png, which is something we will want to standardize with an actual ID from the earlier stages of the process that will carry through Zooniverse for joining back
-            'subject_data_flat__image_1': 'image_id',
         }, inplace=True)
         print(subject_df)
 
@@ -369,14 +384,8 @@ class Command(BaseCommand):
                 self.batch_dir, f"{workflow_slug}-classifications.csv")
 
             # Get workflow version from config yaml
-            config_yaml = os.path.join(
+            workflow_version = get_workflow_version(
                 self.batch_dir, self.batch_config['config_yaml'])
-            with open(config_yaml, 'r') as base_file:
-                workflow_version = float(yaml.full_load(
-                    base_file)['workflow_version'])
-                print(workflow_version)
-
-            question_lookup = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
 
             self.clear_all_tables(workflow_name)
             self.load_csv(raw_classifications_csv)
@@ -388,7 +397,9 @@ class Command(BaseCommand):
                 'load_zooniverse_reductions', workflow=workflow_name)
 
             # After you have loaded the zooniverse reducer output, bring everything together
-            self.consolidate_responses(workflow, question_lookup)
-            self.extract_individual_responses(workflow, question_lookup)
+            self.consolidate_responses(workflow, self.batch_config)
+            self.extract_individual_responses(workflow, self.batch_config)
+
+            # Probably extraneous
             # self.join_response_to_subject(workflow)
             # TODO: self.check_import(workflow_name)
