@@ -16,8 +16,11 @@ class ResponseInline(admin.TabularInline):
     exclude = ['classification_id', 'response_raw',
                'workflow', 'user_id', 'created_at']
 
-    readonly_fields = ['bool_covenant', 'covenant_text', 'addition', 'lot', 'block', 'seller',
-                       'buyer', 'deed_date_year', 'deed_date_month', 'deed_date_day', 'user_name', 'created_at']
+    readonly_fields = [
+        'bool_covenant', 'covenant_text', 'addition',
+        'lot', 'block', 'seller',
+        'buyer', 'deed_date_year', 'deed_date_month', 'deed_date_day', 'user_name', 'created_at'
+    ]
 
 
 class ScoreRangeListFilter(admin.SimpleListFilter):
@@ -79,7 +82,9 @@ class AdditionScoreRangeListFilter(ScoreRangeListFilter):
 @ admin.register(ZooniverseSubject)
 class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['zoon_subject_id',
-                     'addition', 'covenant_text', 'image_id']
+                     'addition', 'covenant_text',
+                     # 'image_id_1', 'image_id_2', 'image_id_3',
+                     ]
 
     list_display = ('__str__', 'bool_covenant', 'median_score', 'bool_problem',
                     'addition', 'lot', 'block', 'deed_date',)
@@ -101,7 +106,9 @@ class SubjectAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'zoon_subject_id', 'image_id', 'dt_retired',
+                'zoon_subject_id',
+                # 'image_id_1', 'image_id_2',  'image_id_3',
+                'dt_retired',
                 'median_score',
                 ('bool_covenant', 'bool_covenant_score'),
                 ('covenant_text', 'covenant_text_score'),
@@ -124,7 +131,8 @@ class SubjectAdmin(admin.ModelAdmin):
         )
 
     readonly_fields = ['workflow', 'zoon_subject_id', 'dt_retired',
-                       'image_id', 'median_score', 'bool_covenant_score', 'covenant_text_score', 'addition_score', 'block_score', 'lot_score', 'deed_date_overall_score', 'deed_date_year_score', 'deed_date_month_score', 'deed_date_day_score', ]
+                       # 'image_id_1', 'image_id_2', 'image_id_3',
+                       'median_score', 'bool_covenant_score', 'covenant_text_score', 'addition_score', 'block_score', 'lot_score', 'deed_date_overall_score', 'deed_date_year_score', 'deed_date_month_score', 'deed_date_day_score', ]
 
     # If you would like to add a default range filter
     # method pattern "get_rangefilter_{field_name}_default"
