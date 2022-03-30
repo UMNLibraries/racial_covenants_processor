@@ -62,8 +62,10 @@ class Command(BaseCommand):
         for mk in matching_keys:
             page_data = None
             try:
+                deed_image_regex = settings.ZOONIVERSE_QUESTION_LOOKUP[
+                    workflow_name]['deed_image_regex']
                 page_data = re.search(
-                    r'\/(?P<workflow_slug>[A-z\-]+)\/(?P<doc_num>\d+)_page_(?P<page_num>\d+)(?P<bool_match>_match)?', mk).groupdict()
+                    deed_image_regex, mk).groupdict()
                 print(page_data)
             except:
                 print(f'Could not parse image path data: {mk}')
