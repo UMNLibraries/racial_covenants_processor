@@ -15,6 +15,7 @@ pyyaml = "*"
 psycopg2 = "*"
 django-admin-rangefilter = "*"
 django-storages = "*"
+requests = "*"
 
 [dev-packages]
 csvkit = "*"
