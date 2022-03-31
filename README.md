@@ -22,7 +22,15 @@ The "deeds" app is currently not being used, except to port over the legacy clas
 1. Split and OCR deed images
 1. Export list of positive matches for racially restrictive language
   - Side effect: Create analyzable statistics on which language found
-1. Upload images of positive matches to S3? Zooniverse?
+1. Upload images of positive matches or all tifs to private S3 for web formatting
+```
+python manage.py upload_deed_images --workflow "Ramsey County" --cache
+python manage.py gather_deed_images --workflow "Ramsey County"
+# To delete:
+python manage.py delete_raw_images
+```
+
+1. Upload matching files to Zooniverse (or point to S3 images)
 1. Upload batch of records to Zooniverse for community confirmation
 1. Export batch results from Zooniverse (Using command line tools)
 1. Load raw and aggregated Zooniverse responses into individual property matches

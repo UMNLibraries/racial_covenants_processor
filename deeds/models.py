@@ -24,7 +24,7 @@ class DeedPage(models.Model):
     @property
     def thumbnail_preview(self):
         if self.page_image_web:
-            return mark_safe('<img src="{}" width="300" height="300" />'.format(self.page_image_web.url))
+            return mark_safe(f'<a href="{self.page_image_web.url}" target="_blank"><img src="{self.page_image_web.url}" width="100" /></a>')
         return ""
 
 

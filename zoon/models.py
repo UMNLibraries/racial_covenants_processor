@@ -1,4 +1,5 @@
 from django.db import models
+from django.dispatch import receiver
 from django.utils.text import slugify
 
 from postgres_copy import CopyManager
@@ -24,9 +25,6 @@ class ZooniverseSubject(models.Model):
 
     image_ids = models.JSONField(blank=True)
 
-    # image_id_1 = models.CharField(max_length=100, db_index=True, blank=True)
-    # image_id_2 = models.CharField(max_length=100, db_index=True, blank=True)
-    # image_id_3 = models.CharField(max_length=100, db_index=True, blank=True)
     dt_retired = models.DateTimeField(null=True)
 
     # This part comes from the reducers
@@ -56,8 +54,55 @@ class ZooniverseSubject(models.Model):
 
     median_score = models.FloatField(null=True)
 
+    # Final values created by combining zooniverse entry with any manual corrections separately entered. Only written under the hood, not directly in the admin, so if we have to delete/re-import, manual work stored in the manual update won't be lost
+    bool_manual_correction = models.BooleanField(
+        null=True, default=False, verbose_name="Has manual updates")
+
+    bool_covenant_final = models.BooleanField(
+        null=True, verbose_name="Has racial covenant")
+    covenant_text_final = models.TextField(
+        null=True, blank=True, verbose_name="Covenant text")
+    addition_final = models.CharField(
+        max_length=500, null=True, blank=True, verbose_name="Addition")
+    lot_final = models.TextField(null=True, blank=True, verbose_name="Lot")
+    block_final = models.CharField(
+        max_length=500, null=True, blank=True, verbose_name="Block")
+    seller_final = models.CharField(
+        max_length=100, null=True, blank=True, verbose_name="Seller name")
+    buyer_final = models.CharField(
+        max_length=100, null=True, blank=True, verbose_name="Buyer name")
+    deed_date_final = models.DateField(
+        null=True, blank=True, verbose_name="Deed date")
+
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"
+
+    def check_bool_manual_update(self):
+        if self.manualcorrection_set.count() > 0:
+            self.bool_manual_correction = True
+        else:
+            self.bool_manual_correction = False
+
+    def get_final_value(self, attr, blank_value=""):
+        if self.manualcorrection_set.count() > 0:
+            if getattr(self.manualcorrection_set.first(), attr) != blank_value:
+                return getattr(self.manualcorrection_set.first(), attr)
+        return getattr(self, attr)
+
+    def get_final_values(self):
+        self.check_bool_manual_update()
+        self.bool_covenant_final = self.get_final_value('bool_covenant')
+        self.covenant_text_final = self.get_final_value('covenant_text')
+        self.addition_final = self.get_final_value('addition')
+        self.lot_final = self.get_final_value('lot')
+        self.block_final = self.get_final_value('block')
+        self.seller_final = self.get_final_value('seller')
+        self.buyer_final = self.get_final_value('buyer')
+        self.deed_date_final = self.get_final_value('deed_date', None)
+
+    def save(self, *args, **kwargs):
+        self.get_final_values()
+        super(ZooniverseSubject, self).save(*args, **kwargs)
 
 
 class ZooniverseResponseRaw(models.Model):
@@ -144,3 +189,46 @@ class ReducedResponse_Text(models.Model):
     user_ids = models.JSONField()
 
     # TODO: Need to get individual "something is wrong" responses direct from classifier, since reduce won't handle these well. Or use a different reducer that doesn't, um, reduce
+
+
+class ManualCorrection(models.Model):
+    '''This is set up as a separate model to preserve any manual work that is done in the event a re-import of zooniverse data is needed'''
+    workflow = models.ForeignKey(
+        ZooniverseWorkflow, on_delete=models.SET_NULL, null=True)
+    zooniverse_subject = models.ForeignKey(
+        ZooniverseSubject, on_delete=models.SET_NULL, null=True)
+
+    # These are kept separate of the foreign key relationship in case this needs to be reconnected later
+    zoon_subject_id = models.IntegerField(db_index=True, null=True, blank=True)
+    zoon_workflow_id = models.IntegerField(
+        db_index=True, null=True, blank=True)
+
+    bool_covenant = models.BooleanField(null=True)
+    covenant_text = models.TextField(null=True, blank=True)
+    addition = models.CharField(max_length=500, null=True, blank=True)
+    lot = models.TextField(null=True, blank=True)
+    block = models.CharField(max_length=500, null=True, blank=True)
+    seller = models.CharField(max_length=100, null=True, blank=True)
+    buyer = models.CharField(max_length=100, null=True, blank=True)
+    deed_date = models.DateField(null=True, blank=True)
+
+    date_added = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    comments = models.TextField(null=True, blank=True)
+
+    objects = CopyManager()
+
+    def save(self, *args, **kwargs):
+        self.zoon_workflow_id = self.zooniverse_subject.workflow.zoon_id
+        self.zoon_subject_id = self.zooniverse_subject.zoon_subject_id
+        super(ManualCorrection, self).save(*args, **kwargs)
+
+        self.zooniverse_subject.get_final_values()
+        self.zooniverse_subject.save()
+
+
+@receiver(models.signals.post_delete, sender=ManualCorrection)
+def model_delete(sender, instance, **kwargs):
+    instance.zooniverse_subject.get_final_values()
+    instance.zooniverse_subject.save()

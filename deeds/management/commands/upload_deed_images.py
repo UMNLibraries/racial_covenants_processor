@@ -28,6 +28,9 @@ class Command(BaseCommand):
         parser.add_argument('-c', '--cache', action='store_true',
                             help='Load raw image list from cache')
 
+        parser.add_argument('-p', '--pool', type=int,
+                            help='How many threads to use? (Default is 8)')
+
     def gather_raw_image_paths(self, deed_image_raw_glob):
         print("Gathering all raw images paths for this workflow ...")
         raw_images = glob.glob(deed_image_raw_glob)
@@ -40,6 +43,7 @@ class Command(BaseCommand):
         return img_df
 
     def check_already_uploaded(self, workflow_slug, upload_keys):
+        print("Checking s3 to see what images have already been uploaded...")
         s3 = self.session.resource('s3')
 
         key_filter = re.compile(f"raw/{workflow_slug}/.+\.tif")
@@ -54,7 +58,7 @@ class Command(BaseCommand):
         remaining_to_upload = [
             u for u in upload_keys if u['s3_path'] not in already_uploaded]
         print(
-            f"Found {len(already_uploaded)} images already uploaded, {len(remaining_to_upload)} ...")
+            f"Found {len(already_uploaded)} images already uploaded, {len(remaining_to_upload)} remaining...")
 
         return remaining_to_upload
 
@@ -68,6 +72,8 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         load_from_cache = kwargs['cache']
+        num_threads = kwargs['pool'] if kwargs['pool'] else 8
+
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
@@ -77,17 +83,20 @@ class Command(BaseCommand):
             if kwargs['cache']:
                 # Read option so you don't have to wait to crawl filesystem again
                 try:
+                    print("Attempting load from cached image list...")
                     raw_img_df = pd.read_csv(os.path.join(
                         settings.BASE_DIR, 'data', f"{workflow_slug}_raw_images_list.csv"))
                 except:
                     print(
-                        "Can't read cached file list. Try not using. the --cache flag")
+                        "Can't read cached file list. Try not using the --cache flag")
                     return False
 
                 raw_img_df['s3_path'] = raw_img_df['filename'].apply(
                     lambda x: os.path.join('raw', workflow_slug, x)
                 )
             else:
+                print(
+                    "Scanning filesystem for local images using 'deed_image_raw_glob' setting...")
                 raw_img_df = self.gather_raw_image_paths(
                     workflow_config['deed_image_raw_glob'])
 
@@ -103,6 +112,7 @@ class Command(BaseCommand):
             self.bucket = self.s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
             filtered_upload_keys = self.check_already_uploaded(
-                workflow_slug, upload_keys)[0:50]
-            pool = ThreadPool(processes=8)
+                workflow_slug, upload_keys)
+
+            pool = ThreadPool(processes=num_threads)
             pool.map(self.upload_image, filtered_upload_keys)
