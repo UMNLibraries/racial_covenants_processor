@@ -70,4 +70,4 @@ class Command(BaseCommand):
             self.bucket = self.s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
             self.delete_raw(workflow_slug)
-            self.delete_web(workflow_slug)
+            # self.delete_web(workflow_slug)

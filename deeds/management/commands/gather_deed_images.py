@@ -63,7 +63,7 @@ class Command(BaseCommand):
             page_data = None
             try:
                 deed_image_regex = settings.ZOONIVERSE_QUESTION_LOOKUP[
-                    workflow_name]['deed_image_regex']
+                    workflow.workflow_name]['deed_image_regex']
                 page_data = re.search(
                     deed_image_regex, mk).groupdict()
                 print(page_data)
@@ -164,6 +164,7 @@ class Command(BaseCommand):
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
+            print('Deleting old DeedPage records (but not their images)...')
             DeedPage.objects.all().delete()
 
             workflow = self.get_workflow(workflow_name)

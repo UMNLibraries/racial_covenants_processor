@@ -1,7 +1,6 @@
 import os
 import re
 import json
-import yaml
 import datetime
 import pandas as pd
 from itertools import chain
@@ -10,10 +9,9 @@ from sqlalchemy import create_engine
 from django.core.management.base import BaseCommand
 from django.core import management
 from django.conf import settings
-from django.db.models import Subquery, OuterRef, F
 
 from zoon.models import ZooniverseResponseRaw, ZooniverseResponseProcessed, ZooniverseWorkflow, ZooniverseSubject, ReducedResponse_Question, ReducedResponse_Text
-from zoon.utils.zooniverse_config import parse_config_yaml, get_workflow_version
+from zoon.utils.zooniverse_config import get_workflow_version
 
 
 class Command(BaseCommand):
@@ -32,15 +30,15 @@ class Command(BaseCommand):
             infile: path to raw classifications CSV
         '''
         print("Loading raw Zooniverse export data...")
-        import_csv = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports',
-                                  'mapping-prejudice-classifications_2_23_2021.csv')
+      # import_csv = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports',
+      #                           'mapping-prejudice-classifications_2_23_2021.csv')
 
         # Make custom mapping from model fields to drop IP column
         mapping = {f.name: f.name for f in ZooniverseResponseRaw._meta.get_fields(
         ) if f.name not in ['id', 'subject_data_flat', 'subject', 'zooniverseresponseprocessed']}
 
         insert_count = ZooniverseResponseRaw.objects.from_csv(
-            import_csv, mapping=mapping)
+            infile, mapping=mapping)
         print("{} records inserted".format(insert_count))
 
     def flatten_subject_data(self, workflow):
@@ -320,10 +318,6 @@ class Command(BaseCommand):
             'id': 'response_raw_id'
         })
 
-        # print(df[df['zoon_subject_id'] == 49988787])
-        # df[df['zoon_subject_id'] == 49988787].to_csv(
-        #     'subject_match_test.csv', index=False)
-
         df['bool_covenant'] = df['annotations'].apply(
             lambda x: self.anno_accessor(x, question_lookup['bool_covenant']))
         df['covenant_text'] = df['annotations'].apply(
@@ -357,17 +351,6 @@ class Command(BaseCommand):
         df.to_sql('zoon_zooniverseresponseprocessed',
                   if_exists='append', index=False, con=sa_engine)
 
-    # def join_response_to_subject(self, workflow):
-    #     print('Joining responses to consolidated subjects...')
-    #
-    #     ZooniverseResponseRaw.objects.update(
-    #         subject_id=Subquery(
-    #             ZooniverseSubject.objects.filter(
-    #                 zoon_subject_id=OuterRef('subject_ids')
-    #                 ).values('id')[:1]
-    #             )
-    #         )
-
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -389,7 +372,10 @@ class Command(BaseCommand):
 
             self.clear_all_tables(workflow_name)
             self.load_csv(raw_classifications_csv)
-            workflow = self.create_workflow(workflow_name, workflow_version)
+
+            workflow = self.create_workflow(
+                workflow_name, workflow_version)
+
             self.flatten_subject_data(workflow)
 
             # Handle reducer output to develop consensus answers
@@ -400,6 +386,6 @@ class Command(BaseCommand):
             self.consolidate_responses(workflow, self.batch_config)
             self.extract_individual_responses(workflow, self.batch_config)
 
-            # Probably extraneous
-            # self.join_response_to_subject(workflow)
-            # TODO: self.check_import(workflow_name)
+            # Handle reducer output to develop consensus answers
+            management.call_command(
+                'connect_manual_corrections', workflow=workflow_name)

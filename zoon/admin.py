@@ -5,14 +5,29 @@ from django.utils.translation import gettext_lazy as _
 
 from rangefilter.filters import DateRangeFilter
 
-from zoon.models import ZooniverseResponseProcessed, ZooniverseSubject
+from deeds.models import DeedPage
+from zoon.models import ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection
+
+
+class ManualCorrectionInline(admin.StackedInline):
+    model = ManualCorrection
+    extra = 0
+    exclude = ['workflow', 'zoon_subject_id', 'zoon_workflow_id']
+
+
+class DeedImageInline(admin.TabularInline):
+    model = DeedPage
+    extra = 0
+    exclude = ['workflow', 'page_image_web', 'page_ocr_text']
+    readonly_fields = ['doc_num', 'page_num',
+                       'doc_date', 'bool_match', 'thumbnail_preview']
 
 
 class ResponseInline(admin.TabularInline):
     model = ZooniverseResponseProcessed
-
+    verbose_name = "Zooniverse individual response"
+    verbose_name_plural = "Zooniverse individual response"
     extra = 0
-
     exclude = ['classification_id', 'response_raw',
                'workflow', 'user_id', 'created_at']
 
@@ -82,57 +97,98 @@ class AdditionScoreRangeListFilter(ScoreRangeListFilter):
 @ admin.register(ZooniverseSubject)
 class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['zoon_subject_id',
-                     'addition', 'covenant_text',
-                     # 'image_id_1', 'image_id_2', 'image_id_3',
-                     ]
+                     'addition_final', 'covenant', 'covenant_text_final']
 
-    list_display = ('__str__', 'bool_covenant', 'median_score', 'bool_problem',
-                    'addition', 'lot', 'block', 'deed_date',)
+    list_display = ('__str__', 'bool_covenant_final', 'median_score', 'bool_problem',
+                    'addition_final', 'lot_final', 'block_final', 'deed_date_final', 'bool_manual_correction')
 
     list_filter = (
         'workflow__workflow_name',
-        'bool_covenant',
+        'bool_covenant_final',
+        'bool_manual_correction',
         'bool_problem',
-        ('deed_date', DateRangeFilter),
+        ('deed_date_final', DateRangeFilter),
         ScoreRangeListFilter,
         AdditionScoreRangeListFilter,
         DateScoreRangeListFilter,
         )
 
     inlines = [
+        ManualCorrectionInline,
+        DeedImageInline,
         ResponseInline
-        ]
+    ]
 
     fieldsets = (
-        (None, {
+        ('Final values', {
+            'fields': (
+                'bool_covenant_final',
+                'covenant_text_final',
+                'addition_final',
+                'lot_final',
+                'block_final',
+                'seller_final',
+                'buyer_final',
+                'deed_date_final',
+                'bool_manual_correction'
+            )
+        }),
+        ('Zooniverse basics', {
             'fields': (
                 'zoon_subject_id',
-                # 'image_id_1', 'image_id_2',  'image_id_3',
+                ('bool_covenant', 'bool_covenant_score'),
                 'dt_retired',
                 'median_score',
-                ('bool_covenant', 'bool_covenant_score'),
+
                 ('covenant_text', 'covenant_text_score'),
-                )
-            }),
-        ('Property fields', {
+            )
+        }),
+        ('Zooniverse property fields', {
             'fields': (
                 ('addition', 'addition_score'),
                 ('block', 'block_score'),
                 ('lot', 'lot_score'),
-                ),
-            }),
-        ('Deed date', {
+            ),
+        }),
+        ('Zooniverse deed date', {
             'fields': (
                 ('deed_date', 'deed_date_overall_score'),
                 ('deed_date_year_score',
                  'deed_date_month_score', 'deed_date_day_score'),
-                ),
-            }),
-        )
+            ),
+        }),
+    )
 
-    readonly_fields = ['workflow', 'zoon_subject_id', 'dt_retired',
-                       # 'image_id_1', 'image_id_2', 'image_id_3',
-                       'median_score', 'bool_covenant_score', 'covenant_text_score', 'addition_score', 'block_score', 'lot_score', 'deed_date_overall_score', 'deed_date_year_score', 'deed_date_month_score', 'deed_date_day_score', ]
+    readonly_fields = [
+        'workflow',
+        'zoon_subject_id',
+        'bool_manual_correction',
+        'bool_covenant_final',
+        'covenant_text_final',
+        'addition_final',
+        'lot_final',
+        'block_final',
+        'seller_final',
+        'buyer_final',
+        'deed_date_final',
+        'dt_retired',
+        'median_score',
+        'bool_covenant',
+        'bool_covenant_score',
+        'covenant_text',
+        'covenant_text_score',
+        'addition',
+        'addition_score',
+        'block',
+        'block_score',
+        'lot',
+        'lot_score',
+        'deed_date',
+        'deed_date_overall_score',
+        'deed_date_year_score',
+        'deed_date_month_score',
+        'deed_date_day_score',
+    ]
 
     # If you would like to add a default range filter
     # method pattern "get_rangefilter_{field_name}_default"
