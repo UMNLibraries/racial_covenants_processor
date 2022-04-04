@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 
     'rangefilter',
     'storages',
+    'localflavor',
 ]
 
 MIDDLEWARE = [

@@ -16,6 +16,7 @@ psycopg2 = "*"
 django-admin-rangefilter = "*"
 django-storages = "*"
 requests = "*"
+django-localflavor = "*"
 
 [dev-packages]
 csvkit = "*"
