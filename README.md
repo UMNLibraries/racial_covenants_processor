@@ -44,6 +44,19 @@ python manage.py load_zooniverse_export
 1. Metes and bounds manual tracing
 1. Final shapefile/data layer
 
+## Other workflow elements
+Manual corrections are stored as separate models from the ZooniverseSubject model so edits are non-destructive and can be recreated in case of a need to re-import from Zooniverse, or can be rolled back as new information emerges.
+```
+# To archive manual corrections in a CSV for later re-import:
+python manage.py dump_manual_corrections --workflow "Ramsey County"
+
+# To re-import a ManualCorrection csv export:
+python manage.py load_manual_corrections --workflow "Ramsey County" --infile relative/path/to/file
+
+# To manually re-join corrections to subjects (mostly you will never run this, it's run as a part of other scripts)
+python manage.py connect_manual_corrections --workflow "Ramsey County"
+```
+
 ## Django installation process
 
 ### 1. Create a PostGIS-enabled database for the project
