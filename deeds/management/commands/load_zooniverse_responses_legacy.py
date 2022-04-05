@@ -11,7 +11,8 @@ class Command(BaseCommand):
     question_lookup = None  # Set in handle
 
     def add_arguments(self, parser):
-        parser.add_argument('-w', '--workflow', type=str, help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
+        parser.add_argument('-w', '--workflow', type=str,
+                            help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
     def load_csv(self):
         '''
@@ -20,22 +21,27 @@ class Command(BaseCommand):
         TK: Move CSV path to question lookup in local settings
         '''
         print("Loading raw Zooniverse export data...")
-        import_csv = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports', 'mapping-prejudice-classifications_2_23_2021.csv')
+        import_csv = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports',
+                                  'mapping-prejudice-classifications_2_23_2021.csv')
 
         # Make custom mapping from model fields to drop IP column
-        mapping = {f.name: f.name for f in ZooniverseResponseRaw._meta.get_fields() if f.name not in ['id', 'subject_data_flat', 'zooniverseresponseflat']}
+        mapping = {f.name: f.name for f in ZooniverseResponseRaw._meta.get_fields(
+        ) if f.name not in ['id', 'subject_data_flat', 'zooniverseresponseflat']}
 
-        insert_count = ZooniverseResponseRaw.objects.from_csv(import_csv, mapping=mapping)
+        insert_count = ZooniverseResponseRaw.objects.from_csv(
+            import_csv, mapping=mapping)
         print("{} records inserted".format(insert_count))
 
     def create_new_subjects(self, workflow, responses) -> dict:
         '''Creates any non-existant subject records in bulk, and returns a lookup table of zooniverse subject ids to django db pks for us in fast creation of flat classification records'''
         print('Creating missing matches ...')
 
-        existing_match_ids = PotentialMatch.objects.filter(workflow=workflow).values_list('zoon_subject_id', flat=True)
+        existing_match_ids = PotentialMatch.objects.filter(
+            workflow=workflow).values_list('zoon_subject_id', flat=True)
 
         import_match_ids = responses.values_list('subject_ids', flat=True)
-        match_ids_to_create = list(set(import_match_ids) - set(existing_match_ids))
+        match_ids_to_create = list(
+            set(import_match_ids) - set(existing_match_ids))
 
         new_matches = []
         for m in match_ids_to_create:
@@ -46,7 +52,8 @@ class Command(BaseCommand):
             new_matches.append(p_match)
         PotentialMatch.objects.bulk_create(new_matches, 10000)
 
-        batch_matches = PotentialMatch.objects.filter(workflow=workflow, zoon_subject_id__in=import_match_ids).values('id', 'zoon_subject_id')
+        batch_matches = PotentialMatch.objects.filter(
+            workflow=workflow, zoon_subject_id__in=import_match_ids).values('id', 'zoon_subject_id')
 
         return {b['zoon_subject_id']: b['id'] for b in batch_matches}
 
@@ -62,7 +69,8 @@ class Command(BaseCommand):
         import_user_names = [u['user_name'] for u in import_users]
 
         # user_ids_to_create = list(set(import_user_ids) - set(existing_user_ids))
-        user_names_to_create = list(set(import_user_names) - set(existing_user_names))
+        user_names_to_create = list(
+            set(import_user_names) - set(existing_user_names))
 
         new_users = []
         for nu in user_names_to_create:
@@ -70,13 +78,15 @@ class Command(BaseCommand):
                 user = ZooniverseUser(
                     # zoon_id=nu,
                     # zoon_name=[u['user_name'] for u in import_users if u['user_id'] == nu][0]
-                    zoon_id=[u['user_id'] for u in import_users if u['user_name'] == nu][0],
+                    zoon_id=[u['user_id']
+                             for u in import_users if u['user_name'] == nu][0],
                     zoon_name=nu
                 )
                 new_users.append(user)
         ZooniverseUser.objects.bulk_create(new_users, 10000)
 
-        batch_users = ZooniverseUser.objects.filter(zoon_name__in=import_user_names).values('id', 'zoon_name')
+        batch_users = ZooniverseUser.objects.filter(
+            zoon_name__in=import_user_names).values('id', 'zoon_name')
 
         return {b['zoon_name']: b['id'] for b in batch_users}
 
@@ -84,7 +94,8 @@ class Command(BaseCommand):
         '''Returns boolean or string depending on answer type'''
         if self.question_lookup[field] is not None:
             try:
-                answer = [a['value'] for a in annotations if a['task'] == self.question_lookup[field]][0]
+                answer = [a['value'] for a in annotations if a['task']
+                          == self.question_lookup[field]][0]
                 if answer == 'Yes':
                     return True
                 if answer == 'No':
@@ -101,7 +112,8 @@ class Command(BaseCommand):
     def zooniverse_date_parser(self, annotations, date_lookup):
         '''Pastes together a date from Zooniverse response, assuming a "3-task combo" in the Zooniverse workflow with separate pulldowns for year, month, day'''
         try:
-            date_answers =  [a['value'] for a in annotations if a['task'] == date_lookup['root_q']][0]
+            date_answers = [a['value']
+                            for a in annotations if a['task'] == date_lookup['root_q']][0]
         except:
             print("Couldn't find date object in expected format.")
             return None
@@ -117,11 +129,11 @@ class Command(BaseCommand):
             print('Could not parse final date.')
             return None
 
-
-    def normalize_responses(self, workflow_name:str):
+    def normalize_responses(self, workflow_name: str):
         print('Created normalized records for retired subject responses...')
         # Only get retired subjects
-        responses = ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name).exclude(subject_data_flat__retired=None)
+        responses = ZooniverseResponseRaw.objects.filter(
+            workflow_name=workflow_name).exclude(subject_data_flat__retired=None)
 
         try:
             workflow, w_created = Workflow.objects.get_or_create(
@@ -144,7 +156,8 @@ class Command(BaseCommand):
 
         flat_responses = []
         for r in responses:
-            bool_covenant_text = self.answer_finder(r.annotations, 'bool_covenant')
+            bool_covenant_text = self.answer_finder(
+                r.annotations, 'bool_covenant')
 
             if bool_covenant_text == "I can't figure this one out":
                 bool_covenant = None
@@ -155,13 +168,15 @@ class Command(BaseCommand):
             elif bool_covenant_text is True:
                 bool_covenant = True
                 bool_outlier = False
-                covenant_text = self.answer_finder(r.annotations, 'covenant_text')
+                covenant_text = self.answer_finder(
+                    r.annotations, 'covenant_text')
                 addition = self.answer_finder(r.annotations, 'addition')
                 lot = self.answer_finder(r.annotations, 'lot')
                 block = self.answer_finder(r.annotations, 'block')
                 seller = self.answer_finder(r.annotations, 'seller')
                 buyer = self.answer_finder(r.annotations, 'buyer')
-                deed_date = self.zooniverse_date_parser(r.annotations, self.question_lookup['deed_date'])
+                deed_date = self.zooniverse_date_parser(
+                    r.annotations, self.question_lookup['deed_date'])
                 dt_retired = r.subject_data_flat['retired']['retired_at']
             elif bool_covenant_text is False:
                 bool_covenant = False
@@ -200,20 +215,22 @@ class Command(BaseCommand):
         print('Saving normalized objects to DB...')
         ZooniverseResponseFlat.objects.bulk_create(flat_responses, 10000)
 
-    def flatten_subject_data(self, workflow_name:str):
+    def flatten_subject_data(self, workflow_name: str):
         '''
         The raw "subject_data" coming back from Zooniverse is a JSON object with the key of the "subject_id". The data being stored behind this key cannot easily be queried by Django, but if we flatten it, we can. This creates a flattened copy of the subject_data field to make querying easier, and updates the raw responses in bulk.
         '''
         print("Creating flattened version of subject_data...")
-        responses = ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name).only('subject_data')
+        responses = ZooniverseResponseRaw.objects.filter(
+            workflow_name=workflow_name).only('subject_data')
 
         for response in responses:
             first_key = next(iter(response.subject_data))
             response.subject_data_flat = response.subject_data[first_key]
 
-        ZooniverseResponseRaw.objects.bulk_update(responses, ['subject_data_flat'], 10000)  # Batches of 10,000 records at a time
+        ZooniverseResponseRaw.objects.bulk_update(
+            responses, ['subject_data_flat'], 10000)  # Batches of 10,000 records at a time
 
-    def check_import(self, workflow_name:str):
+    def check_import(self, workflow_name: str):
         '''Make sure no raw subjects in this batch didn't make it to the ZooniverseResponseFlat model, excluding un-retired subjects'''
         print('Checking for missing subjects ...')
         missing_subjects = ZooniverseResponseRaw.objects.filter(
@@ -227,20 +244,24 @@ class Command(BaseCommand):
             print(zr.id)
             print(zr.annotations)
 
-    def clear_all_tables(self, workflow_name:str):
+    def clear_all_tables(self, workflow_name: str):
         print('WARNING: Clearing all tables before import...')
-        ZooniverseResponseRaw.objects.filter(workflow_name=workflow_name).delete()
+        ZooniverseResponseRaw.objects.filter(
+            workflow_name=workflow_name).delete()
         Workflow.objects.filter(workflow_name=workflow_name).delete()
-        PotentialMatch.objects.filter(workflow__workflow_name=workflow_name).delete()
+        PotentialMatch.objects.filter(
+            workflow__workflow_name=workflow_name).delete()
         # ZooniverseUser.objects.all().delete()
-        ZooniverseResponseFlat.objects.filter(workflow__workflow_name=workflow_name).delete()
+        ZooniverseResponseFlat.objects.filter(
+            workflow__workflow_name=workflow_name).delete()
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
-            self.question_lookup = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
+            self.question_lookup = settings.ZOONIVERSE_QUESTION_LOOKUP[
+                workflow_name]['zozooniverse_config']
 
             self.clear_all_tables(workflow_name)
             self.load_csv()

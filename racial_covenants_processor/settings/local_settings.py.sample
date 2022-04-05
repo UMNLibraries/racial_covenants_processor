@@ -7,36 +7,85 @@ ZOONIVERSE_QUESTION_LOOKUP = {
     'Ramsey County': {
         'panoptes_folder': 'mn_ramsey',  # relative to data/aggregation folder
         'config_yaml': 'Extractor_config_workflow_13143_V4.10.yaml',
-        'num_to_retire': 5,
-        'bool_covenant': 'T0',
-        'covenant_text': 'T2',
-        'addition': 'T9',
-        'lot': 'T5',
-        'block': 'T7',
-        'seller': None,
-        'buyer': None,
-        'deed_date': {
-            'root_q': 'T18',
-            'year': 'T15',
-            'month': 'T16',
-            'day': 'T17',
-        },
-        'month_lookup': {
-            '1 - January': 1,
-            '2 - February': 2,
-            '3 - March': 3,
-            '4 - April': 4,
-            '5 - May': 5,
-            '6 - June': 6,
-            '7 - July': 7,
-            '8 - August': 8,
-            '9 - September': 9,
-            '10 - October': 10,
-            '11 - November': 11,
-            '12 - December': 12,
+        'deed_image_regex': r'\/(?P<workflow_slug>[A-z\-]+)\/(?P<doc_num>\d+)(?:_page_(?P<page_num>\d+))?(?P<bool_match>_match)?',
+        'deed_image_raw_glob': '/Volumes/MappingPrejudice/MappingPrejudice/MP_Ramsey_County_Deeds/Raw_Deed_Imgs/**/*.tif',
+        'parcel_shps': [{
+            'id': 'parcel_main',
+            'description': 'Main parcel shapefile for Ramsey County',
+            'download_url': 'https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_co_ramsey/plan_parcel_data/shp_plan_parcel_data.zip',
+            # If your zip includes a bunch of shapefiles, which one do you actually want?
+            'file_prefix': 'plan_attributedparcelpoly',
+            'mapping': {
+                'pin_primary': 'CountyID',
+                'pin_secondary': 'ParcelID',
+                'street_address': 'SiteAddres',
+                'city': 'SiteCityNa',
+                'state': ('static', 'MN'),
+                'zip_code': 'SiteZIP5',
+                'county_name': ('static', 'Ramsey'),
+                'county_fips': ('static', '27123'),
+                'plat_name': 'PlatName',
+                'block': 'Block',
+                'lot': 'Lot',
+                'join_description': 'TaxDescrip',
+                'phys_description': 'TaxDescrip',
+                'township': 'Township',
+                'range': 'Range',
+                'section': 'Section',
+            }
+        }],
+        'zooniverse_config': {
+            'num_to_retire': 5,
+            'bool_covenant': 'T0',
+            'covenant_text': 'T2',
+            'addition': 'T9',
+            'lot': 'T5',
+            'block': 'T7',
+            'seller': None,
+            'buyer': None,
+            'deed_date': {
+                'root_q': 'T18',
+                'year': 'T15',
+                'month': 'T16',
+                'day': 'T17',
+            },
+            'month_lookup': {
+                '1 - January': 1,
+                '2 - February': 2,
+                '3 - March': 3,
+                '4 - April': 4,
+                '5 - May': 5,
+                '6 - June': 6,
+                '7 - July': 7,
+                '8 - August': 8,
+                '9 - September': 9,
+                '10 - October': 10,
+                '11 - November': 11,
+                '12 - December': 12,
+            }
         }
     },
     'King County': {
 
     }
 }
+
+# aws settings
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+AWS_STORAGE_BUCKET_NAME = 'covenants-deed-images'
+# AWS_DEFAULT_ACL = 'public-read'
+AWS_DEFAULT_ACL = None
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+# s3 static settings
+AWS_LOCATION = 'racial-covenants-processor/static'
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# s3 public media settings
+PUBLIC_MEDIA_LOCATION = 'media'
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
+DEFAULT_FILE_STORAGE = 'hello_django.storage_backends.PublicMediaStorage'
+# s3 private media settings
+PRIVATE_MEDIA_LOCATION = 'private'
+PRIVATE_FILE_STORAGE = 'hello_django.storage_backends.PrivateMediaStorage'

@@ -194,16 +194,6 @@ class Command(BaseCommand):
 
             for shp in self.batch_config['parcel_shps']:
                 local_shp = self.download_shp(workflow, shp)
-                print(local_shp)
-
-                # city_obj, city_created = City.objects.update_or_create(
-                #     name=city,
-                #     defaults={
-                #         'orig_fields': ','.join(layer.fields),
-                #         'orig_file': shp_path,
-                #         'met_council_type': c['MetCouncilType'],
-                #     },
-                # )
 
                 print(
                     'Beginning homegrown layermapping: {} ...'.format(local_shp))
