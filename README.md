@@ -35,9 +35,13 @@ python manage.py delete_raw_images
 1. Export batch results from Zooniverse (Using command line tools)
 1. Load raw and aggregated Zooniverse responses into individual property matches
 ```
-python manage.py load_zooniverse_export
+python manage.py load_zooniverse_export --workflow "Ramsey County"
 ```
   - Side effect: Stats on hit rate, false positives, etc.
+1. Load modern parcel shapefiles with unique fields mapped to unified subset
+```
+python manage.py load_parcel_shp --workflow "Ramsey County"
+```
 1. Automated join of matches to modern parcel map
 1. Export list of unmatched confirmed covenants
 1. Manual (GUIish?) cleanup of bad joins, split parcels, etc.

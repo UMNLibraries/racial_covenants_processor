@@ -383,8 +383,10 @@ class Command(BaseCommand):
                 'load_zooniverse_reductions', workflow=workflow_name)
 
             # After you have loaded the zooniverse reducer output, bring everything together
-            self.consolidate_responses(workflow, self.batch_config)
-            self.extract_individual_responses(workflow, self.batch_config)
+            self.consolidate_responses(
+                workflow, self.batch_config['zooniverse_config'])
+            self.extract_individual_responses(
+                workflow, self.batch_config['zooniverse_config'])
 
             # Handle reducer output to develop consensus answers
             management.call_command(

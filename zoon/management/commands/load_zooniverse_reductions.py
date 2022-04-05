@@ -91,7 +91,7 @@ class Command(BaseCommand):
             # df.loc[df['task_num'] == task_num,
             #        'total_votes'] = df[answer_columns].sum(axis=1)
             # df.loc[df['task_num'] == task_num,
-            #        'total_votes'] = self.batch_config['num_to_retire']
+            #        'total_votes'] = self.batch_config['zooniverse_config']['num_to_retire']
 
             df.loc[df['task_num'] == task_num, 'answer_scores'] = df[answer_columns].to_json(
                 orient='records', lines=True).splitlines()
@@ -109,7 +109,7 @@ class Command(BaseCommand):
             # 'total_votes',
             'answer_scores',
         ]]
-        df['total_votes'] = self.batch_config['num_to_retire']
+        df['total_votes'] = self.batch_config['zooniverse_config']['num_to_retire']
         df['question_type'] = 'q'
 
         print(df)
@@ -166,7 +166,7 @@ class Command(BaseCommand):
             # 'total_votes',
             'answer_scores',
         ]]
-        df['total_votes'] = self.batch_config['num_to_retire']
+        df['total_votes'] = self.batch_config['zooniverse_config']['num_to_retire']
         df['question_type'] = 'd'
         df['answer_scores'] = df['answer_scores'].apply(
             lambda x: json.dumps(x))
@@ -225,7 +225,7 @@ class Command(BaseCommand):
             'consensus_score',
             'user_ids',
         ]]
-        df['total_votes'] = self.batch_config['num_to_retire']
+        df['total_votes'] = self.batch_config['zooniverse_config']['num_to_retire']
 
         print(df)
 
