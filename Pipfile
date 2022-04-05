@@ -17,6 +17,7 @@ django-admin-rangefilter = "*"
 django-storages = "*"
 requests = "*"
 django-localflavor = "*"
+inflect = "*"
 
 [dev-packages]
 csvkit = "*"

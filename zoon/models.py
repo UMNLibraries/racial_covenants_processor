@@ -74,6 +74,9 @@ class ZooniverseSubject(models.Model):
     deed_date_final = models.DateField(
         null=True, blank=True, verbose_name="Deed date")
 
+    parcel_matches = models.ManyToManyField('parcel.Parcel')
+    # parcel_manual = models.ManyToManyField(ManualParcel)  # TODO
+
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"
 
