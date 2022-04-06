@@ -38,6 +38,7 @@ class Command(BaseCommand):
 
                     c['match'] = True
                     c['parcel_metadata'] = lot_match['parcel_metadata']
+                    covenant.parcel_matches.add(lot_match['parcel_id'])
                 except:
                     print(f"NO MATCH: {c['join_string']}")
                     c['match'] = False
