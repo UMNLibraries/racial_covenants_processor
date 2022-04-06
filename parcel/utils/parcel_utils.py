@@ -144,7 +144,7 @@ def build_parcel_spatial_lookups(workflow):
     # Basic lots
     for parcel in Parcel.objects.filter(
         workflow=workflow
-    ).exclude(lot__isnull=True):
+    ).exclude(lot__isnull=True).only('id', 'plat_name', 'block', 'lot', 'orig_filename'):
         candidates, metadata = get_all_parcel_options(parcel)
         for c in candidates:
             parcel_spatial_lookup[c['join_string']] = c

@@ -76,6 +76,7 @@ class ZooniverseSubject(models.Model):
 
     parcel_matches = models.ManyToManyField('parcel.Parcel')
     # parcel_manual = models.ManyToManyField(ManualParcel)  # TODO
+    bool_parcel_match = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"

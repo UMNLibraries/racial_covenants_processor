@@ -44,6 +44,10 @@ class Command(BaseCommand):
                     c['match'] = False
                 match_report.append(c)
 
+        # Update boolean for subjects with matching parcels in bulk
+        ZooniverseSubject.objects.filter(
+            pk__in=[c['subject_id'] for c in matched_subjects]).update(bool_parcel_match=True)
+
         self.write_match_report(workflow, match_report)
 
     def write_match_report(self, workflow, report_list, bool_file=True):
