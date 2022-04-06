@@ -26,4 +26,5 @@ class Parcel(models.Model):
     range = models.IntegerField(null=True, blank=True)
     section = models.IntegerField(null=True, blank=True)
     orig_data = models.JSONField(null=True, blank=True)
+    orig_filename = models.CharField(max_length=255, null=True, blank=True)
     geom_4326 = models.MultiPolygonField(srid=4326)

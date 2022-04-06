@@ -116,6 +116,7 @@ class Command(BaseCommand):
         parcels = []
         parcel_count = 0
 
+        orig_filename = os.path.basename(shp_path)
         ds = DataSource(shp_path)
         layer = ds[0]
 
@@ -154,6 +155,7 @@ class Command(BaseCommand):
                     'workflow_id': workflow.id,
                     'feature_id': feat.fid,
                     'orig_data': all_attributes,
+                    'orig_filename': orig_filename,
                     'geom_4326': multipoly_4326.wkt,
                     # 'geom_utm': multipoly_utm.wkt,
                 })
@@ -161,7 +163,7 @@ class Command(BaseCommand):
                 parcels.append(Parcel(**kwargs))
                 parcel_count += 1
 
-                if parcel_count % 5000 == 0:
+                if parcel_count % 10000 == 0:
                     Parcel.objects.bulk_create(parcels)
                     print('Saved {} records...'.format(parcel_count))
                     parcels = []
