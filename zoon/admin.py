@@ -6,13 +6,8 @@ from django.utils.translation import gettext_lazy as _
 from rangefilter.filters import DateRangeFilter
 
 from deeds.models import DeedPage
+from parcel.models import Parcel
 from zoon.models import ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection
-
-
-class ManualCorrectionInline(admin.StackedInline):
-    model = ManualCorrection
-    extra = 0
-    exclude = ['workflow', 'zoon_subject_id', 'zoon_workflow_id']
 
 
 class DeedImageInline(admin.TabularInline):
@@ -21,6 +16,20 @@ class DeedImageInline(admin.TabularInline):
     exclude = ['workflow', 'page_image_web', 'page_ocr_text']
     readonly_fields = ['doc_num', 'page_num',
                        'doc_date', 'bool_match', 'thumbnail_preview']
+
+
+# class ParcelInline(admin.TabularInline):
+#     model = Parcel
+#     extra = 0
+#     exclude = ['orig_data']
+#     # readonly_fields = ['doc_num', 'page_num',
+#     # 'doc_date', 'bool_match', 'thumbnail_preview']
+
+
+class ManualCorrectionInline(admin.StackedInline):
+    model = ManualCorrection
+    extra = 0
+    exclude = ['workflow', 'zoon_subject_id', 'zoon_workflow_id']
 
 
 class ResponseInline(admin.TabularInline):
@@ -99,13 +108,14 @@ class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['zoon_subject_id',
                      'addition_final', 'covenant', 'covenant_text_final']
 
-    list_display = ('__str__', 'bool_covenant_final', 'median_score', 'bool_problem',
+    list_display = ('__str__', 'bool_covenant_final', 'bool_parcel_match', 'median_score', 'bool_problem',
                     'addition_final', 'lot_final', 'block_final', 'deed_date_final', 'bool_manual_correction')
 
     list_filter = (
         'workflow__workflow_name',
         'bool_covenant_final',
         'bool_manual_correction',
+        'bool_parcel_match',
         'bool_problem',
         ('deed_date_final', DateRangeFilter),
         ScoreRangeListFilter,
@@ -131,6 +141,11 @@ class SubjectAdmin(admin.ModelAdmin):
                 'buyer_final',
                 'deed_date_final',
                 'bool_manual_correction'
+            )
+        }),
+        ('Matching parcels', {
+            'fields': (
+                'parcel_matches',
             )
         }),
         ('Zooniverse basics', {
@@ -161,6 +176,8 @@ class SubjectAdmin(admin.ModelAdmin):
 
     readonly_fields = [
         'workflow',
+        'parcel_matches',
+        'bool_parcel_match',
         'zoon_subject_id',
         'bool_manual_correction',
         'bool_covenant_final',
