@@ -1,12 +1,12 @@
 from django.contrib.gis.db import models
 
 from localflavor.us.us_states import US_STATES
-from zoon.models import ZooniverseWorkflow
+# from zoon.models import ZooniverseWorkflow
 
 
 class Parcel(models.Model):
     workflow = models.ForeignKey(
-        ZooniverseWorkflow, null=True, on_delete=models.SET_NULL)
+        "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     feature_id = models.IntegerField()
     pin_primary = models.CharField(max_length=50, null=True, blank=True)
     pin_secondary = models.CharField(max_length=50, null=True, blank=True)

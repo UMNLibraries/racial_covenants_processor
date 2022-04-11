@@ -53,12 +53,15 @@ Manual corrections are stored as separate models from the ZooniverseSubject mode
 ```
 # To archive manual corrections in a CSV for later re-import:
 python manage.py dump_manual_corrections --workflow "Ramsey County"
+python manage.py dump_extra_parcels --workflow "Ramsey County"
 
 # To re-import a ManualCorrection csv export:
 python manage.py load_manual_corrections --workflow "Ramsey County" --infile relative/path/to/file
+python manage.py load_extra_parcels --workflow "Ramsey County" --infile relative/path/to/file
 
 # To manually re-join corrections to subjects (mostly you will never run this, it's run as a part of other scripts)
 python manage.py connect_manual_corrections --workflow "Ramsey County"
+python manage.py connect_extra_parcels --workflow "Ramsey County"
 ```
 
 ## Django installation process
