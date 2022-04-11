@@ -1,4 +1,6 @@
-from django.db import models
+from django.contrib.gis.db import models
+from django.contrib.gis.db.models.aggregates import Union
+from django.contrib.gis import geos
 from django.dispatch import receiver
 from django.utils.text import slugify
 
@@ -80,8 +82,26 @@ class ZooniverseSubject(models.Model):
     # parcel_manual = models.ManyToManyField(ManualParcel)  # TODO
     bool_parcel_match = models.BooleanField(default=False)
 
+    # Union of any joined parcels
+    geom_union_4326 = models.MultiPolygonField(
+        srid=4326, null=True, blank=True)
+
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"
+
+    def get_geom_union(self):
+        union = self.parcel_matches.all().aggregate(union=Union('geom_4326'))
+        if union:
+            union_final = union['union'].unary_union
+            # Force to multipolygon
+            if union_final and isinstance(union_final, geos.Polygon):
+                union_final = geos.MultiPolygon(union_final)
+            return union_final
+        return None
+
+    def set_geom_union(self):
+        if self.bool_parcel_match:
+            self.geom_union_4326 = self.get_geom_union()
 
     def check_bool_manual_update(self):
         if self.manualcorrection_set.count() > 0:
@@ -120,6 +140,7 @@ class ZooniverseSubject(models.Model):
                     print(f"MATCH: {c['join_string']}")
 
                     self.parcel_matches.add(lot_match['parcel_id'])
+                    self.bool_parcel_match = True
                 except:
                     print(f"NO MATCH: {c['join_string']}")
 
@@ -143,6 +164,7 @@ class ZooniverseSubject(models.Model):
     def save(self, *args, **kwargs):
         self.get_final_values()
         self.check_parcel_match()
+        self.set_geom_union()
         super(ZooniverseSubject, self).save(*args, **kwargs)
 
 
