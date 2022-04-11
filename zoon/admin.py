@@ -7,7 +7,7 @@ from rangefilter.filters import DateRangeFilter
 
 from deeds.models import DeedPage
 from parcel.models import Parcel
-from zoon.models import ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection
+from zoon.models import ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection, ExtraParcelCandidate
 
 
 class DeedImageInline(admin.TabularInline):
@@ -28,6 +28,12 @@ class DeedImageInline(admin.TabularInline):
 
 class ManualCorrectionInline(admin.StackedInline):
     model = ManualCorrection
+    extra = 0
+    exclude = ['workflow', 'zoon_subject_id', 'zoon_workflow_id']
+
+
+class ExtraParcelCandidateInline(admin.StackedInline):
+    model = ExtraParcelCandidate
     extra = 0
     exclude = ['workflow', 'zoon_subject_id', 'zoon_workflow_id']
 
@@ -125,6 +131,7 @@ class SubjectAdmin(admin.ModelAdmin):
 
     inlines = [
         ManualCorrectionInline,
+        ExtraParcelCandidateInline,
         DeedImageInline,
         ResponseInline
     ]

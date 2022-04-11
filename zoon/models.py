@@ -4,6 +4,8 @@ from django.utils.text import slugify
 
 from postgres_copy import CopyManager
 
+from parcel.utils.parcel_utils import get_covenant_parcel_options, get_all_parcel_options, build_parcel_spatial_lookups
+
 
 class ZooniverseWorkflow(models.Model):
     zoon_id = models.IntegerField(null=True, db_index=True)
@@ -89,7 +91,7 @@ class ZooniverseSubject(models.Model):
 
     def get_final_value(self, attr, blank_value=""):
         if self.manualcorrection_set.count() > 0:
-            if getattr(self.manualcorrection_set.first(), attr) != blank_value:
+            if getattr(self.manualcorrection_set.first(), attr) not in [None, blank_value]:
                 return getattr(self.manualcorrection_set.first(), attr)
         return getattr(self, attr)
 
@@ -104,8 +106,43 @@ class ZooniverseSubject(models.Model):
         self.buyer_final = self.get_final_value('buyer')
         self.deed_date_final = self.get_final_value('deed_date', None)
 
+    def check_parcel_match(self):
+        self.parcel_matches.clear()
+        parcel_lookup = None
+        # Main parcel
+        if self.lot_final != '':
+            parcel_lookup = build_parcel_spatial_lookups(self.workflow)
+            candidates, metadata = get_covenant_parcel_options(self)
+
+            for c in candidates:
+                try:
+                    lot_match = parcel_lookup[c['join_string']]
+                    print(f"MATCH: {c['join_string']}")
+
+                    self.parcel_matches.add(lot_match['parcel_id'])
+                except:
+                    print(f"NO MATCH: {c['join_string']}")
+
+        # Check for extra parcels
+        if self.extraparcelcandidate_set.count() > 0:
+            if not parcel_lookup:
+                parcel_lookup = build_parcel_spatial_lookups(self.workflow)
+            for extra_parcel in self.extraparcelcandidate_set.all():
+                candidates, metadata = get_covenant_parcel_options(
+                    extra_parcel)
+
+                for c in candidates:
+                    try:
+                        lot_match = parcel_lookup[c['join_string']]
+                        print(f"MATCH: {c['join_string']}")
+
+                        self.parcel_matches.add(lot_match['parcel_id'])
+                    except:
+                        print(f"NO MATCH: {c['join_string']}")
+
     def save(self, *args, **kwargs):
         self.get_final_values()
+        self.check_parcel_match()
         super(ZooniverseSubject, self).save(*args, **kwargs)
 
 
@@ -224,12 +261,43 @@ class ManualCorrection(models.Model):
     objects = CopyManager()
 
     def save(self, *args, **kwargs):
+        self.workflow = self.zooniverse_subject.workflow
         self.zoon_workflow_id = self.zooniverse_subject.workflow.zoon_id
         self.zoon_subject_id = self.zooniverse_subject.zoon_subject_id
         super(ManualCorrection, self).save(*args, **kwargs)
 
-        self.zooniverse_subject.get_final_values()
+        # self.zooniverse_subject.get_final_values()
         self.zooniverse_subject.save()
+
+
+class ExtraParcelCandidate(models.Model):
+    '''For use when property spans more than one block or addition, NOT for multiple lots in same addition/block for the moment'''
+    workflow = models.ForeignKey(
+        ZooniverseWorkflow, on_delete=models.SET_NULL, null=True)
+    zooniverse_subject = models.ForeignKey(
+        ZooniverseSubject, on_delete=models.SET_NULL, null=True)
+
+    # These are kept separate of the foreign key relationship in case this needs to be reconnected later
+    zoon_subject_id = models.IntegerField(db_index=True, null=True, blank=True)
+    zoon_workflow_id = models.IntegerField(
+        db_index=True, null=True, blank=True)
+
+    addition = models.CharField(max_length=500, null=True, blank=True)
+    lot = models.TextField(null=True, blank=True)
+    block = models.CharField(max_length=500, null=True, blank=True)
+
+    date_added = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    comments = models.TextField(null=True, blank=True)
+
+    objects = CopyManager()
+
+    def save(self, *args, **kwargs):
+        self.workflow = self.zooniverse_subject.workflow
+        self.zoon_workflow_id = self.zooniverse_subject.workflow.zoon_id
+        self.zoon_subject_id = self.zooniverse_subject.zoon_subject_id
+        super(ExtraParcelCandidate, self).save(*args, **kwargs)
 
 
 @receiver(models.signals.post_delete, sender=ManualCorrection)

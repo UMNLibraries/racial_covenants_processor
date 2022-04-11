@@ -1,11 +1,19 @@
+import os
+import datetime
+import pandas as pd
+
+from django.db.models import F
+from django.utils.text import slugify
 from django.core import management
 from django.core.management.base import BaseCommand
 
-from zoon.models import ManualCorrection
+from django.conf import settings
+
+from zoon.models import ExtraParcelCandidate
 
 
 class Command(BaseCommand):
-    '''Load a downloaded CSV of ManualCorrection objects into the datbase and join to ZooniverseSubjects.'''
+    '''Load a downloaded CSV of ExtraParcelCandidate objects into the database and join to ZooniverseSubjects.'''
 
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
@@ -26,30 +34,25 @@ class Command(BaseCommand):
             return False
         else:
 
-            print("Loading manual corrections...")
+            print("Loading extra parcels...")
 
             # Make custom mapping from model fields to drop IP column
             mapping = {
                 # model: csv
                 'zoon_subject_id': 'zoon_subject_id',
                 'zoon_workflow_id': 'zoon_workflow_id',
-                'bool_covenant': 'bool_covenant',
-                'covenant_text': 'covenant_text',
                 'addition': 'addition',
                 'lot': 'lot',
                 'block': 'block',
-                'seller': 'seller',
-                'buyer': 'buyer',
-                'deed_date': 'deed_date',
                 'date_added': 'date_added',
                 'date_updated': 'date_updated',
                 'comments': 'comments',
             }
 
-            insert_count = ManualCorrection.objects.from_csv(
+            insert_count = ExtraParcelCandidate.objects.from_csv(
                 infile, mapping=mapping)
             print("{} records inserted".format(insert_count))
 
             # Handle reducer output to develop consensus answers
             management.call_command(
-                'connect_manual_corrections', workflow=workflow_name)
+                'connect_extra_parcels', workflow=workflow_name)

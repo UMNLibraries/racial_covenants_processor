@@ -104,12 +104,23 @@ def standardize_addition(input_str):
 
 
 def get_covenant_parcel_options(subject_obj):
-    '''Get all possibilities for this ZooniverseSubject that can be attempted to be mapped, and characterize the number of lots found'''
+    '''Get all possibilities for this ZooniverseSubject or ExtraParcelCandidate
+    that can be attempted to be mapped,
+    and characterize the number of lots found'''
+    if hasattr(subject_obj, 'lot_final'):
+        addition_attr = getattr(subject_obj, 'addition_final')
+        block_attr = getattr(subject_obj, 'block_final')
+        lot_attr = getattr(subject_obj, 'lot_final')
+    else:
+        addition_attr = getattr(subject_obj, 'addition')
+        block_attr = getattr(subject_obj, 'block')
+        lot_attr = getattr(subject_obj, 'lot')
+
     out_candidates = []
     metadata = {}
-    addition = standardize_addition(subject_obj.addition)
-    block, metadata['block'] = get_blocks(subject_obj.block_final)
-    lots, metadata['lot'] = get_lots(subject_obj.lot_final)
+    addition = standardize_addition(addition_attr)
+    block, metadata['block'] = get_blocks(block_attr)
+    lots, metadata['lot'] = get_lots(lot_attr)
     if block and lots:
         for lot in lots:
             out_candidates.append(
