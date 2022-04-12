@@ -91,7 +91,7 @@ class ZooniverseSubject(models.Model):
 
     def get_geom_union(self):
         union = self.parcel_matches.all().aggregate(union=Union('geom_4326'))
-        if union:
+        if 'union' in union and union['union'] is not None:
             union_final = union['union'].unary_union
             # Force to multipolygon
             if union_final and isinstance(union_final, geos.Polygon):

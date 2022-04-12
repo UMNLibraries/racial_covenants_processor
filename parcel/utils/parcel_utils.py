@@ -90,7 +90,7 @@ def standardize_addition(input_str):
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r's\'', 's',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r'[A-z],(?: )?[A-z]', ' ',
+        input_str = re.sub(r',(?: )?', ' ',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r' & ', ' and ',
                            input_str, flags=re.IGNORECASE)
@@ -116,6 +116,11 @@ def get_covenant_parcel_options(subject_obj):
         block_attr = getattr(subject_obj, 'block')
         lot_attr = getattr(subject_obj, 'lot')
 
+    if hasattr(subject_obj, 'zooniverse_subject'):
+        subject_id = subject_obj.zooniverse_subject.id
+    else:
+        subject_id = subject_obj.id
+
     out_candidates = []
     metadata = {}
     addition = standardize_addition(addition_attr)
@@ -124,7 +129,7 @@ def get_covenant_parcel_options(subject_obj):
     if block and lots:
         for lot in lots:
             out_candidates.append(
-                {"subject_id": subject_obj.id, "join_string": f"{addition} block {block} lot {lot}", "covenant_metadata": metadata})
+                {"subject_id": subject_id, "join_string": f"{addition} block {block} lot {lot}", "covenant_metadata": metadata})
     # print(blocks, block_style)
         return out_candidates, metadata
     return [], metadata
