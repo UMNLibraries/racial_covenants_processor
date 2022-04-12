@@ -112,7 +112,7 @@ class AdditionScoreRangeListFilter(ScoreRangeListFilter):
 @ admin.register(ZooniverseSubject)
 class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['zoon_subject_id',
-                     'addition_final', 'covenant', 'covenant_text_final']
+                     'addition_final', 'covenant_text', 'covenant_text_final']
 
     list_display = ('__str__', 'bool_covenant_final', 'bool_parcel_match', 'median_score', 'bool_problem',
                     'addition_final', 'lot_final', 'block_final', 'deed_date_final', 'bool_manual_correction')

@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 pytesseract = "*"
 pandas = "*"
+geopandas = "*"
 django = "*"
 psycopg2-binary = "*"
 django-postgres-copy = "*"
@@ -18,6 +19,8 @@ django-storages = "*"
 requests = "*"
 django-localflavor = "*"
 inflect = "*"
+pyproj = "*"
+boto3 = "*"
 
 [dev-packages]
 csvkit = "*"

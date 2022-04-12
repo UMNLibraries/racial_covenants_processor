@@ -7,8 +7,9 @@ Current collaborators include Nicholas Boren, Michael Corey and Justin Schell.
 ## Software requirements
 - Tesseract OCR engine
 - geos and gdal
+- proj
 - pytesseract
-- pandas
+- pandas and geopandas
 - pipenv
 - PostGIS/PostgreSQL
 
