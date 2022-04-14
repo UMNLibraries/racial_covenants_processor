@@ -23,21 +23,6 @@ class Command(BaseCommand):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
-    #
-    #
-    # for extra_parcel in self.extraparcelcandidate_set.all():
-    #     candidates, metadata = get_covenant_parcel_options(
-    #         extra_parcel)
-    #
-    #     for c in candidates:
-    #         try:
-    #             lot_match = parcel_lookup[c['join_string']]
-    #             print(f"MATCH: {c['join_string']}")
-    #
-    #             self.parcel_matches.add(lot_match['parcel_id'])
-    #         except:
-    #             print(f"NO MATCH: {c['join_string']}")
-
     def match_parcel(self, parcel_lookup, target_obj, subject_obj):
         ''' Separate subject necessary because you also have to run this on the ExtraParcelCandidate objects and then link the result to its subject'''
         candidates, metadata = get_covenant_parcel_options(target_obj)
@@ -57,27 +42,11 @@ class Command(BaseCommand):
 
     def match_parcels_bulk(self, workflow, parcel_lookup):
         print("Attempting to auto-join covenants to parcels ...")
-        # matched_subjects = []
-        # match_report = []
         for covenant in ZooniverseSubject.objects.filter(
             workflow=workflow,
             bool_covenant_final=True
         ).order_by('addition_final'):
             self.match_parcel(parcel_lookup, covenant, covenant)
-            # candidates, metadata = get_covenant_parcel_options(covenant)
-            # for c in candidates:
-            #     try:
-            #         lot_match = parcel_lookup[c['join_string']]
-            #         print(f"MATCH: {c['join_string']}")
-            #         matched_subjects.append(c)
-            #
-            #         c['match'] = True
-            #         c['parcel_metadata'] = lot_match['parcel_metadata']
-            #         covenant.parcel_matches.add(lot_match['parcel_id'])
-            #     except:
-            #         print(f"NO MATCH: {c['join_string']}")
-            #         c['match'] = False
-            #     match_report.append(c)
 
         print('Attempting to auto-join extra parcel candidates...')
         for extra_parcel in ExtraParcelCandidate.objects.all():
