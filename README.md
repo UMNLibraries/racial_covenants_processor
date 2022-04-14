@@ -14,7 +14,7 @@ Current collaborators include Nicholas Boren, Michael Corey and Justin Schell.
 - PostGIS/PostgreSQL
 
 ## Note on legacy code
-The "deeds" app is currently not being used, except to port over the legacy classification system for comparison with the new Zooniverse-native methods
+The "deed' app is currently not being used, except to port over the legacy classification system for comparison with the new Zooniverse-native methods
 
 ## High-level workflow
 

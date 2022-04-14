@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from rangefilter.filters import DateRangeFilter
 
-from apps.deeds.models import DeedPage
+from apps.deed.models import DeedPage
 from apps.parcel.models import Parcel
 from apps.zoon.models import ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection, ExtraParcelCandidate
 

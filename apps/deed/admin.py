@@ -5,7 +5,7 @@ from .models import DeedPage
 
 @admin.register(DeedPage)
 class DeedPageAdmin(admin.ModelAdmin):
-    readonly_fields = ('thumbnail_preview',)
+    readonly_fields = ('thumbnail_preview', 'zooniverse_subject')
 
     def thumbnail_preview(self, obj):
         return obj.thumbnail_preview
