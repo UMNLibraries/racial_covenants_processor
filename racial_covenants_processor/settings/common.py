@@ -31,9 +31,9 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'deeds.apps.DeedsConfig',
-    'zoon.apps.ZoonConfig',
-    'parcel.apps.ParcelConfig',
+    'apps.deeds',
+    'apps.zoon',
+    'apps.parcel',
 
     'django.contrib.admin',
     'django.contrib.auth',
