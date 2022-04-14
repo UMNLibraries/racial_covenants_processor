@@ -5,7 +5,7 @@ import boto3
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from apps.deeds.models import DeedPage
+from apps.deed.models import DeedPage
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
 from apps.zoon.utils.zooniverse_config import get_workflow_version
 

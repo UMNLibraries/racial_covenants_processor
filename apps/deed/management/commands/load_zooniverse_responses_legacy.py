@@ -1,7 +1,7 @@
 import os
 import datetime
 
-from apps.deeds.models import ZooniverseResponseRaw, Workflow, PotentialMatch, ZooniverseUser, ZooniverseResponseFlat
+from apps.deed.models import ZooniverseResponseRaw, Workflow, PotentialMatch, ZooniverseUser, ZooniverseResponseFlat
 from django.core.management.base import BaseCommand
 from django.conf import settings
 

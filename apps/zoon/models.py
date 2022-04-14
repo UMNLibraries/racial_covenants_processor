@@ -215,7 +215,7 @@ class ZooniverseResponseProcessed(models.Model):
 
 
 class ZooniverseUser(models.Model):
-    '''Temp: duplicated from apps.deeds.models. May or may not be needed later, but not actually doing anything on this app currently.'''
+    '''Temp: duplicated from apps.deed.models. May or may not be needed later, but not actually doing anything on this app currently.'''
     zoon_id = models.IntegerField(null=True, db_index=True)
     zoon_name = models.CharField(max_length=100, blank=True, db_index=True)
 

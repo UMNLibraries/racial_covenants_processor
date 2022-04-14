@@ -9,7 +9,7 @@ from sklearn.metrics import cohen_kappa_score
 from statistics import mode, StatisticsError
 # from datetime import date
 
-from apps.deeds.models import Workflow, ZooniverseResponseFlat, ZooniverseUser, ZooniverseUserRating
+from apps.deed.models import Workflow, ZooniverseResponseFlat, ZooniverseUser, ZooniverseUserRating
 from django.db.models import F
 from django.core.management.base import BaseCommand
 from django.core import management

@@ -30,23 +30,22 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [
-    'apps.deeds',
-    'apps.zoon',
-    'apps.parcel',
+INSTALLED_APPS = ['apps.deed',
+                  'apps.zoon',
+                  'apps.parcel',
 
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.gis',
+                  'django.contrib.admin',
+                  'django.contrib.auth',
+                  'django.contrib.contenttypes',
+                  'django.contrib.sessions',
+                  'django.contrib.messages',
+                  'django.contrib.staticfiles',
+                  'django.contrib.gis',
 
-    'rangefilter',
-    'storages',
-    'localflavor',
-]
+                  'rangefilter',
+                  'storages',
+                  'localflavor',
+                  ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
