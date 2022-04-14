@@ -86,6 +86,8 @@ class ZooniverseSubject(models.Model):
     geom_union_4326 = models.MultiPolygonField(
         srid=4326, null=True, blank=True)
 
+    date_updated = models.DateTimeField(auto_now=True, null=True)
+
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"
 

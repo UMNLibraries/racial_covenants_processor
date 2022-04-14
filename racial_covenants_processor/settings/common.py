@@ -41,6 +41,7 @@ INSTALLED_APPS = ['apps.deed',
                   'django.contrib.messages',
                   'django.contrib.staticfiles',
                   'django.contrib.gis',
+                  'django.contrib.humanize',
 
                   'rangefilter',
                   'storages',
@@ -62,7 +63,7 @@ ROOT_URLCONF = 'racial_covenants_processor.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,6 +75,8 @@ TEMPLATES = [
         },
     },
 ]
+
+USE_THOUSANDS_SEPERATOR = True
 
 WSGI_APPLICATION = 'racial_covenants_processor.wsgi.application'
 
