@@ -1,0 +1,43 @@
+{% load humanize %}
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{workflow.workflow_name}} summary</title>
+  <meta name="description" content="Placeholder for {{workflow.workflow_name}} summary">
+  <meta name="author" content="Mapping Prejudice">
+
+  <style>
+    body {
+      font-family : Walfork,Walsheim,"Helvetica Neue";
+    }
+    .workflow-stats td {
+      text-align: right;
+    }
+
+    .workflow-stats td:first-child {
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>{{workflow.workflow_name}} summary</h1>
+  <i>Last updated: {{last_update}}</i>
+  <table class="workflow-stats">
+    <tr>
+      <td>Total flagged subjects</td>
+      <td>{{subject_count|intcomma}}</td>
+    </tr>
+    <tr>
+      <td>Total covenants</td>
+      <td>{{covenants_count|intcomma}} (+{{covenants_maybe_count|intcomma}} TBD)</td>
+    </tr>
+    <tr>
+      <td>Total covenants mapped</td>
+      <td>{{mapped_count|intcomma}}</td>
+    </tr>
+  </table>
+</body>
+</html>
