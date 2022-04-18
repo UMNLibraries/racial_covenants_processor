@@ -6,8 +6,8 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from apps.deed.models import DeedPage
-from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
-from apps.zoon.utils.zooniverse_config import get_workflow_version
+from apps.zoon.models import ZooniverseSubject
+from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
 class Command(BaseCommand):
@@ -20,21 +20,21 @@ class Command(BaseCommand):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
-    def get_workflow(self, workflow_name):
-        self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
-
-        self.batch_dir = os.path.join(
-            settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
-
-        # Get workflow version from config yaml
-        workflow_version = get_workflow_version(
-            self.batch_dir, self.batch_config['config_yaml'])
-
-        workflow = ZooniverseWorkflow.objects.get(
-            workflow_name=workflow_name,
-            version=workflow_version
-        )
-        return workflow
+    # def get_workflow(self, workflow_name):
+    #     self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
+    #
+    #     self.batch_dir = os.path.join(
+    #         settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
+    #
+    #     # Get workflow version from config yaml
+    #     workflow_version = get_workflow_version(
+    #         self.batch_dir, self.batch_config['config_yaml'])
+    #
+    #     workflow = ZooniverseWorkflow.objects.get(
+    #         workflow_name=workflow_name,
+    #         version=workflow_version
+    #     )
+    #     return workflow
 
     def find_matching_keys(self, workflow):
         # Then use the session to get the resource
@@ -167,7 +167,8 @@ class Command(BaseCommand):
             print('Deleting old DeedPage records (but not their images)...')
             DeedPage.objects.all().delete()
 
-            workflow = self.get_workflow(workflow_name)
+            # workflow = self.get_workflow(workflow_name)
+            workflow = get_workflow_obj(workflow_name)
 
             matching_keys = self.find_matching_keys(workflow)
 
