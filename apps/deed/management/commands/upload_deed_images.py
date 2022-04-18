@@ -48,7 +48,8 @@ class Command(BaseCommand):
 
         key_filter = re.compile(f"raw/{workflow_slug}/.+\.tif")
 
-        matching_keys = [obj.key for obj in self.bucket.objects.all(
+        matching_keys = [obj.key for obj in self.bucket.objects.filter(
+            Prefix=f'raw/{workflow_slug}/'
         ) if re.match(key_filter, obj.key)]
 
         web_keys_to_check = [key['s3_path'] for key in upload_keys]

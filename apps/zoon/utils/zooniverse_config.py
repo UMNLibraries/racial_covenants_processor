@@ -2,6 +2,9 @@ import os
 import re
 import yaml
 
+from apps.zoon.models import ZooniverseWorkflow
+from django.conf import settings
+
 
 def parse_labels_question_type(task_num, label_config):
     answer_nodes = []
@@ -60,6 +63,24 @@ def get_workflow_version(batch_dir, yaml_filename):
             base_file)['workflow_version'])
         return workflow_version
     return False
+
+
+def get_workflow_obj(workflow_name):
+
+    workflow_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
+
+    batch_dir = os.path.join(
+        settings.BASE_DIR, 'data', 'zooniverse_exports', workflow_config['panoptes_folder'])
+
+    # Get workflow version from config yaml
+    workflow_version = get_workflow_version(
+        batch_dir, workflow_config['config_yaml'])
+
+    workflow = ZooniverseWorkflow.objects.get(
+        workflow_name=workflow_name,
+        version=workflow_version
+    )
+    return workflow
 
 
 def parse_config_yaml(infile):
