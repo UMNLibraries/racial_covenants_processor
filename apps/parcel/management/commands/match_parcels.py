@@ -114,6 +114,5 @@ class Command(BaseCommand):
 
             # Get all possible parcel lots to join
             parcel_lookup = build_parcel_spatial_lookups(workflow)
-            print(parcel_lookup)
             self.match_parcels_bulk(workflow, parcel_lookup)
             self.write_match_report(workflow)
