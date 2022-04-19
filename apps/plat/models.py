@@ -1,20 +1,23 @@
 from django.db import models
 from django.utils.text import slugify
 from django.utils.html import mark_safe
+from django.db.models import F
 
-from apps.zoon.models import ZooniverseWorkflow
+from apps.parcel.utils.parcel_utils import standardize_addition, get_all_parcel_options
 from racial_covenants_processor.storage_backends import PrivateMediaStorage
 
 
 class Plat(models.Model):
     workflow = models.ForeignKey(
-        ZooniverseWorkflow, null=True, on_delete=models.SET_NULL)
+        'zoon.ZooniverseWorkflow', null=True, on_delete=models.SET_NULL)
     plat_name = models.CharField(max_length=255, db_index=True, null=True)
     plat_year = models.IntegerField(null=True, blank=True)
     book_name = models.CharField(
         max_length=255, db_index=True, null=True, blank=True)
     gov_id = models.CharField(
         max_length=255, null=True, blank=True)  # Can't be an index because some plat maps have multiple plats on same map page. Maybe revisit this later
+    plat_name_standardized = models.CharField(
+        max_length=255, db_index=True, null=True)
 
     class Meta:
         ordering = ["plat_name"]
@@ -24,6 +27,10 @@ class Plat(models.Model):
 
     def __str__(self):
         return self.plat_name
+
+    def save(self, *args, **kwargs):
+        self.plat_name_standardized = self.standardize_addition(
+            self.plat_name)
 
 
 class PlatMapPage(models.Model):
@@ -43,12 +50,51 @@ class PlatMapPage(models.Model):
 
 class PlatAlternateName(models.Model):
     workflow = models.ForeignKey(
-        ZooniverseWorkflow, null=True, on_delete=models.SET_NULL)
+        'zoon.ZooniverseWorkflow', null=True, on_delete=models.SET_NULL)
     plat = models.ForeignKey(Plat, null=True, on_delete=models.SET_NULL)
     plat_name = models.CharField(
         max_length=255, db_index=True, null=True, blank=True)
     alternate_name = models.CharField(max_length=255, db_index=True, null=True)
+    alternate_name_standardized = models.CharField(
+        max_length=255, db_index=True, null=True)
 
     def save(self, *args, **kwargs):
+        from apps.parcel.models import Parcel, ParcelJoinCandidate
         self.plat_name = self.plat.plat_name
+        self.alternate_name_standardized = standardize_addition(
+            self.alternate_name)
+
+        parcel_matches = Parcel.objects.filter(
+            workflow=self.workflow,
+            plat_standardized=self.alternate_name_standardized
+        )
+        parcel_matches.update(plat=self.plat)
+
+        plat_parcels = Parcel.objects.filter(
+            workflow=self.workflow,
+            plat=self.plat
+        )
+
+        # avoid duplication
+        ParcelJoinCandidate.objects.filter(
+            parcel__pk__in=plat_parcels.values_list('pk', flat=True)
+        ).delete()
+
+        # update parcel candidates for all parcels in this plat
+        join_cands = []
+        for parcel in plat_parcels:
+            candidates, metadata = get_all_parcel_options(parcel)
+            for c in candidates:
+                # parcel_spatial_lookup[c['join_string']] = c
+                join_cands.append(ParcelJoinCandidate(
+                    workflow=self.workflow,
+                    parcel=parcel,
+                    plat_name_standardized=parcel.plat_standardized,
+                    join_string=c['join_string'],
+                    metadata=c['parcel_metadata']
+                ))
+        ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
+
+        # TODO: Below is not updating all of the plat records correctl
+
         super(PlatAlternateName, self).save(*args, **kwargs)

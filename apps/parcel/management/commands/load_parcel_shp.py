@@ -10,9 +10,10 @@ from django.contrib.gis.gdal import DataSource, OGRGeometry, OGRGeomType
 from django.contrib.gis.gdal.error import GDALException
 from django.conf import settings
 
-from apps.parcel.models import Parcel
-from apps.zoon.models import ZooniverseWorkflow
-from apps.zoon.utils.zooniverse_config import get_workflow_version
+from apps.parcel.models import Parcel, ParcelJoinCandidate
+from apps.plat.models import Plat, PlatAlternateName
+from apps.parcel.utils.parcel_utils import standardize_addition, get_all_parcel_options
+from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
 class Command(BaseCommand):
@@ -119,6 +120,7 @@ class Command(BaseCommand):
         orig_filename = os.path.basename(shp_path)
         ds = DataSource(shp_path)
         layer = ds[0]
+        mapping = self.build_mapping(shp_mapping)
 
         for feat in layer:
             try:
@@ -141,7 +143,6 @@ class Command(BaseCommand):
 
                 all_attributes = self.gather_all_attributes(layer.fields, feat)
 
-                mapping = self.build_mapping(shp_mapping)
                 kwargs = {}
                 for k, v in mapping.items():
                     # Check for static values
@@ -165,7 +166,7 @@ class Command(BaseCommand):
 
                 if parcel_count % 10000 == 0:
                     Parcel.objects.bulk_create(parcels)
-                    print('Saved {} records...'.format(parcel_count))
+                    print('Saved {} parcel records...'.format(parcel_count))
                     parcels = []
 
             except GDALException as e:
@@ -174,6 +175,74 @@ class Command(BaseCommand):
         Parcel.objects.bulk_create(parcels)
         print('Saved {} records...'.format(parcel_count))
 
+    def standardize_parcel_plats(self, workflow):
+        ''' Standardize each unique addition name, and save back to Parcel objects with that plat_name'''
+        print('Standardizing parcel plat names...')
+        parcel_additions = Parcel.objects.filter(
+            workflow=workflow).values_list('plat_name', flat=True).distinct()
+        for pa in parcel_additions:
+            print(pa)
+            Parcel.objects.filter(workflow=workflow, plat_name=pa).update(
+                plat_standardized=standardize_addition(pa))
+
+    def join_to_plats(self, workflow):
+        '''Find matching plat names based on addition value'''
+        print("Joining plats to parcel objs...")
+        plat_lookup = {p['plat_name_standardized']: p['id'] for p in Plat.objects.filter(
+            workflow=workflow).values('id', 'plat_name_standardized')}
+        plat_alternate_lookup = {p['alternate_name_standardized']: p['plat__id'] for p in PlatAlternateName.objects.filter(
+            workflow=workflow).values('plat__id', 'alternate_name_standardized')}
+
+        # Wait do we even need to do the alternate here or are we doing it twice?
+        # TODO: Attempt plat match before trying to list all join options on both sides
+        # plat match can be optional, but if it's there it can give you alternate candidates (again on both sides)
+
+        # Merge alternates into main plat lookup
+        plat_lookup.update(plat_alternate_lookup)
+
+        plat_matches = []
+        cant_match = {}
+        for parcel in Parcel.objects.filter(workflow=workflow).only('plat_standardized', 'id'):
+            try:
+                plat_id = plat_lookup[parcel.plat_standardized]
+                parcel.plat_id = plat_id
+                plat_matches.append(parcel)
+            except:
+                if parcel.plat_standardized not in cant_match:
+                    cant_match[parcel.plat_standardized] = 1
+                else:
+                    cant_match[parcel.plat_standardized] += 1
+
+        print("Can't match these additions:")
+        for plat, num_parcels in cant_match.items():
+            print(f"{plat}: {num_parcels} parcels")
+
+        print(f'\nUpdating {len(plat_matches)} Parcel objs...')
+        Parcel.objects.bulk_update(plat_matches, ['plat_id'], batch_size=5000)
+
+    def build_parcel_spatial_lookups(self, workflow):
+        print("Clearing old ParcelJoinCandidate objects...")
+        ParcelJoinCandidate.objects.filter(workflow=workflow).delete()
+
+        print('Building parcel spatial lookup options...')
+        join_cands = []
+        for parcel in Parcel.objects.filter(
+            workflow=workflow
+        ).exclude(lot__isnull=True).defer('geom_4326', 'orig_data'):
+            # First parse parcel's default addition
+            candidates, metadata = get_all_parcel_options(parcel)
+            for c in candidates:
+                # parcel_spatial_lookup[c['join_string']] = c
+                join_cands.append(ParcelJoinCandidate(
+                    workflow=workflow,
+                    parcel=parcel,
+                    plat_name_standardized=parcel.plat_standardized,
+                    join_string=c['join_string'],
+                    metadata=c['parcel_metadata']
+                ))
+
+        ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
+
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -181,15 +250,7 @@ class Command(BaseCommand):
         else:
             # This config info comes from local_settings, generally.
             self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
-            self.batch_dir = os.path.join(
-                settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
-
-            # Get workflow version from config yaml
-            workflow_version = get_workflow_version(
-                self.batch_dir, self.batch_config['config_yaml'])
-
-            workflow = ZooniverseWorkflow.objects.get(
-                workflow_name=workflow_name, version=workflow_version)
+            workflow = get_workflow_obj(workflow_name)
 
             self.shp_dir = os.path.join(
                 settings.BASE_DIR, 'data', 'shp', workflow.slug)
@@ -200,3 +261,7 @@ class Command(BaseCommand):
                 print(
                     'Beginning homegrown layermapping: {} ...'.format(local_shp))
                 self.save_parcels(workflow, local_shp, shp['mapping'])
+
+            self.standardize_parcel_plats(workflow)
+            self.join_to_plats(workflow)
+            self.build_parcel_spatial_lookups(workflow)

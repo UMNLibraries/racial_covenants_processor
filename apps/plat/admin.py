@@ -39,6 +39,8 @@ class PlatAdmin(admin.ModelAdmin):
 @admin.register(PlatAlternateName)
 class PlatAlternateNameAdmin(admin.ModelAdmin):
     list_filter = ['workflow']
+    list_display = ['alternate_name', 'plat_name', 'workflow']
     autocomplete_fields = ['plat']
     exclude = ['plat_name']
+    readonly_fields = ['alternate_name_standardized']
     search_fields = ['alternate_name', 'plat__plat_name']
