@@ -6,6 +6,7 @@ import requests
 from zipfile import ZipFile
 
 from django.core.management.base import BaseCommand
+from django.core import management
 from django.contrib.gis.gdal import DataSource, OGRGeometry, OGRGeomType
 from django.contrib.gis.gdal.error import GDALException
 from django.conf import settings
@@ -220,29 +221,6 @@ class Command(BaseCommand):
         print(f'\nUpdating {len(plat_matches)} Parcel objs...')
         Parcel.objects.bulk_update(plat_matches, ['plat_id'], batch_size=5000)
 
-    def build_parcel_spatial_lookups(self, workflow):
-        print("Clearing old ParcelJoinCandidate objects...")
-        ParcelJoinCandidate.objects.filter(workflow=workflow).delete()
-
-        print('Building parcel spatial lookup options...')
-        join_cands = []
-        for parcel in Parcel.objects.filter(
-            workflow=workflow
-        ).exclude(lot__isnull=True).defer('geom_4326', 'orig_data'):
-            # First parse parcel's default addition
-            candidates, metadata = get_all_parcel_options(parcel)
-            for c in candidates:
-                # parcel_spatial_lookup[c['join_string']] = c
-                join_cands.append(ParcelJoinCandidate(
-                    workflow=workflow,
-                    parcel=parcel,
-                    plat_name_standardized=parcel.plat_standardized,
-                    join_string=c['join_string'],
-                    metadata=c['parcel_metadata']
-                ))
-
-        ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
-
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -264,4 +242,5 @@ class Command(BaseCommand):
 
             self.standardize_parcel_plats(workflow)
             self.join_to_plats(workflow)
-            self.build_parcel_spatial_lookups(workflow)
+            management.call_command(
+                'rebuild_parcel_spatial_lookups', workflow=workflow_name)

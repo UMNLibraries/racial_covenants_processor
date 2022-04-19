@@ -46,7 +46,7 @@ def get_blocks(input_str):
             return repeated_text_num, 'repeated_text_num'
 
         # print(input_str)
-    return None, None
+    return 'none', None
 
 
 def get_lots(input_str):
@@ -124,7 +124,7 @@ def get_covenant_parcel_options(subject_obj):
     addition = standardize_addition(addition_attr)
     block, metadata['block'] = get_blocks(block_attr)
     lots, metadata['lot'] = get_lots(lot_attr)
-    if block and lots:
+    if lots:  # Allow blank lot
         for lot in lots:
             out_candidates.append(
                 {"subject_id": subject_id, "join_string": f"{addition} block {block} lot {lot}", "covenant_metadata": metadata})
@@ -150,7 +150,7 @@ def get_all_parcel_options(parcel_obj):
 
     block, metadata['block'] = get_blocks(parcel_obj.block)
     lots, metadata['lot'] = get_lots(parcel_obj.lot)
-    if block and lots:
+    if lots:
         for a in [addition] + extra_additions:
             for lot in lots:
                 out_candidates.append(
