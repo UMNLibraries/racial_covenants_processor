@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from apps.parcel.models import Parcel
-from apps.parcel.utils.parcel_utils import get_covenant_parcel_options, get_all_parcel_options, build_parcel_spatial_lookups
+from apps.parcel.utils.parcel_utils import get_covenant_parcel_options, build_parcel_spatial_lookups
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ExtraParcelCandidate
 from apps.zoon.utils.zooniverse_config import get_workflow_version
 
@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 c['match'] = True
                 c['parcel_metadata'] = lot_match['parcel_metadata']
                 subject_obj.parcel_matches.add(lot_match['parcel_id'])
-            except:
+            except KeyError as e:
                 print(f"NO MATCH: {c['join_string']}")
                 c['match'] = False
             self.match_report.append(c)
@@ -65,8 +65,6 @@ class Command(BaseCommand):
             update_objs.append(z)
         ZooniverseSubject.objects.bulk_update(
             update_objs, ['geom_union_4326'], batch_size=1000)
-
-        self.write_match_report(workflow)
 
     def write_match_report(self, workflow, bool_file=True):
         fieldnames = ['join_string', 'match', 'subject_id',
@@ -114,8 +112,8 @@ class Command(BaseCommand):
             workflow = ZooniverseWorkflow.objects.get(
                 workflow_name=workflow_name, version=workflow_version)
 
-            # Find all possible parcel lots to join
+            # Get all possible parcel lots to join
             parcel_lookup = build_parcel_spatial_lookups(workflow)
-
+            print(parcel_lookup)
             self.match_parcels_bulk(workflow, parcel_lookup)
-            self.match_parcels_bulk(workflow, parcel_lookup)
+            self.write_match_report(workflow)

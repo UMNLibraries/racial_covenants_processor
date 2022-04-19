@@ -43,11 +43,22 @@ python manage.py load_zooniverse_export --workflow "Ramsey County"
 ```
 python manage.py load_parcel_shp --workflow "Ramsey County"
 ```
+1. Load images to s3 and/or list of plats/additions to help with autojoin to Parcels and with manual research
+```
+python manage.py upload_plat_images --workflow "Ramsey County"
+python manage.py load_plat_records --workflow "Ramsey County"
+```
 1. Automated join of matches to modern parcel map
+```
+python manage.py match_parcels --workflow "Ramsey County"
+```
 1. Export list of unmatched confirmed covenants
 1. Manual (GUIish?) cleanup of bad joins, split parcels, etc.
 1. Metes and bounds manual tracing
 1. Final shapefile/data layer
+```
+python manage.py dump_covenants_shapefile --workflow "Ramsey County"
+```
 
 ## Other workflow elements
 Manual corrections are stored as separate models from the ZooniverseSubject model so edits are non-destructive and can be recreated in case of a need to re-import from Zooniverse, or can be rolled back as new information emerges.

@@ -1,8 +1,6 @@
 import re
 import inflect
 
-from apps.parcel.models import Parcel
-
 
 def check_repeated_text_num(input_str):
     # Repeated text num, e.g. "six 6" or "6 six"
@@ -140,32 +138,42 @@ def get_all_parcel_options(parcel_obj):
 
     out_candidates = []
     metadata = {'orig_filename': parcel_obj.orig_filename}
-    addition = standardize_addition(parcel_obj.plat_name)
+    # addition = standardize_addition(parcel_obj.plat_name)
+    addition = parcel_obj.plat_standardized
+
+    # Check for alternate addition spellings
+    extra_additions = []
+    if parcel_obj.plat:
+        if parcel_obj.plat.platalternatename_set.count() > 0:
+            for p in parcel_obj.plat.platalternatename_set.all():
+                extra_additions.append(p.alternate_name_standardized)
 
     block, metadata['block'] = get_blocks(parcel_obj.block)
     lots, metadata['lot'] = get_lots(parcel_obj.lot)
     if block and lots:
-        for lot in lots:
-            out_candidates.append(
-                {"parcel_id": parcel_obj.id, "join_string": f"{addition} block {block} lot {lot}", "parcel_metadata": metadata})
+        for a in [addition] + extra_additions:
+            for lot in lots:
+                out_candidates.append(
+                    {"parcel_id": parcel_obj.id, "join_string": f"{a} block {block} lot {lot}", "parcel_metadata": metadata})
+
     # print(blocks, block_style)
         return out_candidates, metadata
     return [], metadata
 
 
 def build_parcel_spatial_lookups(workflow):
+    from apps.parcel.models import ParcelJoinCandidate
     print('Gathering all parcel records from this workflow...')
     parcel_spatial_lookup = {}
 
     # Basic lots
-    for parcel in Parcel.objects.filter(
+    for candidate in ParcelJoinCandidate.objects.filter(
         workflow=workflow
-    ).exclude(lot__isnull=True).only('id', 'plat_name', 'block', 'lot', 'orig_filename'):
-        candidates, metadata = get_all_parcel_options(parcel)
-        for c in candidates:
-            parcel_spatial_lookup[c['join_string']] = c
+    ).exclude(join_string='').values('parcel__id', 'join_string', 'metadata'):
+        parcel_spatial_lookup[candidate['join_string']] = {
+            'parcel_id': candidate['parcel__id'],
+            'parcel_metadata': candidate['metadata']
+        }
 
     # TODO: How to dip into physical descriptions?
-
-    # print(parcel_spatial_lookup)
     return parcel_spatial_lookup

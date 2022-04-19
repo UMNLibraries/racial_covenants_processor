@@ -6,7 +6,7 @@ from django.utils.text import slugify
 
 from postgres_copy import CopyManager
 
-from apps.parcel.utils.parcel_utils import get_covenant_parcel_options, get_all_parcel_options, build_parcel_spatial_lookups
+from apps.parcel.utils.parcel_utils import get_covenant_parcel_options, build_parcel_spatial_lookups
 
 
 class ZooniverseWorkflow(models.Model):
