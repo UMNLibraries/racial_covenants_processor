@@ -1,0 +1,37 @@
+-   model: plat.plat
+    pk: 1
+    fields:
+        workflow: 1
+        plat_name: AMES OUT LOTS
+        plat_year: null
+        book_name: '1'
+        gov_id: null
+        plat_name_standardized: ames out lots
+-   model: plat.plat
+    pk: 2
+    fields:
+        workflow: 1
+        plat_name: ARLINGTON HILLS ADDITION TO ST. PAUL
+        plat_year: null
+        book_name: '2'
+        gov_id: null
+        plat_name_standardized: arlington hills
+-   model: plat.plat
+    pk: 3
+    fields:
+        workflow: 1
+        plat_name: F. AMB'S ADDITION TO WEST ST. PAUL
+        plat_year: null
+        book_name: '3'
+        gov_id: null
+        plat_name_standardized: f. ambs
+-   model: plat.plat
+    pk: 4
+    fields:
+        workflow: 1
+        plat_name: JOSEPH ARTH'S SUBDIVISION OF BLOCK 85 OF LYMAN DAYTON'S ADDITION
+            TO ST. PAUL
+        plat_year: null
+        book_name: '3'
+        gov_id: null
+        plat_name_standardized: joseph arths subdivision of block 85 of lyman daytons

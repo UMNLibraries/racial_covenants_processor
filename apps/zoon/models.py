@@ -78,6 +78,11 @@ class ZooniverseSubject(models.Model):
     deed_date_final = models.DateField(
         null=True, blank=True, verbose_name="Deed date")
 
+    street_address_final = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Street address")
+    city_final = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="City")
+
     parcel_matches = models.ManyToManyField('parcel.Parcel')
     # parcel_manual = models.ManyToManyField(ManualParcel)  # TODO
     bool_parcel_match = models.BooleanField(default=False)
@@ -117,6 +122,21 @@ class ZooniverseSubject(models.Model):
                 return getattr(self.manualcorrection_set.first(), attr)
         return getattr(self, attr)
 
+    def get_from_parcel_or_cx(self, attr, blank_value=""):
+        # ManualCorrection trumps value set automatically by linked parcel
+        if self.manualcorrection_set.count() > 0:
+            if getattr(self.manualcorrection_set.first(), attr) not in [None, blank_value]:
+                return getattr(self.manualcorrection_set.first(), attr)
+        # Otherwise, use parcel value if present
+        if self.parcel_matches.count() > 0:
+            output = []
+            for pm in self.parcel_matches.all():
+                value = getattr(pm, attr)
+                if value not in [None, blank_value]:
+                    output.append(getattr(pm, attr))
+            return '; '.join(output)
+        return None
+
     def get_final_values(self):
         self.check_bool_manual_update()
         self.bool_covenant_final = self.get_final_value('bool_covenant')
@@ -127,6 +147,9 @@ class ZooniverseSubject(models.Model):
         self.seller_final = self.get_final_value('seller')
         self.buyer_final = self.get_final_value('buyer')
         self.deed_date_final = self.get_final_value('deed_date', None)
+        self.street_address_final = self.get_from_parcel_or_cx(
+            'street_address')
+        self.city_final = self.get_from_parcel_or_cx('city')
 
     def check_parcel_match(self):
         self.parcel_matches.clear()
@@ -276,6 +299,9 @@ class ManualCorrection(models.Model):
     seller = models.CharField(max_length=100, null=True, blank=True)
     buyer = models.CharField(max_length=100, null=True, blank=True)
     deed_date = models.DateField(null=True, blank=True)
+
+    street_address = models.CharField(max_length=255, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
 
     date_added = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
