@@ -1,0 +1,6 @@
+-   model: zoon.zooniverseworkflow
+    pk: 1
+    fields:
+        zoon_id: 13143
+        workflow_name: Ramsey County
+        version: 4.1
