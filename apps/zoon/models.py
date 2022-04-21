@@ -341,6 +341,7 @@ class ExtraParcelCandidate(models.Model):
         self.zoon_workflow_id = self.zooniverse_subject.workflow.zoon_id
         self.zoon_subject_id = self.zooniverse_subject.zoon_subject_id
         super(ExtraParcelCandidate, self).save(*args, **kwargs)
+        self.zooniverse_subject.save()
 
 
 @receiver(models.signals.post_delete, sender=ManualCorrection)
