@@ -54,6 +54,8 @@ def get_blocks(input_str):
 
 def get_lots(input_str):
     if input_str:
+        input_str = input_str.strip()
+
         if re.match(r'none', input_str, flags=re.IGNORECASE):
             return None, None
 
@@ -72,6 +74,12 @@ def get_lots(input_str):
         repeated_text_num = check_repeated_text_num(input_str)
         if repeated_text_num:
             return [repeated_text_num], 'repeated_text_num'
+
+        num_range = re.search(r'^(\d+)-(\d+)$', input_str)
+        if num_range:
+            start = int(num_range.group(1))
+            end = int(num_range.group(2))
+            return list(range(start, end+1)), 'num_range'
 
         list_of_nums_preprocess = input_str.replace(', & ', ',').replace(' & ', ',').replace(', and', ',').replace(
             ' and ', ',').replace(', ', ',')

@@ -1,10 +1,10 @@
 from django.test import TestCase
 from apps.zoon.models import ZooniverseSubject
 
-from apps.parcel.utils.parcel_utils import get_blocks, write_join_strings
+from apps.parcel.utils.parcel_utils import get_blocks, get_lots, write_join_strings
 
 
-class PlatTests(TestCase):
+class JoinStringTests(TestCase):
     fixtures = ['plat', 'zoon']
 
     def test_get_blocks_none_text(self):
@@ -23,6 +23,26 @@ class PlatTests(TestCase):
         """Does get_blocks give expected output for None as 'none'?"""
         block, block_meta = get_blocks(None)
         self.assertEquals(block, 'none')
+
+    def test_lot_range(self):
+        """Does get_lots render '1-20' as list [1,2,3,...20]"""
+        lots, lots_meta = get_lots("1-20")
+        self.assertEquals(lots, list(range(1,21)))
+
+    def test_lot_bad_range_start(self):
+        """Does get_lots render 'x1-20' None"""
+        lots, lots_meta = get_lots("x1-20")
+        self.assertEquals(lots, None)
+
+    def test_lot_bad_range_end(self):
+        """Does get_lots render '1-20x' as None"""
+        lots, lots_meta = get_lots("1-20x")
+        self.assertEquals(lots, None)
+
+    def test_lot_bad_range_letter(self):
+        """Does get_lots render '1x-20' as None"""
+        lots, lots_meta = get_lots("1x-20")
+        self.assertEquals(lots, None)
 
     def test_write_join_strings_basic(self):
         addition = "JANE'S ADDITION"
