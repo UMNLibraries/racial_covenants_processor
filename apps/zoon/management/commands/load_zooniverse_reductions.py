@@ -7,7 +7,6 @@ from sqlalchemy import create_engine
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from apps.zoon.models import ReducedResponse_Question, ReducedResponse_Text
 from apps.zoon.utils.zooniverse_config import parse_config_yaml
 
 

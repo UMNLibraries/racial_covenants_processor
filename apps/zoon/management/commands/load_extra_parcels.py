@@ -1,13 +1,5 @@
-import os
-import datetime
-import pandas as pd
-
-from django.db.models import F
-from django.utils.text import slugify
 from django.core import management
 from django.core.management.base import BaseCommand
-
-from django.conf import settings
 
 from apps.zoon.models import ExtraParcelCandidate
 

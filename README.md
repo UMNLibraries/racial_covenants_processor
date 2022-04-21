@@ -63,19 +63,22 @@ python manage.py dump_covenants_shapefile --workflow "Ramsey County"
 ```
 
 ## Other workflow elements
-Manual corrections are stored as separate models from the ZooniverseSubject model so edits are non-destructive and can be recreated in case of a need to re-import from Zooniverse, or can be rolled back as new information emerges.
+Manual corrections, extra parcel records and alternate names for plats are stored as separate models from the ZooniverseSubject model so edits are non-destructive and can be recreated in case of a need to re-import from Zooniverse, or can be rolled back as new information emerges.
 ```
-# To archive manual corrections in a CSV for later re-import:
+# To archive manual entries in a CSV for later re-import:
 python manage.py dump_manual_corrections --workflow "Ramsey County"
 python manage.py dump_extra_parcels --workflow "Ramsey County"
+python manage.py dump_plat_alternate_names --workflow "Ramsey County"
 
-# To re-import a ManualCorrection csv export:
+# To re-import a those manual entries from csv export:
 python manage.py load_manual_corrections --workflow "Ramsey County" --infile relative/path/to/file
 python manage.py load_extra_parcels --workflow "Ramsey County" --infile relative/path/to/file
+python manage.py load_plat_alternate_names --workflow "Ramsey County" --infile relative/path/to/file
 
-# To manually re-join corrections to subjects (mostly you will never run this, it's run as a part of other scripts)
+# To manually re-join corrections to subjects/plats (mostly you will never run these, which are run as a part of the previous "load" scripts)
 python manage.py connect_manual_corrections --workflow "Ramsey County"
 python manage.py connect_extra_parcels --workflow "Ramsey County"
+python manage.py connect_plat_alternate_names --workflow "Ramsey County"
 ```
 
 ## Django installation process

@@ -6,6 +6,7 @@ from django.db.models import F
 from apps.parcel.utils.parcel_utils import standardize_addition, get_all_parcel_options
 from racial_covenants_processor.storage_backends import PrivateMediaStorage
 
+from postgres_copy import CopyManager
 
 class Plat(models.Model):
     workflow = models.ForeignKey(
@@ -52,15 +53,23 @@ class PlatAlternateName(models.Model):
     workflow = models.ForeignKey(
         'zoon.ZooniverseWorkflow', null=True, on_delete=models.SET_NULL)
     plat = models.ForeignKey(Plat, null=True, on_delete=models.SET_NULL)
+
+    # These are kept separate of the foreign key relationship in case this needs to be reconnected later
+    zoon_workflow_id = models.IntegerField(
+        db_index=True, null=True, blank=True)
     plat_name = models.CharField(
         max_length=255, db_index=True, null=True, blank=True)
+
     alternate_name = models.CharField(max_length=255, db_index=True, null=True)
     alternate_name_standardized = models.CharField(
         max_length=255, db_index=True, null=True)
 
+    objects = CopyManager()
+
     def save(self, *args, **kwargs):
         from apps.parcel.models import Parcel, ParcelJoinCandidate
         self.plat_name = self.plat.plat_name
+        self.zoon_workflow_id = self.plat.workflow.zoon_id
         self.alternate_name_standardized = standardize_addition(
             self.alternate_name)
 
@@ -83,7 +92,7 @@ class PlatAlternateName(models.Model):
         # update parcel candidates for all parcels in this plat
         join_cands = []
         for parcel in plat_parcels:
-            candidates, metadata = get_all_parcel_options(parcel)
+            candidates = get_all_parcel_options(parcel)
             for c in candidates:
                 # parcel_spatial_lookup[c['join_string']] = c
                 join_cands.append(ParcelJoinCandidate(
@@ -91,7 +100,7 @@ class PlatAlternateName(models.Model):
                     parcel=parcel,
                     plat_name_standardized=parcel.plat_standardized,
                     join_string=c['join_string'],
-                    metadata=c['parcel_metadata']
+                    metadata=c['metadata']
                 ))
         ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
 
