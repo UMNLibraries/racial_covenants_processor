@@ -48,7 +48,6 @@ def get_blocks(input_str):
         if str(input_str).lower() == 'none':
             return 'none', 'no_block'
 
-        # print(input_str)
         return input_str, None
     return 'none', 'no_block'
 
@@ -80,7 +79,6 @@ def get_lots(input_str):
         if list_of_nums:
             return sorted(set(list_of_nums_preprocess.split(','))), 'list_of_nums'
 
-    # print(f"{input_str}")
     return None, None
 
 
@@ -145,19 +143,6 @@ def get_covenant_parcel_options(subject_obj):
         candidate['subject_id'] = subject_id
     return join_strings
 
-    # out_candidates = []
-    # metadata = {}
-    # addition = standardize_addition(addition_attr)
-    # block, metadata['block'] = get_blocks(block_attr)
-    # lots, metadata['lot'] = get_lots(lot_attr)
-    # if lots:  # Allow blank lot
-    #     for lot in lots:
-    #         out_candidates.append(
-    #             {"subject_id": subject_id, "join_string": f"{addition} block {block} lot {lot}", "covenant_metadata": metadata})
-    # # print(blocks, block_style)
-    #     return out_candidates, metadata
-    # return [], metadata
-
 
 def get_all_parcel_options(parcel_obj):
     '''Get all possibilities for this Parcel that can be attempted to be mapped, and characterize the number of lots found and if they are the entire lot or a component'''
@@ -178,25 +163,9 @@ def get_all_parcel_options(parcel_obj):
     for a in [addition] + extra_additions:
         join_strings += write_join_strings(a, parcel_obj.block, parcel_obj.lot)
 
-    # block, metadata['block'] = get_blocks(parcel_obj.block)
-    # lots, metadata['lot'] = get_lots(parcel_obj.lot)
-    # if lots:
-    #     join_strings = []
-
-
-            # join_strings += write_join_strings(addition_attr, block_attr, lot_attr)
-
     for candidate in join_strings:
         candidate['parcel_id'] = parcel_obj.id
     return join_strings
-
-            # for lot in lots:
-            #     out_candidates.append(
-            #         {"parcel_id": parcel_obj.id, "join_string": f"{a} block {block} lot {lot}", "parcel_metadata": metadata})
-
-    # print(blocks, block_style)
-    #     return out_candidates, metadata
-    # return [], metadata
 
 
 def build_parcel_spatial_lookups(workflow):

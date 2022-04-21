@@ -49,13 +49,9 @@ class Command(BaseCommand):
         ).order_by('addition_final'):
             self.match_parcel(parcel_lookup, covenant, covenant)
 
-        # print('Attempting to auto-join extra parcel candidates...')
-        # for extra_parcel in ExtraParcelCandidate.objects.all():
-        #     self.match_parcel(parcel_lookup, extra_parcel,
-        #                       extra_parcel.zooniverse_subject)
-
         matched_qs = ZooniverseSubject.objects.filter(
             pk__in=[c['subject_id'] for c in self.matched_lots])
+
         # Update boolean for subjects with matching parcels in bulk
         matched_qs.update(bool_parcel_match=True)
 
@@ -89,8 +85,6 @@ class Command(BaseCommand):
         ).count()
 
         print(f"{cov_count} covenant subjects")
-
-        # print(self.match_report)
 
         matched_lots = [s for s in self.match_report if s['match'] is True]
         matched_subjects = set([s['subject_id'] for s in matched_lots])
