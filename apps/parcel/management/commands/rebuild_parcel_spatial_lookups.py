@@ -25,7 +25,7 @@ class Command(BaseCommand):
             workflow=workflow
         ).exclude(lot__isnull=True).defer('geom_4326', 'orig_data'):
             # First parse parcel's default addition
-            candidates, metadata = get_all_parcel_options(parcel)
+            candidates = get_all_parcel_options(parcel)
             for c in candidates:
                 # parcel_spatial_lookup[c['join_string']] = c
                 join_cands.append(ParcelJoinCandidate(
@@ -33,7 +33,7 @@ class Command(BaseCommand):
                     parcel=parcel,
                     plat_name_standardized=parcel.plat_standardized,
                     join_string=c['join_string'],
-                    metadata=c['parcel_metadata']
+                    metadata=c['metadata']
                 ))
 
         ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)

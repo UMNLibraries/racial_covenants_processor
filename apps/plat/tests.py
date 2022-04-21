@@ -17,3 +17,5 @@ class PlatTests(TestCase):
         s = Plat.objects.get(plat_name="F. AMB'S ADDITION TO WEST ST. PAUL")
         self.assertEquals(s.plat_name_standardized,
                           standardize_addition(s.plat_name))
+
+    #TODO: tests for plat extra addition candidates

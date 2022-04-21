@@ -12,6 +12,7 @@ from django.conf import settings
 
 from apps.zoon.models import ZooniverseResponseRaw, ZooniverseResponseProcessed, ZooniverseWorkflow, ZooniverseSubject, ReducedResponse_Question, ReducedResponse_Text
 from apps.zoon.utils.zooniverse_config import get_workflow_version
+from apps.parcel.utils.parcel_utils import write_join_strings
 
 
 class Command(BaseCommand):
@@ -255,6 +256,10 @@ class Command(BaseCommand):
         final_df.loc[final_df['bool_covenant']
                      == "No", 'bool_covenant'] = False
 
+        # Set beginning join_strings
+        final_df['join_candidates'] = final_df.apply(
+            self.get_join_candidates, axis=1)
+
         # Fill NAs in text fields with empty strings
         string_fields = ['covenant_text', 'addition',
                          'lot', 'block', 'seller', 'buyer']
@@ -268,6 +273,9 @@ class Command(BaseCommand):
         print('Sending consolidated subject results to Django ...')
         final_df.to_sql('zoon_zooniversesubject',
                         if_exists='append', index=False, con=sa_engine)
+
+    def get_join_candidates(self, row):
+        return write_join_strings(row['addition'], row['block'], row['lot'])
 
     def anno_accessor(self, input_obj, q_id):
         try:

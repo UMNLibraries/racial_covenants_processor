@@ -6,7 +6,7 @@ from django.utils.text import slugify
 
 from postgres_copy import CopyManager
 
-from apps.parcel.utils.parcel_utils import get_covenant_parcel_options, build_parcel_spatial_lookups
+from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_all_covenant_candidates
 
 
 class ZooniverseWorkflow(models.Model):
@@ -78,14 +78,15 @@ class ZooniverseSubject(models.Model):
     deed_date_final = models.DateField(
         null=True, blank=True, verbose_name="Deed date")
 
-    street_address_final = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name="Street address")
+    street_address_final = models.TextField(null=True, blank=True, verbose_name="Street address")
     city_final = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name="City")
+        max_length=500, null=True, blank=True, verbose_name="City")
 
     parcel_matches = models.ManyToManyField('parcel.Parcel')
     # parcel_manual = models.ManyToManyField(ManualParcel)  # TODO
     bool_parcel_match = models.BooleanField(default=False)
+
+    join_candidates = models.JSONField(null=True, blank=True)
 
     # Union of any joined parcels
     geom_union_4326 = models.MultiPolygonField(
@@ -95,6 +96,10 @@ class ZooniverseSubject(models.Model):
 
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"
+
+    @property
+    def join_strings(self):
+        return "; ".join([c['join_string'] for c in self.join_candidates])
 
     def get_geom_union(self):
         union = self.parcel_matches.all().aggregate(union=Union('geom_4326'))
@@ -128,13 +133,13 @@ class ZooniverseSubject(models.Model):
             if getattr(self.manualcorrection_set.first(), attr) not in [None, blank_value]:
                 return getattr(self.manualcorrection_set.first(), attr)
         # Otherwise, use parcel value if present
-        if self.parcel_matches.count() > 0:
+        if self.bool_parcel_match:
             output = []
             for pm in self.parcel_matches.all():
                 value = getattr(pm, attr)
                 if value not in [None, blank_value]:
                     output.append(getattr(pm, attr))
-            return '; '.join(output)
+            return '; '.join(sorted(set(output)))
         return None
 
     def get_final_values(self):
@@ -147,19 +152,24 @@ class ZooniverseSubject(models.Model):
         self.seller_final = self.get_final_value('seller')
         self.buyer_final = self.get_final_value('buyer')
         self.deed_date_final = self.get_final_value('deed_date', None)
+
         self.street_address_final = self.get_from_parcel_or_cx(
             'street_address')
         self.city_final = self.get_from_parcel_or_cx('city')
 
     def check_parcel_match(self):
         self.parcel_matches.clear()
+        self.bool_parcel_match = False
         parcel_lookup = None
+        join_strings = []
         # Main parcel
         if self.lot_final != '':
             parcel_lookup = build_parcel_spatial_lookups(self.workflow)
-            candidates, metadata = get_covenant_parcel_options(self)
+            self.join_candidates = gather_all_covenant_candidates(self)
+            print(self.join_candidates)
 
-            for c in candidates:
+            for c in self.join_candidates:
+                join_strings.append(c['join_string'])
                 try:
                     lot_match = parcel_lookup[c['join_string']]
                     print(f"MATCH: {c['join_string']}")
@@ -168,23 +178,6 @@ class ZooniverseSubject(models.Model):
                     self.bool_parcel_match = True
                 except:
                     print(f"NO MATCH: {c['join_string']}")
-
-        # Check for extra parcels
-        if self.extraparcelcandidate_set.count() > 0:
-            if not parcel_lookup:
-                parcel_lookup = build_parcel_spatial_lookups(self.workflow)
-            for extra_parcel in self.extraparcelcandidate_set.all():
-                candidates, metadata = get_covenant_parcel_options(
-                    extra_parcel)
-
-                for c in candidates:
-                    try:
-                        lot_match = parcel_lookup[c['join_string']]
-                        print(f"MATCH: {c['join_string']}")
-
-                        self.parcel_matches.add(lot_match['parcel_id'])
-                    except:
-                        print(f"NO MATCH: {c['join_string']}")
 
     def save(self, *args, **kwargs):
         self.get_final_values()

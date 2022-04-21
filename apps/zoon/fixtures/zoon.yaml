@@ -4,3 +4,29 @@
         zoon_id: 13143
         workflow_name: Ramsey County
         version: 4.1
+
+-   model: zoon.zooniversesubject
+    pk: 1
+    fields:
+        workflow: 1
+        zoon_subject_id: 1
+        bool_covenant_final: True
+        covenant_text_final: This is sample covenant text
+        addition_final: JANE'S ADDITION
+        image_ids: ''
+        lot_final: One (1)
+        block_final: NONE
+        bool_parcel_match: True
+
+-   model: zoon.zooniversesubject
+    pk: 2
+    fields:
+        workflow: 1
+        zoon_subject_id: 2
+        bool_covenant_final: True
+        covenant_text_final: This is sample covenant text
+        addition_final: JANE'S ADDITION
+        image_ids: ''
+        lot_final: One (1)
+        block_final: nonsense
+        bool_parcel_match: True
