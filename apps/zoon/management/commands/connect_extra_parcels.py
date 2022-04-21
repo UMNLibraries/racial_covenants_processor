@@ -1,11 +1,8 @@
-import os
-
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from django.db.models import Subquery, OuterRef, F
 
-from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ExtraParcelCandidate
-from apps.zoon.utils.zooniverse_config import get_workflow_version
+from apps.zoon.models import ZooniverseSubject, ExtraParcelCandidate
+from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
 class Command(BaseCommand):
@@ -44,16 +41,6 @@ class Command(BaseCommand):
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
-            # This config info comes from local_settings, generally.
-            self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
-            self.batch_dir = os.path.join(
-                settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
-
-            # Get workflow version from config yaml
-            workflow_version = get_workflow_version(
-                self.batch_dir, self.batch_config['config_yaml'])
-
-            workflow = ZooniverseWorkflow.objects.get(
-                workflow_name=workflow_name, version=workflow_version)
+            workflow = get_workflow_obj(workflow_name)
 
             self.reconnect_extra_parcels(workflow)

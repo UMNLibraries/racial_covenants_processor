@@ -1,14 +1,12 @@
 import os
-import json
 import datetime
 import pandas as pd
-from sqlalchemy import create_engine
 
 from django.core.management.base import BaseCommand
 from django.db.models import F
 from django.conf import settings
 
-from apps.zoon.models import ZooniverseSubject, ReducedResponse_Question, ReducedResponse_Text
+from apps.zoon.models import ZooniverseSubject
 
 
 class Command(BaseCommand):
@@ -16,7 +14,8 @@ class Command(BaseCommand):
     batch_config = None  # Set in handle
 
     def add_arguments(self, parser):
-        parser.add_argument('-w', '--workflow', type=str, help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
+        parser.add_argument('-w', '--workflow', type=str,
+                            help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -35,6 +34,7 @@ class Command(BaseCommand):
 
             print(subjects_df)
 
-            outfile = os.path.join(settings.BASE_DIR, 'data', 'analysis', f'ramsey_subjects_merged_zooniverse_{datetime.datetime.now().date()}.csv')
+            outfile = os.path.join(settings.BASE_DIR, 'data', 'analysis',
+                                   f'ramsey_subjects_merged_zooniverse_{datetime.datetime.now().date()}.csv')
             print(outfile)
             subjects_df.to_csv(outfile, index=False)
