@@ -44,6 +44,5 @@ jobs:
         pipenv install
     - name: Run Tests
       run: |
-        pipenv shell
-        python manage.py test apps.plat
-        python manage.py test apps.parcel
+        pipenv run python manage.py test apps.plat
+        pipenv run python manage.py test apps.parcel
