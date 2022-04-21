@@ -1,4 +1,3 @@
-import re
 import os
 import csv
 import sys
@@ -7,10 +6,9 @@ import datetime
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from apps.parcel.models import Parcel
-from apps.parcel.utils.parcel_utils import get_covenant_parcel_options, build_parcel_spatial_lookups
-from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ExtraParcelCandidate
-from apps.zoon.utils.zooniverse_config import get_workflow_version
+from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups
+from apps.zoon.models import ZooniverseSubject
+from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
 class Command(BaseCommand):
@@ -25,16 +23,19 @@ class Command(BaseCommand):
 
     def match_parcel(self, parcel_lookup, target_obj, subject_obj):
         ''' Separate subject necessary because you also have to run this on the ExtraParcelCandidate objects and then link the result to its subject'''
-        candidates, metadata = get_covenant_parcel_options(target_obj)
+        # candidates = get_covenant_parcel_options(target_obj)
+        candidates = target_obj.join_candidates
         for c in candidates:
             try:
                 lot_match = parcel_lookup[c['join_string']]
                 print(f"MATCH: {c['join_string']}")
-                self.matched_lots.append(c)
 
                 c['match'] = True
                 c['parcel_metadata'] = lot_match['parcel_metadata']
+
                 subject_obj.parcel_matches.add(lot_match['parcel_id'])
+                self.matched_lots.append(c)
+
             except KeyError as e:
                 print(f"NO MATCH: {c['join_string']}")
                 c['match'] = False
@@ -48,10 +49,10 @@ class Command(BaseCommand):
         ).order_by('addition_final'):
             self.match_parcel(parcel_lookup, covenant, covenant)
 
-        print('Attempting to auto-join extra parcel candidates...')
-        for extra_parcel in ExtraParcelCandidate.objects.all():
-            self.match_parcel(parcel_lookup, extra_parcel,
-                              extra_parcel.zooniverse_subject)
+        # print('Attempting to auto-join extra parcel candidates...')
+        # for extra_parcel in ExtraParcelCandidate.objects.all():
+        #     self.match_parcel(parcel_lookup, extra_parcel,
+        #                       extra_parcel.zooniverse_subject)
 
         matched_qs = ZooniverseSubject.objects.filter(
             pk__in=[c['subject_id'] for c in self.matched_lots])
@@ -68,7 +69,7 @@ class Command(BaseCommand):
 
     def write_match_report(self, workflow, bool_file=True):
         fieldnames = ['join_string', 'match', 'subject_id',
-                      'covenant_metadata', 'parcel_metadata']
+                      'metadata', 'parcel_metadata']
 
         if bool_file:
             timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%m')
@@ -89,6 +90,8 @@ class Command(BaseCommand):
 
         print(f"{cov_count} covenant subjects")
 
+        # print(self.match_report)
+
         matched_lots = [s for s in self.match_report if s['match'] is True]
         matched_subjects = set([s['subject_id'] for s in matched_lots])
 
@@ -102,15 +105,7 @@ class Command(BaseCommand):
         else:
             # This config info comes from local_settings, generally.
             self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
-            self.batch_dir = os.path.join(
-                settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
-
-            # Get workflow version from config yaml
-            workflow_version = get_workflow_version(
-                self.batch_dir, self.batch_config['config_yaml'])
-
-            workflow = ZooniverseWorkflow.objects.get(
-                workflow_name=workflow_name, version=workflow_version)
+            workflow = get_workflow_obj(workflow_name)
 
             # Get all possible parcel lots to join
             parcel_lookup = build_parcel_spatial_lookups(workflow)

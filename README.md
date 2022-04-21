@@ -51,6 +51,7 @@ python manage.py load_plat_records --workflow "Ramsey County"
 1. Automated join of matches to modern parcel map
 ```
 python manage.py rebuild_parcel_spatial_lookups --workflow "Ramsey County"
+python manage.py rebuild_covenant_spatial_lookups --workflow "Ramsey County"
 python manage.py match_parcels --workflow "Ramsey County"
 ```
 1. Export list of unmatched confirmed covenants

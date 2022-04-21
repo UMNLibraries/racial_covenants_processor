@@ -45,8 +45,12 @@ def get_blocks(input_str):
         if repeated_text_num:
             return repeated_text_num, 'repeated_text_num'
 
+        if str(input_str).lower() == 'none':
+            return 'none', 'no_block'
+
         # print(input_str)
-    return 'none', None
+        return input_str, None
+    return 'none', 'no_block'
 
 
 def get_lots(input_str):
@@ -74,7 +78,7 @@ def get_lots(input_str):
             ' and ', ',').replace(', ', ',')
         list_of_nums = re.match(r'^[\d,]+$', list_of_nums_preprocess)
         if list_of_nums:
-            return set(list_of_nums_preprocess.split(',')), 'list_of_nums'
+            return sorted(set(list_of_nums_preprocess.split(','))), 'list_of_nums'
 
     # print(f"{input_str}")
     return None, None
@@ -101,6 +105,22 @@ def standardize_addition(input_str):
     return ''
 
 
+def write_join_strings(addition_raw, block_raw, lot_raw):
+    '''More low-level, to generate the actual string, using string values'''
+    out_candidates = []
+    metadata = {}
+    addition = standardize_addition(addition_raw)
+    block, metadata['block'] = get_blocks(block_raw)
+    lots, metadata['lot'] = get_lots(lot_raw)
+    if lots:  # Allow blank lot
+        for lot in lots:
+            out_candidates.append(
+                {"join_string": f"{addition} block {block} lot {lot}", "metadata": metadata})
+    # print(blocks, block_style)
+        return out_candidates
+    return []
+
+
 def get_covenant_parcel_options(subject_obj):
     '''Get all possibilities for this ZooniverseSubject or ExtraParcelCandidate
     that can be attempted to be mapped,
@@ -119,18 +139,24 @@ def get_covenant_parcel_options(subject_obj):
     else:
         subject_id = subject_obj.id
 
-    out_candidates = []
-    metadata = {}
-    addition = standardize_addition(addition_attr)
-    block, metadata['block'] = get_blocks(block_attr)
-    lots, metadata['lot'] = get_lots(lot_attr)
-    if lots:  # Allow blank lot
-        for lot in lots:
-            out_candidates.append(
-                {"subject_id": subject_id, "join_string": f"{addition} block {block} lot {lot}", "covenant_metadata": metadata})
-    # print(blocks, block_style)
-        return out_candidates, metadata
-    return [], metadata
+    join_strings = write_join_strings(addition_attr, block_attr, lot_attr)
+
+    for candidate in join_strings:
+        candidate['subject_id'] = subject_id
+    return join_strings
+
+    # out_candidates = []
+    # metadata = {}
+    # addition = standardize_addition(addition_attr)
+    # block, metadata['block'] = get_blocks(block_attr)
+    # lots, metadata['lot'] = get_lots(lot_attr)
+    # if lots:  # Allow blank lot
+    #     for lot in lots:
+    #         out_candidates.append(
+    #             {"subject_id": subject_id, "join_string": f"{addition} block {block} lot {lot}", "covenant_metadata": metadata})
+    # # print(blocks, block_style)
+    #     return out_candidates, metadata
+    # return [], metadata
 
 
 def get_all_parcel_options(parcel_obj):
@@ -148,17 +174,29 @@ def get_all_parcel_options(parcel_obj):
             for p in parcel_obj.plat.platalternatename_set.all():
                 extra_additions.append(p.alternate_name_standardized)
 
-    block, metadata['block'] = get_blocks(parcel_obj.block)
-    lots, metadata['lot'] = get_lots(parcel_obj.lot)
-    if lots:
-        for a in [addition] + extra_additions:
-            for lot in lots:
-                out_candidates.append(
-                    {"parcel_id": parcel_obj.id, "join_string": f"{a} block {block} lot {lot}", "parcel_metadata": metadata})
+    join_strings = []
+    for a in [addition] + extra_additions:
+        join_strings += write_join_strings(a, parcel_obj.block, parcel_obj.lot)
+
+    # block, metadata['block'] = get_blocks(parcel_obj.block)
+    # lots, metadata['lot'] = get_lots(parcel_obj.lot)
+    # if lots:
+    #     join_strings = []
+
+
+            # join_strings += write_join_strings(addition_attr, block_attr, lot_attr)
+
+    for candidate in join_strings:
+        candidate['parcel_id'] = parcel_obj.id
+    return join_strings
+
+            # for lot in lots:
+            #     out_candidates.append(
+            #         {"parcel_id": parcel_obj.id, "join_string": f"{a} block {block} lot {lot}", "parcel_metadata": metadata})
 
     # print(blocks, block_style)
-        return out_candidates, metadata
-    return [], metadata
+    #     return out_candidates, metadata
+    # return [], metadata
 
 
 def build_parcel_spatial_lookups(workflow):
@@ -177,3 +215,12 @@ def build_parcel_spatial_lookups(workflow):
 
     # TODO: How to dip into physical descriptions?
     return parcel_spatial_lookup
+
+
+def gather_all_covenant_candidates(subject_obj):
+    candidates = get_covenant_parcel_options(subject_obj)
+    if subject_obj.extraparcelcandidate_set.count() > 0:
+        for extra_parcel in subject_obj.extraparcelcandidate_set.all():
+            candidates += get_covenant_parcel_options(extra_parcel)
+
+    return list({v['join_string']:v for v in candidates}.values())

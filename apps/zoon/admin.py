@@ -115,7 +115,7 @@ class SubjectAdmin(admin.ModelAdmin):
                      'addition_final', 'covenant_text', 'covenant_text_final']
 
     list_display = ('__str__', 'bool_covenant_final', 'bool_parcel_match', 'median_score', 'bool_problem',
-                    'addition_final', 'lot_final', 'block_final', 'deed_date_final', 'bool_manual_correction')
+                    'addition_final', 'block_final', 'lot_final', 'deed_date_final', 'bool_manual_correction')
 
     list_filter = (
         'workflow__workflow_name',
@@ -147,6 +147,7 @@ class SubjectAdmin(admin.ModelAdmin):
                 'seller_final',
                 'buyer_final',
                 'deed_date_final',
+                'join_strings',
                 'bool_manual_correction'
             )
         }),
@@ -188,6 +189,7 @@ class SubjectAdmin(admin.ModelAdmin):
         'bool_parcel_match',
         'geom_union_4326',
         'zoon_subject_id',
+        'join_strings',
         'bool_manual_correction',
         'bool_covenant_final',
         'covenant_text_final',
