@@ -33,12 +33,11 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install gdal and postgis
+    - name: Install gdal
       run: |
         sudo apt-add-repository ppa:ubuntugis
         sudo apt update
         sudo apt install gdal-bin libgdal-dev
-        sudo apt install postgresql-10-postgis-scripts
     - name: Install Dependencies with pipenv
       run: |
         pip install pipenv
