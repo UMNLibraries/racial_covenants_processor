@@ -72,9 +72,14 @@ class Command(BaseCommand):
             bool_manual_correction=True
         )
 
+        manually_cxed_subjects = ManualCorrection.objects.filter(
+            workflow=workflow
+        ).values_list('zoon_subject_id', flat=True)
+
         ZooniverseSubject.objects.filter(
             workflow=workflow,
-            manualcorrection__bool_covenant__isnull=False
+            zoon_subject_id__in=manually_cxed_subjects
+            # manualcorrection__bool_covenant__isnull=False
         ).update(
             bool_covenant_final=Subquery(
                 ManualCorrection.objects.filter(

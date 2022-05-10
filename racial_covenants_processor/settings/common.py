@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-hzse32*#gs73ew9re9$-5@yz0l5n2n(_tq_kv56-d4o2#ziy&2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -50,6 +50,7 @@ INSTALLED_APPS = ['apps.deed',
                   ]
 
 MIDDLEWARE = [
+    'racial_covenants_processor.middleware.HealthCheckMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

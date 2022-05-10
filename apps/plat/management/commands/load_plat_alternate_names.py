@@ -1,11 +1,11 @@
 from django.core import management
 from django.core.management.base import BaseCommand
 
-from apps.zoon.models import ManualCorrection
+from apps.plat.models import PlatAlternateName
 
 
 class Command(BaseCommand):
-    '''Load a downloaded CSV of ManualCorrection objects into the database and join to ZooniverseSubjects.'''
+    '''Load a downloaded CSV of PlatAlternateName objects into the database and join to Plats.'''
 
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
@@ -26,30 +26,21 @@ class Command(BaseCommand):
             return False
         else:
 
-            print("Loading manual corrections...")
+            print("Loading plat alternate names...")
 
             # Make custom mapping from model fields to drop IP column
             mapping = {
                 # model: csv
-                'zoon_subject_id': 'zoon_subject_id',
                 'zoon_workflow_id': 'zoon_workflow_id',
-                'bool_covenant': 'bool_covenant',
-                'covenant_text': 'covenant_text',
-                'addition': 'addition',
-                'lot': 'lot',
-                'block': 'block',
-                'seller': 'seller',
-                'buyer': 'buyer',
-                'deed_date': 'deed_date',
-                'date_added': 'date_added',
-                'date_updated': 'date_updated',
-                'comments': 'comments',
+                'plat_name': 'plat_name',
+                'alternate_name': 'alternate_name',
+                'alternate_name_standardized': 'alternate_name_standardized',
             }
 
-            insert_count = ManualCorrection.objects.from_csv(
+            insert_count = PlatAlternateName.objects.from_csv(
                 infile, mapping=mapping)
             print("{} records inserted".format(insert_count))
 
             # Handle reducer output to develop consensus answers
             management.call_command(
-                'connect_manual_corrections', workflow=workflow_name)
+                'connect_plat_alternate_names', workflow=workflow_name)

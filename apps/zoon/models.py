@@ -99,7 +99,9 @@ class ZooniverseSubject(models.Model):
 
     @property
     def join_strings(self):
-        return "; ".join([c['join_string'] for c in self.join_candidates])
+        if self.join_candidates:
+            return "; ".join([c['join_string'] for c in self.join_candidates])
+        return None
 
     def get_geom_union(self):
         union = self.parcel_matches.all().aggregate(union=Union('geom_4326'))

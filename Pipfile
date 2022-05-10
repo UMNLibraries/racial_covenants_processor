@@ -21,6 +21,8 @@ django-localflavor = "*"
 inflect = "*"
 pyproj = "*"
 boto3 = "*"
+gunicorn = "*"
+click = "*"
 
 [dev-packages]
 csvkit = "*"
