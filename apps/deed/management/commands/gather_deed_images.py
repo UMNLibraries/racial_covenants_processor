@@ -20,23 +20,8 @@ class Command(BaseCommand):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
-    # def get_workflow(self, workflow_name):
-    #     self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
-    #
-    #     self.batch_dir = os.path.join(
-    #         settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
-    #
-    #     # Get workflow version from config yaml
-    #     workflow_version = get_workflow_version(
-    #         self.batch_dir, self.batch_config['config_yaml'])
-    #
-    #     workflow = ZooniverseWorkflow.objects.get(
-    #         workflow_name=workflow_name,
-    #         version=workflow_version
-    #     )
-    #     return workflow
-
     def find_matching_keys(self, workflow):
+        print("Finding matching s3 keys...")
         # Then use the session to get the resource
         s3 = self.session.resource('s3')
 
@@ -44,7 +29,8 @@ class Command(BaseCommand):
 
         key_filter = re.compile(f"web/{workflow.slug}/.+\.jpg")
 
-        matching_keys = [obj.key for obj in my_bucket.objects.all(
+        matching_keys = [obj.key for obj in my_bucket.objects.filter(
+            Prefix=f'web/{workflow.slug}/'
         ) if re.match(key_filter, obj.key)]
 
         return matching_keys
@@ -57,6 +43,8 @@ class Command(BaseCommand):
             matching_keys: List of s3 keys matching our workflow
             workflow: Django ZooniverseWorkflow object
         '''
+        print("Creting Django DeedPage objects...")
+
         deed_pages = []
 
         for mk in matching_keys:
@@ -89,7 +77,7 @@ class Command(BaseCommand):
                     **page_data
                 ))
 
-        DeedPage.objects.bulk_create(deed_pages)
+        DeedPage.objects.bulk_create(deed_pages, batch_size=10000)
 
         return deed_pages
 
@@ -152,6 +140,7 @@ class Command(BaseCommand):
         Arguments:
             workflow: Django ZooniverseWorkflow object
         '''
+        print('Linking DeedPage records to ZooniverseSubject records ...')
         deed_pages = DeedPage.objects.filter(
             workflow=workflow
             )

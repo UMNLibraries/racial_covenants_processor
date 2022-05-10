@@ -200,4 +200,4 @@ def gather_all_covenant_candidates(subject_obj):
         for extra_parcel in subject_obj.extraparcelcandidate_set.all():
             candidates += get_covenant_parcel_options(extra_parcel)
 
-    return list({v['join_string']:v for v in candidates}.values())
+    return list({v['join_string']: v for v in candidates}.values())

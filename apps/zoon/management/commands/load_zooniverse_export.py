@@ -11,7 +11,8 @@ from django.core import management
 from django.conf import settings
 
 from apps.zoon.models import ZooniverseResponseRaw, ZooniverseResponseProcessed, ZooniverseWorkflow, ZooniverseSubject, ReducedResponse_Question, ReducedResponse_Text
-from apps.zoon.utils.zooniverse_config import get_workflow_version
+# from apps.zoon.utils.zooniverse_config import get_workflow_version
+from apps.zoon.utils.zooniverse_config import get_workflow_obj
 from apps.parcel.utils.parcel_utils import write_join_strings
 
 
@@ -256,10 +257,6 @@ class Command(BaseCommand):
         final_df.loc[final_df['bool_covenant']
                      == "No", 'bool_covenant'] = False
 
-        # Set beginning join_strings
-        final_df['join_candidates'] = final_df.apply(
-            self.get_join_candidates, axis=1)
-
         # Fill NAs in text fields with empty strings
         string_fields = ['covenant_text', 'addition',
                          'lot', 'block', 'seller', 'buyer']
@@ -268,6 +265,13 @@ class Command(BaseCommand):
         final_df.drop(columns=['year', 'month', 'day'], inplace=True)
         final_df['workflow_id'] = workflow.id
 
+        # Set beginning join_strings
+        final_df['join_candidates'] = final_df.apply(
+            self.get_join_candidates, axis=1)
+
+        # Set initial bool_parcel_match to False
+        final_df['bool_parcel_match'] = False
+
         print(final_df)
 
         print('Sending consolidated subject results to Django ...')
@@ -275,7 +279,7 @@ class Command(BaseCommand):
                         if_exists='append', index=False, con=sa_engine)
 
     def get_join_candidates(self, row):
-        return write_join_strings(row['addition'], row['block'], row['lot'])
+        return json.dumps(write_join_strings(row['addition'], row['block'], row['lot']))
 
     def anno_accessor(self, input_obj, q_id):
         try:
@@ -299,6 +303,8 @@ class Command(BaseCommand):
         subject_ids = pd.DataFrame(ZooniverseSubject.objects.filter(
             workflow=workflow
         ).values('id', 'zoon_subject_id')).rename(columns={'id': 'subject_id'})
+
+        print(subject_ids)
 
         df = pd.DataFrame(ZooniverseResponseRaw.objects.filter(
             workflow_name=workflow.workflow_name
@@ -374,15 +380,16 @@ class Command(BaseCommand):
             raw_classifications_csv = os.path.join(
                 self.batch_dir, f"{workflow_slug}-classifications.csv")
 
-            # Get workflow version from config yaml
-            workflow_version = get_workflow_version(
-                self.batch_dir, self.batch_config['config_yaml'])
+            # # Get workflow version from config yaml
+            # workflow_version = get_workflow_version(
+            #     self.batch_dir, self.batch_config['config_yaml'])
+            workflow = get_workflow_obj(workflow_name)
 
             self.clear_all_tables(workflow_name)
             self.load_csv(raw_classifications_csv)
 
-            workflow = self.create_workflow(
-                workflow_name, workflow_version)
+            # workflow = self.create_workflow(
+            #     workflow_name, workflow_version)
 
             self.flatten_subject_data(workflow)
 
@@ -396,6 +403,5 @@ class Command(BaseCommand):
             self.extract_individual_responses(
                 workflow, self.batch_config['zooniverse_config'])
 
-            # Handle reducer output to develop consensus answers
-            management.call_command(
-                'connect_manual_corrections', workflow=workflow_name)
+            # management.call_command(
+            #     'connect_manual_corrections', workflow=workflow_name)

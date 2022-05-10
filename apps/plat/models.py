@@ -8,6 +8,7 @@ from racial_covenants_processor.storage_backends import PrivateMediaStorage
 
 from postgres_copy import CopyManager
 
+
 class Plat(models.Model):
     workflow = models.ForeignKey(
         'zoon.ZooniverseWorkflow', null=True, on_delete=models.SET_NULL)
