@@ -1,7 +1,9 @@
 import os
 import re
+import csv
 import json
 import datetime
+import numpy as np
 import pandas as pd
 from itertools import chain
 from sqlalchemy import create_engine
@@ -24,16 +26,17 @@ class Command(BaseCommand):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
-    def load_csv(self, infile: str):
+        parser.add_argument('-s', '--slow', action='store_true',
+                            help="Don't use bulk copy to avoid I/O limitations")
+
+    def load_csv_bulk(self, infile: str):
         '''
         Implements a django-postgres-copy loader to bulk load raw Zooniverse responses into the ZooniverseResponseRaw model.
 
         Arguments:
             infile: path to raw classifications CSV
         '''
-        print("Loading raw Zooniverse export data...")
-      # import_csv = os.path.join(settings.BASE_DIR, 'data', 'zooniverse_exports',
-      #                           'mapping-prejudice-classifications_2_23_2021.csv')
+        print('Bulk-loading raw classifications CSV...')
 
         # Make custom mapping from model fields to drop IP column
         mapping = {f.name: f.name for f in ZooniverseResponseRaw._meta.get_fields(
@@ -42,6 +45,70 @@ class Command(BaseCommand):
         insert_count = ZooniverseResponseRaw.objects.from_csv(
             infile, mapping=mapping)
         print("{} records inserted".format(insert_count))
+
+    def load_csv_by_record(self, infile: str):
+        '''
+        An alternative, more traditional load script for the ZooniverseResponseRaw model. On local machines, COPY will be much faster, but you can run into issues on servers where you may have I/O constraints, like RDS.
+
+        Arguments:
+            infile: path to raw classifications CSV
+        '''
+        print("Loading raw Zooniverse export data using an old-fashioned load script (--slow mode)...")
+
+        raw_df = pd.read_csv(infile, parse_dates=['created_at'])
+        # raw_df.fillna(value=None, inplace=True)
+        raw_df.replace([np.nan], [None], inplace=True)
+        raw_df['metadata'] = raw_df['metadata'].apply(lambda x: json.loads(x))
+        raw_df['annotations'] = raw_df['annotations'].apply(lambda x: json.loads(x))
+        raw_df['subject_data'] = raw_df['subject_data'].apply(lambda x: json.loads(x))
+
+        objs = [
+            ZooniverseResponseRaw(
+                classification_id=row['classification_id'],
+                user_name=row['user_name'],
+                user_id=row['user_id'],
+                workflow_id=row['workflow_id'],
+                workflow_name=row['workflow_name'],
+                workflow_version=row['workflow_version'],
+                created_at=row['created_at'],
+                gold_standard=row['gold_standard'],
+                expert=row['expert'],
+                metadata=row['metadata'],
+                annotations=row['annotations'],
+                subject_data=row['subject_data'],
+                subject_ids=row['subject_ids'],
+            )
+            for row in raw_df.to_dict('records')
+        ]
+
+        msg = ZooniverseResponseRaw.objects.bulk_create(objs, 10000)
+        return msg
+
+
+        # with open(infile, 'r') as csv_file:
+        #     raw_csv = csv.DictReader(csv_file)
+        #
+        #     objs = [
+        #         ZooniverseResponseRaw(
+        #             classification_id=row['classification_id'],
+        #             user_name=row['user_name'],
+        #             user_id=row['user_id'],
+        #             workflow_id=row['workflow_id'],
+        #             workflow_name=row['workflow_name'],
+        #             workflow_version=row['workflow_version'],
+        #             created_at=row['created_at'],
+        #             gold_standard=row['gold_standard'],
+        #             expert=row['expert'],
+        #             metadata=row['metadata'],
+        #             annotations=row['annotations'],
+        #             subject_data=row['subject_data'],
+        #             subject_ids=row['subject_ids'],
+        #         )
+        #         for row in raw_csv
+        #     ]
+        #
+        #     msg = ZooniverseResponseRaw.objects.bulk_create(objs, 10000)
+        #     return msg
 
     def flatten_subject_data(self, workflow):
         '''
@@ -94,24 +161,24 @@ class Command(BaseCommand):
                 zoon_workflow_id__in=all_workflow_ids
             ).delete()
 
-    def create_workflow(self, workflow_name: str, workflow_version: str):
-        # Check if this name exists in raw responses
-        matches = ZooniverseResponseRaw.objects.filter(
-            workflow_name=workflow_name).values('workflow_id').distinct()
-        if matches.count() > 0:
-            workflow, w_created = ZooniverseWorkflow.objects.get_or_create(
-                zoon_id=matches[0]['workflow_id'],
-                workflow_name=workflow_name,
-                version=workflow_version
-            )
-            if w_created:
-                print(f"New workflow record created for {workflow_name}.")
-            else:
-                print(f"Existing workflow record found for {workflow_name}.")
-            return workflow
-        else:
-            print("No matching workflow found in Zooniverse responses.")
-            raise
+    # def create_workflow(self, workflow_name: str, workflow_version: str):
+    #     # Check if this name exists in raw responses
+    #     matches = ZooniverseResponseRaw.objects.filter(
+    #         workflow_name=workflow_name).values('workflow_id').distinct()
+    #     if matches.count() > 0:
+    #         workflow, w_created = ZooniverseWorkflow.objects.get_or_create(
+    #             zoon_id=matches[0]['workflow_id'],
+    #             workflow_name=workflow_name,
+    #             version=workflow_version
+    #         )
+    #         if w_created:
+    #             print(f"New workflow record created for {workflow_name}.")
+    #         else:
+    #             print(f"Existing workflow record found for {workflow_name}.")
+    #         return workflow
+    #     else:
+    #         print("No matching workflow found in Zooniverse responses.")
+    #         raise
 
     def sql_df_writer(self, conn, var_name, question_lookup):
         '''Help pandas return a sensible response for each question that can be joined back to a unique subject id. Scores are put into percentages to handle possible changes to what's required to retire.'''
@@ -175,7 +242,6 @@ class Command(BaseCommand):
         # Make a DF for each question, then left join to subject IDs to create subject records
         bool_covenant_df = self.sql_df_writer(
             sa_engine, 'bool_covenant', question_lookup)
-        print(bool_covenant_df)
         covenant_text_df = self.sql_df_writer_text(
             sa_engine, 'covenant_text', question_lookup)
         addition_df = self.sql_df_writer_text(
@@ -304,8 +370,6 @@ class Command(BaseCommand):
             workflow=workflow
         ).values('id', 'zoon_subject_id')).rename(columns={'id': 'subject_id'})
 
-        print(subject_ids)
-
         df = pd.DataFrame(ZooniverseResponseRaw.objects.filter(
             workflow_name=workflow.workflow_name
         ).exclude(
@@ -358,8 +422,6 @@ class Command(BaseCommand):
 
         df = df.drop(columns=['annotations', 'subject_ids', 'zoon_subject_id'])
 
-        print(df)
-
         print('Sending processed individual responses to Django ...')
         sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
         df.to_sql('zoon_zooniverseresponseprocessed',
@@ -367,6 +429,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
+        bool_use_slow = kwargs['slow']
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
@@ -380,16 +443,13 @@ class Command(BaseCommand):
             raw_classifications_csv = os.path.join(
                 self.batch_dir, f"{workflow_slug}-classifications.csv")
 
-            # # Get workflow version from config yaml
-            # workflow_version = get_workflow_version(
-            #     self.batch_dir, self.batch_config['config_yaml'])
             workflow = get_workflow_obj(workflow_name)
 
             self.clear_all_tables(workflow_name)
-            self.load_csv(raw_classifications_csv)
-
-            # workflow = self.create_workflow(
-            #     workflow_name, workflow_version)
+            if bool_use_slow:
+                self.load_csv_by_record(raw_classifications_csv)
+            else:
+                self.load_csv_bulk(raw_classifications_csv)
 
             self.flatten_subject_data(workflow)
 

@@ -191,10 +191,10 @@ class ZooniverseSubject(models.Model):
 class ZooniverseResponseRaw(models.Model):
     classification_id = models.IntegerField()
     user_name = models.CharField(max_length=100, blank=True, db_index=True)
-    user_id = models.IntegerField(null=True, db_index=True)
+    user_id = models.IntegerField(null=True)
     # user_ip = models.CharField(max_length=10, blank=True)  # Removed from import in order to reduce personal info stored in database
     workflow_id = models.IntegerField(null=True)
-    workflow_name = models.CharField(max_length=100, blank=True, db_index=True)
+    workflow_name = models.CharField(max_length=100, blank=True)
     workflow_version = models.FloatField()
     created_at = models.DateTimeField()
     gold_standard = models.BooleanField(null=True)

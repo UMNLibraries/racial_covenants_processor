@@ -54,7 +54,7 @@ class Command(BaseCommand):
             workflow_version = get_workflow_version(
                 self.batch_dir, self.batch_config['config_yaml'])
 
-            workflow_zoon_id = self.batch_config.zoon_workflow_id
+            workflow_zoon_id = self.batch_config['zoon_workflow_id']
 
             workflow = self.create_workflow(
                 workflow_zoon_id,
