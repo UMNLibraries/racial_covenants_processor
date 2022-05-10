@@ -20,6 +20,10 @@ The "deed' app is currently not being used, except to port over the legacy class
 
 1. Identify deed image folder structure
 1. Create manifest of multipage deed images to OCR
+1. Create workflow object
+```
+python manage.py create_workflow --workflow "Ramsey County"
+```
 1. Split and OCR deed images
 1. Export list of positive matches for racially restrictive language
   - Side effect: Create analyzable statistics on which language found
@@ -36,7 +40,7 @@ python manage.py delete_raw_images
 1. Export batch results from Zooniverse (Using command line tools)
 1. Load raw and aggregated Zooniverse responses into individual property matches
 ```
-python manage.py load_zooniverse_export --workflow "Ramsey County"
+python manage.py load_zooniverse_export --slow --workflow "Ramsey County"
 ```
   - Side effect: Stats on hit rate, false positives, etc.
 1. Load modern parcel shapefiles with unique fields mapped to unified subset
@@ -91,6 +95,7 @@ psql -d postgres
 CREATE DATABASE racial_covenants_processor;
 CREATE USER racial_covenants_processor with password 'racial_covenants_processor';
 GRANT ALL PRIVILEGES ON DATABASE racial_covenants_processor to racial_covenants_processor;
+ALTER DATABASE racial_covenants_processor OWNER TO racial_covenants_processor;
 \q
 psql -d racial_covenants_processor
 CREATE EXTENSION postgis;
