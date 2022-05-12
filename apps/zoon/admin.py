@@ -140,6 +140,7 @@ class SubjectAdmin(admin.ModelAdmin):
         ('Final values', {
             'fields': (
                 'bool_covenant_final',
+                'bool_parcel_match',
                 'covenant_text_final',
                 'addition_final',
                 'lot_final',
