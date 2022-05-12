@@ -21,18 +21,25 @@ class PlatMapPageInline(admin.TabularInline):
 class PlatAdmin(admin.ModelAdmin):
     readonly_fields = ('workflow', 'plat_name')
     list_filter = ['workflow']
-    list_display = ['plat_name', 'map_pages']
+    list_display = ['plat_name', 'map_pages', 'linked_parcel_count']
     search_fields = ['plat_name']
     inlines = [PlatMapPageInline]
 
+    def linked_parcel_count(self, obj):
+        return obj.linked_parcel_count
+    linked_parcel_count.admin_order_field = 'linked_parcel_count'
+
     def map_pages(self, obj):
         return obj.map_pages
-
     map_pages.admin_order_field = 'map_pages'
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        queryset = queryset.annotate(map_pages=Count("platmappage"))
+        queryset = queryset.annotate(
+            map_pages=Count("platmappage", distinct=True)
+        ).annotate(
+            linked_parcel_count=Count("parcel", distinct=True)
+        )
         return queryset
 
 
