@@ -22,6 +22,18 @@ class ZooniverseWorkflow(models.Model):
         return slugify(self.workflow_name)
 
 
+MATCH_TYPE_OPTIONS = (
+    ('SL', 'Simple lot'),
+    ('ML', 'Multiple single lots'),
+    ('PL', 'Partial lot'),
+    ('PD', 'Long phys description'),
+    ('C', 'Cemetery plot'),
+    ('PC', 'Petition covenant'),
+    ('SE', 'Something else'),
+    ('NG', 'No geographic information'),
+)
+
+
 class ZooniverseSubject(models.Model):
     '''Future: Assign an id to correspond to a deed image pre-Zooniverse'''
     workflow = models.ForeignKey(ZooniverseWorkflow, on_delete=models.CASCADE)
@@ -42,6 +54,9 @@ class ZooniverseSubject(models.Model):
     buyer = models.CharField(max_length=100, blank=True)
     deed_date = models.DateField(null=True)
 
+    # Match type not a part of Ramsey County workflow but will be used in future.
+    match_type = models.CharField(choices=MATCH_TYPE_OPTIONS, max_length=4, null=True, blank=True)
+
     # Scores, also from the reducers
     bool_covenant_score = models.FloatField(null=True)
     covenant_text_score = models.FloatField(null=True)
@@ -60,10 +75,10 @@ class ZooniverseSubject(models.Model):
 
     # Final values created by combining zooniverse entry with any manual corrections separately entered. Only written under the hood, not directly in the admin, so if we have to delete/re-import, manual work stored in the manual update won't be lost
     bool_manual_correction = models.BooleanField(
-        null=True, default=False, verbose_name="Has manual updates")
+        null=True, default=False, verbose_name="Manual updates?")
 
     bool_covenant_final = models.BooleanField(
-        null=True, verbose_name="Has racial covenant")
+        null=True, verbose_name="Racial covenant?")
     covenant_text_final = models.TextField(
         null=True, blank=True, verbose_name="Covenant text")
     addition_final = models.CharField(
@@ -81,10 +96,11 @@ class ZooniverseSubject(models.Model):
     street_address_final = models.TextField(null=True, blank=True, verbose_name="Street address")
     city_final = models.CharField(
         max_length=500, null=True, blank=True, verbose_name="City")
+    match_type_final = models.CharField(choices=MATCH_TYPE_OPTIONS, max_length=4, null=True, blank=True)
 
     parcel_matches = models.ManyToManyField('parcel.Parcel')
     # parcel_manual = models.ManyToManyField(ManualParcel)  # TODO
-    bool_parcel_match = models.BooleanField(default=False)
+    bool_parcel_match = models.BooleanField(default=False, verbose_name="Parcel match?")
 
     join_candidates = models.JSONField(null=True, blank=True)
 
@@ -153,6 +169,7 @@ class ZooniverseSubject(models.Model):
         self.block_final = self.get_final_value('block')
         self.seller_final = self.get_final_value('seller')
         self.buyer_final = self.get_final_value('buyer')
+        self.match_type_final = self.get_final_value('match_type')
         self.deed_date_final = self.get_final_value('deed_date', None)
 
         self.street_address_final = self.get_from_parcel_or_cx(
@@ -301,6 +318,7 @@ class ManualCorrection(models.Model):
     date_added = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
+    match_type = models.CharField(choices=MATCH_TYPE_OPTIONS, max_length=4, null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
 
     objects = CopyManager()

@@ -16,6 +16,7 @@ Once all of the below load scripts have been run, many covenants (ZooniverseSubj
 1. Add a ManualCorrection, and enter in ONLY the values you want to change.
 1. Click "save and continue editing"
 1. Check to see if there are now values in the "Matching parcels" section. If yes, then at least part of the lot has matched to a modern Parcel. If not, there is either more to fix or an automatic match isn't possible.
+1. Choose a "match type" value to indicate how this parcel was matched (or how it will need to be matched in the future).
 
 ## Software requirements
 - Tesseract OCR engine

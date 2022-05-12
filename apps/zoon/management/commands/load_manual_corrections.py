@@ -43,6 +43,7 @@ class Command(BaseCommand):
                 'deed_date': 'deed_date',
                 'date_added': 'date_added',
                 'date_updated': 'date_updated',
+                'match_type': 'match_type',
                 'comments': 'comments',
             }
 

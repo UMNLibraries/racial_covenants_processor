@@ -114,15 +114,15 @@ class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['zoon_subject_id',
                      'addition_final', 'covenant_text', 'covenant_text_final']
 
-    list_display = ('__str__', 'bool_covenant_final', 'bool_parcel_match', 'median_score', 'bool_problem',
-                    'addition_final', 'block_final', 'lot_final', 'deed_date_final', 'bool_manual_correction')
+    list_display = ('__str__', 'bool_covenant_final', 'bool_parcel_match', 'bool_manual_correction', 'median_score',
+                    'addition_final', 'block_final', 'lot_final', 'deed_date_final', 'match_type_final', )
 
     list_filter = (
         'workflow__workflow_name',
         'bool_covenant_final',
-        'bool_manual_correction',
         'bool_parcel_match',
-        'bool_problem',
+        'bool_manual_correction',
+        'match_type_final',
         ('deed_date_final', DateRangeFilter),
         ScoreRangeListFilter,
         AdditionScoreRangeListFilter,
