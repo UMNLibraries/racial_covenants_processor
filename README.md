@@ -2,7 +2,20 @@
 
 This is the roadmap and future home for a generalized set of tools to OCR property deeds to look for racially restrictive covenant language, then map the results.
 
-Current collaborators include Nicholas Boren, Michael Corey and Justin Schell.
+Current collaborators include Michael Corey, Justin Schell and Nicholas Boren.
+
+## How to map a covenant
+
+Once all of the below load scripts have been run, many covenants (ZooniverseSubject) objects will not automatically join to modern parcels. Here's how to try to make them match up.
+
+1. Open the ZooniverseSubject list view.
+1. Filter for "has racial covenant" (Yes) and "bool parcel match" (no) to find covenants that need mapping.
+1. Select a ZooniverseSubject that looks potentially fixable (e.g. geo information that looks close, but not quite right)
+1. Look at the individual responses at the bottom of the ZooniverseSubject page to see what different users entered, and compare to what is saved as the "Addition," "Block" and "Lot" values at the top.
+1. If you see something to fix, click on the deed images to confirm that your fix is accurate.
+1. Add a ManualCorrection, and enter in ONLY the values you want to change.
+1. Click "save and continue editing"
+1. Check to see if there are now values in the "Matching parcels" section. If yes, then at least part of the lot has matched to a modern Parcel. If not, there is either more to fix or an automatic match isn't possible.
 
 ## Software requirements
 - Tesseract OCR engine
