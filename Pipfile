@@ -23,6 +23,10 @@ pyproj = "*"
 boto3 = "*"
 gunicorn = "*"
 click = "*"
+djangorestframework = "*"
+markdown = "*"
+django-filter = "*"
+djangorestframework-gis = "*"
 
 [dev-packages]
 csvkit = "*"

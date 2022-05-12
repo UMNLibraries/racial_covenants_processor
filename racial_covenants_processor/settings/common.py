@@ -47,6 +47,8 @@ INSTALLED_APPS = ['apps.deed',
                   'rangefilter',
                   'storages',
                   'localflavor',
+                  'rest_framework',
+                  'rest_framework_gis',
                   ]
 
 MIDDLEWARE = [
@@ -154,6 +156,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
 
 try:
     from .local_settings import *
