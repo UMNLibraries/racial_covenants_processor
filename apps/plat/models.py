@@ -105,6 +105,6 @@ class PlatAlternateName(models.Model):
                 ))
         ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
 
-        # TODO: Below is not updating all of the plat records correctl
+        # TODO: Below is not updating all of the plat records correctly
 
         super(PlatAlternateName, self).save(*args, **kwargs)

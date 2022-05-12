@@ -105,6 +105,7 @@ class Command(BaseCommand):
         self.set_string_final(workflow, 'block')
         self.set_string_final(workflow, 'seller')
         self.set_string_final(workflow, 'buyer')
+        self.set_string_final(workflow, 'match_type')
 
         print('Set everything else w/o manualcorrection to zooniverse consensus...')
         ZooniverseSubject.objects.filter(
@@ -120,6 +121,7 @@ class Command(BaseCommand):
             seller_final=F('seller'),
             buyer_final=F('buyer'),
             deed_date_final=F('deed_date'),
+            match_type_final=F('match_type'),
         )
 
     def handle(self, *args, **kwargs):
