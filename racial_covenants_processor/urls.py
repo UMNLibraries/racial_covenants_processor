@@ -14,12 +14,22 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from rest_framework import routers
 
 from apps.zoon import views
+from apps.zoon.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet
+
+# Routers provide an easy way of automatically determining the URL conf.
+router = routers.DefaultRouter()
+router.register(r'covenants', CovenantNoGeoViewSet)
+router.register(r'covenants-geo', CovenantGeoViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('workflow/<int:workflow_id>/', views.workflow_summary, name='workflow'),
+
+    path('api/', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls'))
 ]
