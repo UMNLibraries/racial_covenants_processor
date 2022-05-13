@@ -63,5 +63,5 @@ class CovenantNoGeoViewSet(viewsets.ModelViewSet):
 
 
 class CovenantGeoViewSet(viewsets.ModelViewSet):
-    queryset = ZooniverseSubject.objects.filter(bool_covenant_final=True)
+    queryset = ZooniverseSubject.objects.filter(bool_covenant_final=True, bool_parcel_match=True)
     serializer_class = CovenantGeoSerializer

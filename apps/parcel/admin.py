@@ -7,7 +7,7 @@ from .models import Parcel
 class ParcelAdmin(admin.ModelAdmin):
     exclude = ['geom_4326']
     list_filter = ['workflow', 'city']
-    list_display = ['pin_primary', 'street_address', 'plat', 'city', 'plat_name', 'join_description']
+    list_display = ['pin_primary', 'street_address', 'plat', 'city', 'plat_name', 'block', 'lot']
     search_fields = ['plat_name', 'pin_primary', 'street_address', 'city']
     # readonly_fields = ['geom_4326', 'plat']
 
