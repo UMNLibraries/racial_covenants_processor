@@ -5,6 +5,14 @@ from django.db.models import Max
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
 
 
+def index(request):
+    workflows = ZooniverseWorkflow.objects.all()
+    context = {
+        'workflows': workflows
+    }
+    return render(request, 'index.html', context)
+
+
 def workflow_summary(request, workflow_id):
     workflow = ZooniverseWorkflow.objects.get(id=workflow_id)
     subjects = ZooniverseSubject.objects.filter(

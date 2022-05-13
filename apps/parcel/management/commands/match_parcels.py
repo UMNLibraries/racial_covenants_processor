@@ -107,6 +107,7 @@ class Command(BaseCommand):
 
             csv_buffer = StringIO()
             csv_writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+            csv_writer.writeheader()
             csv_writer.writerows(self.match_report)
 
             csv_file = ContentFile(csv_buffer.getvalue().encode('utf-8'))

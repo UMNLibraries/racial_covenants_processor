@@ -30,6 +30,7 @@ urlpatterns = [
 
     path('workflow/<int:workflow_id>/', views.workflow_summary, name='workflow'),
     path('workflow/<int:workflow_id>/matches/', views.covenant_matches, name='workflow_matches'),
+    path('', views.index, name='index'),
 
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls'))

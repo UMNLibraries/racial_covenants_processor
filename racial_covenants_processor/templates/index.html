@@ -1,0 +1,27 @@
+{% load humanize %}
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deed machine workflows</title>
+  <meta name="description" content="Placeholder for deed machine index">
+  <meta name="author" content="Mapping Prejudice">
+
+  <style>
+    body {
+      font-family : Walfork, Walsheim, "Helvetica Neue";
+    }
+
+  </style>
+</head>
+<body>
+  <h1>Current workflows</h1>
+  {% for workflow in workflows %}
+    <p><a href="{% url 'workflow' workflow.id %}">{{ workflow }}</a></p>
+  {% endfor %}
+
+  <div><a href="{% url 'admin:index' %}">Admin site</a></div>
+</body>
+</html>
