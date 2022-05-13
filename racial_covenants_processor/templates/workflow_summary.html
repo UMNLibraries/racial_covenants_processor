@@ -25,6 +25,7 @@
 <body>
   <h1>{{workflow.workflow_name}} summary</h1>
   <i>Last updated: {{last_update}}</i>
+  <p><a href="{% url 'workflow_matches' workflow.id %}">Workflow match status</a></p>
   <table class="workflow-stats">
     <tr>
       <td>Total flagged subjects</td>

@@ -2,12 +2,15 @@ import os
 import csv
 import sys
 import datetime
+from io import StringIO
 
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups
 from apps.zoon.models import ZooniverseSubject
+from apps.parcel.models import JoinReport
+from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
@@ -20,6 +23,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
+        parser.add_argument('-l', '--local', action='store_true',
+                            help='Save to local CSV in "analysis" dir, rather than Django object/S3')
 
     def match_parcel(self, parcel_lookup, target_obj, subject_obj):
         ''' Separate subject necessary because you also have to run this on the ExtraParcelCandidate objects and then link the result to its subject'''
@@ -63,34 +68,59 @@ class Command(BaseCommand):
         ZooniverseSubject.objects.bulk_update(
             update_objs, ['geom_union_4326'], batch_size=1000)
 
-    def write_match_report(self, workflow, bool_file=True):
+    def write_match_report(self, workflow, bool_local=False):
         fieldnames = ['join_string', 'match', 'subject_id',
                       'metadata', 'parcel_metadata']
 
-        if bool_file:
-            timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%m')
+        now = datetime.datetime.now()
+        timestamp = now.strftime('%Y%m%d_%H%m')
+
+        matched_lots = [s for s in self.match_report if s['match'] is True]
+        matched_subjects = set([s['subject_id'] for s in matched_lots])
+
+        covenant_count = ZooniverseSubject.objects.filter(
+            workflow=workflow,
+            bool_covenant_final=True
+        ).count()
+
+        matched_lot_count = len(matched_lots)
+        matched_subject_count = len(matched_subjects)
+
+        print(f"{covenant_count} covenant subjects")
+        print(
+            f"{matched_lot_count} lot matches found on {matched_subject_count} subjects.")
+
+        filename_tail = f'{workflow.slug}_match_report_{timestamp}.csv'
+
+        if bool_local:
+
             outfile_path = os.path.join(
-                settings.BASE_DIR, 'data', 'analysis', f'{workflow.slug}_match_report_{timestamp}.csv')
+                settings.BASE_DIR, 'data', 'analysis', filename_tail)
             print(f'Writing report to {outfile_path}')
             with(open(outfile_path, 'w') as outfile):
                 writer = csv.DictWriter(outfile, fieldnames=fieldnames)
                 writer.writerows(self.match_report)
         else:
-            writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
-            writer.writerows(self.match_report)
+            print('Creating JoinReport object...')
+            # writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
+            # writer.writerows(self.match_report)
 
-        cov_count = ZooniverseSubject.objects.filter(
-            workflow=workflow,
-            bool_covenant_final=True
-        ).count()
+            csv_buffer = StringIO()
+            csv_writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+            csv_writer.writerows(self.match_report)
 
-        print(f"{cov_count} covenant subjects")
+            csv_file = ContentFile(csv_buffer.getvalue().encode('utf-8'))
 
-        matched_lots = [s for s in self.match_report if s['match'] is True]
-        matched_subjects = set([s['subject_id'] for s in matched_lots])
-
-        print(
-            f"{len(matched_lots)} lot matches found on {len(matched_subjects)} subjects.")
+            report_obj = JoinReport(
+                workflow=workflow,
+                # report_csv=csv_file,
+                covenant_count=covenant_count,
+                matched_lot_count=matched_lot_count,
+                matched_subject_count=matched_subject_count,
+                created_at=now
+            )
+            report_obj.report_csv.save(filename_tail, csv_file)
+            report_obj.save()
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']

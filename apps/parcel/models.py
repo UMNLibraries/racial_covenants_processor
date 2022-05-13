@@ -1,7 +1,7 @@
 from django.contrib.gis.db import models
-
 from localflavor.us.us_states import US_STATES
 
+from racial_covenants_processor.storage_backends import PublicMediaStorage
 from apps.plat.models import Plat
 
 
@@ -46,3 +46,14 @@ class ParcelJoinCandidate(models.Model):
     join_string = models.CharField(
         max_length=255, db_index=True, null=True)
     metadata = models.JSONField(null=True, blank=True)
+
+
+class JoinReport(models.Model):
+    workflow = models.ForeignKey(
+         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
+    report_csv = models.FileField(
+        storage=PublicMediaStorage(), upload_to="analysis/", null=True)
+    covenant_count = models.IntegerField()
+    matched_lot_count = models.IntegerField()
+    matched_subject_count = models.IntegerField()
+    created_at = models.DateTimeField()
