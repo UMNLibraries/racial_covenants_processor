@@ -16,7 +16,6 @@ from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 class Command(BaseCommand):
     '''Attempt to auto-join covenants to modern parcels using current values'''
-    batch_config = None  # Set in handle
     matched_lots = []
     match_report = []
 
@@ -128,11 +127,11 @@ class Command(BaseCommand):
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
-            # This config info comes from local_settings, generally.
-            self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
             workflow = get_workflow_obj(workflow_name)
 
             # Get all possible parcel lots to join
             parcel_lookup = build_parcel_spatial_lookups(workflow)
             self.match_parcels_bulk(workflow, parcel_lookup)
-            self.write_match_report(workflow)
+
+            bool_local = kwargs['local']
+            self.write_match_report(workflow, bool_local)
