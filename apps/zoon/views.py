@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.contrib.postgres.aggregates import ArrayAgg
 
 from django.db.models import Max
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
@@ -22,3 +23,20 @@ def workflow_summary(request, workflow_id):
     }
 
     return render(request, 'workflow_summary.html', context)
+
+
+def covenant_matches(request, workflow_id):
+    workflow = ZooniverseWorkflow.objects.get(id=workflow_id)
+    covenants = ZooniverseSubject.objects.filter(
+        workflow=workflow,
+        bool_covenant_final=True
+    ).annotate(
+        matched_parcel_join_strings=ArrayAgg('parcel_matches__parceljoincandidate__join_string')
+    ).order_by('addition_final')
+
+    context = {
+        'workflow': workflow,
+        'covenants': covenants
+    }
+
+    return render(request, 'covenant_matches.html', context)

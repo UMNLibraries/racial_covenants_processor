@@ -1,0 +1,69 @@
+{% load humanize %}
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{workflow.workflow_name}} covenant matches</title>
+  <meta name="description" content="Placeholder for {{workflow.workflow_name}} covenant matches">
+  <meta name="author" content="Mapping Prejudice">
+
+  <style>
+    body {
+      font-family : Walfork,Walsheim,"Helvetica Neue";
+    }
+
+    #matches-by-addition {
+      max-width: 600px;
+      font-size: 0.9em;
+    }
+
+    table.match-stats {
+      margin-bottom: 15px;
+      width: 100%;
+    }
+
+    table.match-stats th, td {
+      text-align: left;
+      padding: 2px;
+    }
+
+    table.match-stats td:first-child {
+      width: 95px
+    }
+
+    table.match-stats td:last-child {
+      width: 105px;
+      text-align: right;
+    }
+
+    table.match-stats th {
+      background-color: #d2e0d1;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>{{workflow.workflow_name}} covenant matches</h1>
+
+  <section id="matches-by-addition">
+    {% regroup covenants by addition_final as addition_list %}
+    {% for addition_final in addition_list %}
+    <table class="match-stats">
+      <tr><th colspan="3">{{ addition_final.grouper }}</th></tr>
+      {% for covenant in addition_final.list %}
+        {% for join_candidate in covenant.join_candidates %}
+        <tr>
+          <td>{% if join_candidate.join_string in covenant.matched_parcel_join_strings %}MATCH{% else %}NO MATCH{% endif %}</td>
+          <td>{{ join_candidate.join_string }}</td>
+          <td><a href="/admin/zoon/zooniversesubject/{{ covenant.id }}/change/">Subject: {{ covenant.id }}</a></td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+    </table>
+  {% endfor %}
+  </section>
+
+</body>
+</html>
