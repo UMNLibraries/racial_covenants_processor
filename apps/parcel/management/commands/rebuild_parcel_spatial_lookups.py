@@ -21,9 +21,21 @@ class Command(BaseCommand):
 
         print('Building parcel spatial lookup options...')
         join_cands = []
-        for parcel in Parcel.objects.filter(
+        parcels = Parcel.objects.filter(
             workflow=workflow
-        ).exclude(lot__isnull=True).defer('geom_4326', 'orig_data'):
+        ).exclude(lot__isnull=True).prefetch_related(
+            'plat__platalternatename_set'
+        ).only(
+            'id',
+            'plat',
+            'plat_name',
+            'plat_standardized',
+            'block',
+            'lot',
+            'join_description'
+        )
+        print('Parcel records gathered from DB, starting candidate generation...')
+        for parcel in parcels:
             # First parse parcel's default addition
             candidates = get_all_parcel_options(parcel)
             for c in candidates:
@@ -36,7 +48,8 @@ class Command(BaseCommand):
                     metadata=c['metadata']
                 ))
 
-        ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
+        print('Candidates generated, saving to DB...')
+        ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=2000)
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
