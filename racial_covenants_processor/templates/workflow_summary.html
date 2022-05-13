@@ -41,6 +41,11 @@
     </tr>
   </table>
 
+  <h3>Download in-progress shapefiles</h3>
+  {% for shp in shp_exports %}
+    <p><a href="{{ shp.shp_zip.url }}">{{ shp.created_at }}</a></p>
+  {% endfor %}
+
   <h3>Download past join reports</h3>
   {% for report in join_reports %}
     <p><a href="{{ report.report_csv.url }}">{{ report.created_at }}</a></p>

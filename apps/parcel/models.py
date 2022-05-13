@@ -57,3 +57,12 @@ class JoinReport(models.Model):
     matched_lot_count = models.IntegerField()
     matched_subject_count = models.IntegerField()
     created_at = models.DateTimeField()
+
+
+class ShpExport(models.Model):
+    workflow = models.ForeignKey(
+         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
+    shp_zip = models.FileField(
+        storage=PublicMediaStorage(), upload_to="main_exports/", null=True)
+    covenant_count = models.IntegerField()
+    created_at = models.DateTimeField()
