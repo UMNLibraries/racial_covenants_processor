@@ -33,6 +33,13 @@ class Parcel(models.Model):
 
     plat = models.ForeignKey(Plat, on_delete=models.SET_NULL, null=True)
 
+    @property
+    def join_strings(self):
+        strings = []
+        for candidate in self.parceljoincandidate_set.all():
+            strings.append(candidate.join_string)
+        return strings
+
 
 class ParcelJoinCandidate(models.Model):
     '''A given parcel can be made up of more than one lot, theoretically. This

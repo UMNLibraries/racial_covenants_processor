@@ -74,6 +74,8 @@ class PlatAlternateName(models.Model):
         self.alternate_name_standardized = standardize_addition(
             self.alternate_name)
 
+        super(PlatAlternateName, self).save(*args, **kwargs)
+
         parcel_matches = Parcel.objects.filter(
             workflow=self.workflow,
             plat_standardized=self.alternate_name_standardized
@@ -104,7 +106,3 @@ class PlatAlternateName(models.Model):
                     metadata=c['metadata']
                 ))
         ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
-
-        # TODO: Below is not updating all of the plat records correctly
-
-        super(PlatAlternateName, self).save(*args, **kwargs)

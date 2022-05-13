@@ -163,6 +163,8 @@ def get_all_parcel_options(parcel_obj):
     # Check for alternate addition spellings
     extra_additions = []
     if parcel_obj.plat:
+        if addition != parcel_obj.plat.plat_name_standardized:
+            extra_additions.append(parcel_obj.plat.plat_name_standardized)
         if parcel_obj.plat.platalternatename_set.count() > 0:
             for p in parcel_obj.plat.platalternatename_set.all():
                 extra_additions.append(p.alternate_name_standardized)
