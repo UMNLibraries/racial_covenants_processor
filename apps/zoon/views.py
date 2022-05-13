@@ -1,10 +1,12 @@
 from django.shortcuts import render
 from django.contrib.postgres.aggregates import ArrayAgg
+from django.contrib.auth.decorators import login_required
 
 from django.db.models import Max
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
+from apps.parcel.models import JoinReport
 
-
+@login_required(login_url='/admin/login/')
 def index(request):
     workflows = ZooniverseWorkflow.objects.all()
     context = {
@@ -12,7 +14,7 @@ def index(request):
     }
     return render(request, 'index.html', context)
 
-
+@login_required(login_url='/admin/login/')
 def workflow_summary(request, workflow_id):
     workflow = ZooniverseWorkflow.objects.get(id=workflow_id)
     subjects = ZooniverseSubject.objects.filter(
@@ -21,8 +23,11 @@ def workflow_summary(request, workflow_id):
     last_update = subjects.aggregate(
         last_update=Max('date_updated'))['last_update']
 
+    join_reports = JoinReport.objects.filter(workflow=workflow).order_by('-created_at')
+
     context = {
         'workflow': workflow,
+        'join_reports': join_reports,
         'last_update': last_update,
         'subject_count': subjects.count(),
         'covenants_count': subjects.filter(bool_covenant=True).count(),
@@ -32,7 +37,7 @@ def workflow_summary(request, workflow_id):
 
     return render(request, 'workflow_summary.html', context)
 
-
+@login_required(login_url='/admin/login/')
 def covenant_matches(request, workflow_id):
     workflow = ZooniverseWorkflow.objects.get(id=workflow_id)
     covenants = ZooniverseSubject.objects.filter(
