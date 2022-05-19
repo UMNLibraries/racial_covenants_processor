@@ -18,12 +18,16 @@ from django.urls import path, include
 from rest_framework import routers
 
 from apps.zoon import views
-from apps.zoon.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet
+from apps.zoon.serializers import SubjectNoGeoViewSet, SubjectGeoViewSet
+from apps.parcel.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
-router.register(r'covenants', CovenantNoGeoViewSet)
-router.register(r'covenants-geo', CovenantGeoViewSet)
+router.register(r'covenants', SubjectNoGeoViewSet)
+router.register(r'covenants-geo', SubjectGeoViewSet)
+
+router.register(r'covenants-beta', CovenantNoGeoViewSet)
+router.register(r'covenants-geo-beta', CovenantGeoViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -1,3 +1,4 @@
+import json
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Union
 from django.contrib.gis import geos
@@ -102,7 +103,12 @@ class ZooniverseSubject(models.Model):
     # parcel_manual = models.ManyToManyField(ManualParcel)  # TODO
     bool_parcel_match = models.BooleanField(default=False, verbose_name="Parcel match?")
 
+
     join_candidates = models.JSONField(null=True, blank=True)
+
+    # Fields resulting from join to Parcel models
+    parcel_addresses = models.JSONField(null=True, blank=True)
+    parcel_city = models.CharField(max_length=50, null=True, blank=True, db_index=True)
 
     # Union of any joined parcels
     geom_union_4326 = models.MultiPolygonField(
@@ -128,6 +134,20 @@ class ZooniverseSubject(models.Model):
                 union_final = geos.MultiPolygon(union_final)
             return union_final
         return None
+
+    def get_parcel_addresses(self):
+        return list(self.parcel_matches.all().values('street_address', 'city', 'state', 'zip_code'))
+
+    def get_parcel_cities(self):
+        return self.parcel_matches.all().values_list('city', flat=True)
+
+    def set_addresses(self):
+        if self.bool_parcel_match:
+            self.parcel_addresses = json.dumps(self.get_parcel_addresses())
+            cities = self.get_parcel_cities()
+            if len(cities) > 0:
+                # Assuming for the most part that we can generally take the first city we find. There will be edge cases, but those can be accessed via the address JSON object and this one is more of a shorthand
+                self.parcel_city = cities[0]
 
     def set_geom_union(self):
         if self.bool_parcel_match:
@@ -202,6 +222,7 @@ class ZooniverseSubject(models.Model):
         self.get_final_values()
         self.check_parcel_match()
         self.set_geom_union()
+        self.set_addresses()
         super(ZooniverseSubject, self).save(*args, **kwargs)
 
 
