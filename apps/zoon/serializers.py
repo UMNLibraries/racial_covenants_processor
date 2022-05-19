@@ -5,7 +5,7 @@ from .models import ZooniverseSubject
 
 
 # Serializers define the API representation.
-class CovenantNoGeoSerializer(serializers.ModelSerializer):
+class SubjectNoGeoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ZooniverseSubject
         fields = [
@@ -29,7 +29,7 @@ class CovenantNoGeoSerializer(serializers.ModelSerializer):
         ]
 
 
-class CovenantGeoSerializer(GeoFeatureModelSerializer):
+class SubjectGeoSerializer(GeoFeatureModelSerializer):
 
     class Meta:
         model = ZooniverseSubject
@@ -57,11 +57,11 @@ class CovenantGeoSerializer(GeoFeatureModelSerializer):
         geo_field = 'geom_union_4326'
 
 # ViewSets define the view behavior.
-class CovenantNoGeoViewSet(viewsets.ModelViewSet):
+class SubjectNoGeoViewSet(viewsets.ModelViewSet):
     queryset = ZooniverseSubject.objects.filter(bool_covenant_final=True)
-    serializer_class = CovenantNoGeoSerializer
+    serializer_class = SubjectNoGeoSerializer
 
 
-class CovenantGeoViewSet(viewsets.ModelViewSet):
+class SubjectGeoViewSet(viewsets.ModelViewSet):
     queryset = ZooniverseSubject.objects.filter(bool_covenant_final=True, bool_parcel_match=True)
-    serializer_class = CovenantGeoSerializer
+    serializer_class = SubjectGeoSerializer

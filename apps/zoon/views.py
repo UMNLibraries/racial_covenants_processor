@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 
 from django.db.models import Max
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
-from apps.parcel.models import ShpExport, JoinReport
+from apps.parcel.models import ShpExport, CSVExport, JoinReport
 
 @login_required(login_url='/admin/login/')
 def index(request):
@@ -24,11 +24,13 @@ def workflow_summary(request, workflow_id):
         last_update=Max('date_updated'))['last_update']
 
     shp_exports = ShpExport.objects.filter(workflow=workflow).order_by('-created_at')
+    csv_exports = CSVExport.objects.filter(workflow=workflow).order_by('-created_at')
     join_reports = JoinReport.objects.filter(workflow=workflow).order_by('-created_at')
 
     context = {
         'workflow': workflow,
         'shp_exports': shp_exports,
+        'csv_exports': csv_exports,
         'join_reports': join_reports,
         'last_update': last_update,
         'subject_count': subjects.count(),

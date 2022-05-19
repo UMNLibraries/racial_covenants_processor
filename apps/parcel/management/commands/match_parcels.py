@@ -63,9 +63,10 @@ class Command(BaseCommand):
         update_objs = []
         for z in matched_qs:
             z.set_geom_union()
+            z.set_addresses()
             update_objs.append(z)
         ZooniverseSubject.objects.bulk_update(
-            update_objs, ['geom_union_4326'], batch_size=1000)
+            update_objs, ['geom_union_4326', 'parcel_addresses', 'parcel_city'], batch_size=1000)
 
     def write_match_report(self, workflow, bool_local=False):
         fieldnames = ['join_string', 'match', 'subject_id',
