@@ -33,6 +33,7 @@ class Command(BaseCommand):
                 # model: csv
                 'zoon_subject_id': 'zoon_subject_id',
                 'zoon_workflow_id': 'zoon_workflow_id',
+                'epc_type': 'epc_type',
                 'addition': 'addition',
                 'lot': 'lot',
                 'block': 'block',

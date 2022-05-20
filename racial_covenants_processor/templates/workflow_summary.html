@@ -43,17 +43,22 @@
 
   <h3>Download in-progress shapefiles</h3>
   {% for shp in shp_exports %}
-    <p><a href="{{ shp.shp_zip.url }}">{{ shp.created_at }}</a></p>
+    <p><a href="{{ shp.shp_zip.url }}">{{ shp.created_at }}</a> {{ shp.covenant_count|intcomma }} mapped covenants</p>
+  {% endfor %}
+
+  <h3>Download in-progress geoJSONs</h3>
+  {% for json in geojson_exports %}
+    <p><a href="{{ json.geojson.url }}">{{ json.created_at }}</a> {{ json.covenant_count|intcomma }} mapped covenants</p>
   {% endfor %}
 
   <h3>Download in-progress CSVs</h3>
   {% for csv in csv_exports %}
-    <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a></p>
+    <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.covenant_count|intcomma }} mapped covenants</p>
   {% endfor %}
 
   <h3>Download past join reports</h3>
   {% for report in join_reports %}
-    <p><a href="{{ report.report_csv.url }}">{{ report.created_at }}</a></p>
+    <p><a href="{{ report.report_csv.url }}">{{ report.created_at }}</a> {{ report.covenant_count|intcomma }} covenants</p>
   {% endfor %}
 </body>
 </html>

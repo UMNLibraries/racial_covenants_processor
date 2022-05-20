@@ -356,6 +356,10 @@ class ManualCorrection(models.Model):
         # self.zooniverse_subject.get_final_values()
         self.zooniverse_subject.save()
 
+EPC_TYPE_CHOICES = (
+    ('el', 'Extra deed lot (old)'),
+    ('me', 'Modern equivalent lot'),
+)
 
 class ExtraParcelCandidate(models.Model):
     '''For use when property spans more than one block or addition, NOT for multiple lots in same addition/block for the moment'''
@@ -363,6 +367,8 @@ class ExtraParcelCandidate(models.Model):
         ZooniverseWorkflow, on_delete=models.SET_NULL, null=True)
     zooniverse_subject = models.ForeignKey(
         ZooniverseSubject, on_delete=models.SET_NULL, null=True)
+
+    epc_type = models.CharField(max_length=2, choices=EPC_TYPE_CHOICES, blank=True, null=True)
 
     # These are kept separate of the foreign key relationship in case this needs to be reconnected later
     zoon_subject_id = models.IntegerField(db_index=True, null=True, blank=True)

@@ -3,7 +3,7 @@ from django.db.models import Prefetch
 from rest_framework import serializers, viewsets
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
-from .models import Parcel
+from .models import Parcel, GeoJSONExport
 from apps.zoon.models import ZooniverseSubject
 
 
@@ -133,6 +133,14 @@ class ParcelGeoSerializer(GeoFeatureModelSerializer):
         geo_field = 'geom_4326'
 
 
+class GeoJSONExportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GeoJSONExport
+
+        fields = '__all__'
+
+
+
 # ViewSets define the view behavior.
 class CovenantNoGeoViewSet(viewsets.ModelViewSet):
     queryset = Parcel.covenant_objects.all()
@@ -142,3 +150,8 @@ class CovenantNoGeoViewSet(viewsets.ModelViewSet):
 class CovenantGeoViewSet(viewsets.ModelViewSet):
     queryset = Parcel.covenant_objects.all()
     serializer_class = ParcelGeoSerializer
+
+
+class GeoJSONExportViewSet(viewsets.ModelViewSet):
+    queryset = GeoJSONExport.objects.all()
+    serializer_class = GeoJSONExportSerializer

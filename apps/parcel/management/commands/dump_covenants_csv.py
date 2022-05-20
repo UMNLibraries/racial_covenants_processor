@@ -2,18 +2,12 @@ import os
 import datetime
 import tempfile
 import pandas as pd
-# import geopandas as gpd
-# from shapely import wkt
-# from zipfile import ZipFile
 
 from django.core.management.base import BaseCommand
 from django.core.files.base import File
-# from django.contrib.gis.db.models.functions import AsWKT
 from django.conf import settings
 
 from apps.parcel.models import Parcel, CSVExport
-# from apps.zoon.models import ZooniverseWorkflow
-# from apps.parcel.models import Parcel
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
