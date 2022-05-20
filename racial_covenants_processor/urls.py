@@ -23,11 +23,11 @@ from apps.parcel.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
-router.register(r'covenants', SubjectNoGeoViewSet)
-router.register(r'covenants-geo', SubjectGeoViewSet)
+router.register(r'subjects', SubjectNoGeoViewSet)
+router.register(r'subjects-geo', SubjectGeoViewSet, basename='subjectsgeo')
 
-router.register(r'covenants-beta', CovenantNoGeoViewSet)
-router.register(r'covenants-geo-beta', CovenantGeoViewSet)
+router.register(r'covenants', CovenantNoGeoViewSet)
+router.register(r'covenants-geo', CovenantGeoViewSet, basename='covenantsgeo')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
