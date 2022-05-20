@@ -32,17 +32,22 @@ class Command(BaseCommand):
         for c in candidates:
             try:
                 lot_match = parcel_lookup[c['join_string']]
-                print(f"MATCH: {c['join_string']}")
+
 
                 c['match'] = True
                 c['parcel_metadata'] = lot_match['parcel_metadata']
+                c['num_parcels'] = len(lot_match['parcel_ids'])
 
-                subject_obj.parcel_matches.add(lot_match['parcel_id'])
+                print(f"MATCH: {c['join_string']} ({c['num_parcels']} parcels)")
+
+                for parcel_id in lot_match['parcel_ids']:
+                    subject_obj.parcel_matches.add(parcel_id)
                 self.matched_lots.append(c)
 
             except KeyError as e:
                 print(f"NO MATCH: {c['join_string']}")
                 c['match'] = False
+                c['num_parcels'] = 0
             self.match_report.append(c)
 
     def match_parcels_bulk(self, workflow, parcel_lookup):
@@ -70,7 +75,7 @@ class Command(BaseCommand):
 
     def write_match_report(self, workflow, bool_local=False):
         fieldnames = ['join_string', 'match', 'subject_id',
-                      'metadata', 'parcel_metadata']
+                      'metadata', 'parcel_metadata', 'num_parcels']
 
         now = datetime.datetime.now()
         timestamp = now.strftime('%Y%m%d_%H%m')

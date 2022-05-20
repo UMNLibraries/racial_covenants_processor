@@ -210,10 +210,13 @@ class ZooniverseSubject(models.Model):
             for c in self.join_candidates:
                 join_strings.append(c['join_string'])
                 try:
-                    lot_match = parcel_lookup[c['join_string']] # TODO: There can be more than one modern parcel with same lot designation -- weird!
+                    lot_match = parcel_lookup[c['join_string']]
                     print(f"MATCH: {c['join_string']}")
 
-                    self.parcel_matches.add(lot_match['parcel_id'])
+                    # There can be more than one modern parcel with same lot designation -- weird!
+                    for parcel_id in lot_match['parcel_ids']:
+                        self.parcel_matches.add(parcel_id)
+                    # self.parcel_matches.add(lot_match['parcel_id'])
                     self.bool_parcel_match = True
                 except:
                     print(f"NO MATCH: {c['join_string']}")
