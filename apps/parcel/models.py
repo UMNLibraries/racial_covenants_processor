@@ -135,3 +135,12 @@ class CSVExport(models.Model):
         storage=PublicMediaStorage(), upload_to="main_exports/", null=True)
     covenant_count = models.IntegerField()
     created_at = models.DateTimeField()
+
+
+class GeoJSONExport(models.Model):
+    workflow = models.ForeignKey(
+         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
+    geojson = models.FileField(
+        storage=PublicMediaStorage(), upload_to="main_exports/", null=True)
+    covenant_count = models.IntegerField()
+    created_at = models.DateTimeField()
