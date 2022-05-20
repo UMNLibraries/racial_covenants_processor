@@ -187,10 +187,14 @@ def build_parcel_spatial_lookups(workflow):
     for candidate in ParcelJoinCandidate.objects.filter(
         workflow=workflow
     ).exclude(join_string='').values('parcel__id', 'join_string', 'metadata'):
-        parcel_spatial_lookup[candidate['join_string']] = {
-            'parcel_id': candidate['parcel__id'],
-            'parcel_metadata': candidate['metadata']
-        }
+        # Allow for multiple parcels with same lot combo, does happen with adjacent lots
+        if candidate['join_string'] not in parcel_spatial_lookup:
+            parcel_spatial_lookup[candidate['join_string']] = {
+                'parcel_ids': [candidate['parcel__id']],
+                'parcel_metadata': candidate['metadata']
+            }
+        else:
+            parcel_spatial_lookup[candidate['join_string']]['parcel_ids'].append(candidate['parcel__id'])
 
     # TODO: How to dip into physical descriptions?
     return parcel_spatial_lookup
