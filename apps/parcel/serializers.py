@@ -1,12 +1,10 @@
-from django.db.models import Prefetch
-
 from rest_framework import serializers, viewsets
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from .models import Parcel, GeoJSONExport
 from apps.zoon.models import ZooniverseSubject
 
-covenant_api_fields = fields = [
+covenant_api_fields = [
     'workflow',
     'cnty_name',
     'cnty_fips',
@@ -68,15 +66,6 @@ class ParcelNoGeoSerializer(serializers.ModelSerializer):
     block_mod = serializers.CharField()
     lot_mod = serializers.CharField()
     ph_dsc_mod = serializers.CharField()
-
-    # cnty_name = serializers.CharField(source='county_name')
-    # cnty_fips = serializers.CharField(source='county_fips')
-    # cnty_pin = serializers.CharField(source='pin_primary')
-    # street_add= serializers.CharField(source='street_address')
-    # add_mod = serializers.CharField(source='plat_name')
-    # block_mod = serializers.CharField(source='block')
-    # lot_mod = serializers.CharField(source='lot')
-    # ph_dsc_mod = serializers.CharField(source='phys_description')
 
     class Meta:
         model = Parcel

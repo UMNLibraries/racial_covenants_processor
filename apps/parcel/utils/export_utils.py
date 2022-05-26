@@ -96,7 +96,6 @@ def build_gdf(workflow):
     covenants_df['join_strgs'] = covenants_df['join_candidates'].apply(lambda x: ';'.join([jc['join_string'] for jc in x]))
     covenants_df['match_type'] = covenants_df['match_type'].apply(lambda x: [mt[1] for mt in MATCH_TYPE_OPTIONS if mt[0] == x][0] if x is not None else 'Automatic match')
 
-    # covenants_df['image_ids'] = covenants_df['image_ids'].apply(lambda x: json.dumps(x))
     covenants_df['image_ids'] = covenants_df['image_ids'].apply(lambda x: ','.join([img for img in x]))
 
     # Currently blank fields in existing workflows
@@ -109,22 +108,10 @@ def build_gdf(workflow):
 
     covenants_df.drop(columns=['join_candidates'], inplace=True)
 
-    # transform_dict = EXPORT_FIELDS_TRANSFORM
-    # # Extra geo parameter
-    # transform_dict['wkt_4326'] = 'geometry'
-
     covenants_df.rename(columns={
         'id': 'db_id',
-        # 'plat_name': 'add_mod',
-        # 'block': 'block_mod',
-        # 'lot': 'lot_mod',
         'plat__pk': 'plat_dbid',
         'wkt_4326': 'geometry'
-        # 'street_address': 'street_add',
-        # 'phys_description': 'ph_dsc_mod',
-        # 'county_name': 'cnty_name',
-        # 'county_fips': 'cnty_fips',
-        # 'pin_primary': 'cnty_pin',
     }, inplace=True)
 
     covenants_df = covenants_df[EXPORT_FIELDS_ORDERED + ['geometry']]
@@ -136,16 +123,3 @@ def build_gdf(workflow):
         covenants_df, geometry='geometry')
 
     return covenants_geo_df
-
-# EXPORT_FIELDS_TRANSFORM = {
-#     'id': 'db_id',
-#     # 'plat_name': 'add_mod',
-#     # 'block': 'block_mod',
-#     # 'lot': 'lot_mod',
-#     'plat__pk': 'plat_dbid',
-#     # 'street_address': 'street_add',
-#     # 'phys_description': 'ph_dsc_mod',
-#     # 'county_name': 'cnty_name',
-#     # 'county_fips': 'cnty_fips',
-#     # 'pin_primary': 'cnty_pin',
-# }
