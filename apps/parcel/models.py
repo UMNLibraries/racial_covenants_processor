@@ -1,16 +1,9 @@
-from django.db.models import Prefetch
 from django.db.models import OuterRef, Subquery, F
-# from django.contrib.postgres.fields.jsonb import KeyTransform
-# from django.contrib.postgres.aggregates import JSONBAgg, StringAgg
 from django.contrib.gis.db import models
 from localflavor.us.us_states import US_STATES
 
 from racial_covenants_processor.storage_backends import PublicMediaStorage
 from apps.plat.models import Plat
-
-# class JsonBuildObject(Func):
-#     function = 'jsonb_build_object'
-#     output_field = JSONField()
 
 
 class CovenantsParcelManager(models.Manager):
@@ -24,19 +17,6 @@ class CovenantsParcelManager(models.Manager):
             bool_covenant_final=True,
             workflow=OuterRef('workflow')
         ).order_by('deed_date')[:1]
-
-        # EXPORT_FIELDS_TRANSFORM = {
-        #     'id': 'db_id',
-        #     'plat_name': 'add_mod',
-        #     'block': 'block_mod',
-        #     'lot': 'lot_mod',
-        #     'plat__pk': 'plat_dbid',
-        #     'street_address': 'street_add',
-        #     'phys_description': 'ph_dsc_mod',
-        #     'county_name': 'cnty_name',
-        #     'county_fips': 'cnty_fips',
-        #     'pin_primary': 'cnty_pin',
-        # }
 
         return super().get_queryset().filter(
             zooniversesubject__bool_covenant_final=True
