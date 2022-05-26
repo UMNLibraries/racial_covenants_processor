@@ -7,7 +7,9 @@ from django.core.management.base import BaseCommand
 from django.core.files.base import File
 from django.conf import settings
 
-from apps.parcel.models import Parcel, CSVExport
+from apps.parcel.models import CSVExport
+from apps.parcel.utils.export_utils import build_gdf
+from apps.zoon.models import MATCH_TYPE_OPTIONS
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
@@ -19,56 +21,6 @@ class Command(BaseCommand):
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
         parser.add_argument('-l', '--local', action='store_true',
                             help='Save to local csv in "main_exports" dir, rather than Django object/S3')
-
-    def build_df(self, workflow):
-        joined_covenants = Parcel.covenant_objects.filter(
-            workflow=workflow
-        ).values(
-            'workflow',
-            'county_name',
-            'county_fips',
-
-            'deed_date',
-            'seller',
-            'buyer',
-            'covenant_text',
-
-            'zoon_subject_id',
-            'zoon_dt_retired',
-            'image_ids',
-            'median_score',
-            'manual_cx',
-            'match_type',
-
-            'street_address',
-            'city',
-            'state',
-            'zip_code',
-
-            'addition_cov',
-            'lot_cov',
-            'block_cov',
-
-            'pin_primary',
-            'plat_name',
-            'block',
-            'lot',
-            'phys_description',
-
-            'plat',
-
-            'date_updated',
-        )
-
-        covenants_df = pd.DataFrame(joined_covenants)
-        covenants_df.rename(columns={
-            'id': 'db_id',
-            'plat_name': 'addition_modern',
-            'block': 'block_modern',
-            'lot': 'lot_modern',
-            'phys_description': 'phys_description_modern',
-        }, inplace=True)
-        return covenants_df
 
     def save_csv_local(self, df, version_slug):
         out_csv = os.path.join(
@@ -102,12 +54,13 @@ class Command(BaseCommand):
         else:
             workflow = get_workflow_obj(workflow_name)
 
-            covenants_df = self.build_df(workflow)
+            covenants_df = build_gdf(workflow)
+            covenants_df.drop(columns=['geometry'], inplace=True)
 
             print(covenants_df)
 
             now = datetime.datetime.now()
-            timestamp = now.strftime('%Y%m%d_%H%m')
+            timestamp = now.strftime('%Y%m%d_%H%M')
             version_slug = f"{workflow.slug}_covenants_{timestamp}"
 
             if kwargs['local']:

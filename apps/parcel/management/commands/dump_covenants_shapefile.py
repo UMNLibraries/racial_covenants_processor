@@ -2,18 +2,16 @@ import os
 import json
 import datetime
 import tempfile
-import pandas as pd
 import geopandas as gpd
-# from shapely import wkt
 from zipfile import ZipFile
 
 from django.core.management.base import BaseCommand
 from django.core.files.base import File
-from django.contrib.gis.db.models.functions import AsWKT
 from django.conf import settings
 
 from apps.parcel.models import ShpExport
-from apps.parcel.models import Parcel
+from apps.parcel.utils.export_utils import build_gdf
+from apps.zoon.models import MATCH_TYPE_OPTIONS
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
@@ -25,70 +23,6 @@ class Command(BaseCommand):
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
         parser.add_argument('-l', '--local', action='store_true',
                             help='Save to local un-zipped shp in "main_exports" dir, rather than Django object/S3')
-
-    def build_gdf(self, workflow):
-        joined_covenants = Parcel.covenant_objects.filter(
-            workflow=workflow
-        ).annotate(
-            wkt_4326=AsWKT('geom_4326')
-        ).values(
-            'id',
-            'workflow',
-            'county_name',
-            'county_fips',
-
-            'deed_date',
-            'seller',
-            'buyer',
-            'covenant_text',
-
-            'zoon_subject_id',
-            'zoon_dt_retired',
-            'image_ids',
-            'median_score',
-            'manual_cx',
-            'match_type',
-
-            'street_address',
-            'city',
-            'state',
-            'zip_code',
-
-            'addition_cov',
-            'lot_cov',
-            'block_cov',
-
-            'pin_primary',
-            'plat_name',
-            'block',
-            'lot',
-            'phys_description',
-
-            'plat',
-
-            'date_updated',
-            'wkt_4326'
-        )
-
-        covenants_df = pd.DataFrame(joined_covenants)
-        covenants_df.rename(columns={
-            'id': 'db_id',
-            'plat_name': 'addition_modern',
-            'block': 'block_modern',
-            'lot': 'lot_modern',
-            'phys_description': 'phys_description_modern',
-            'wkt_4326': 'geometry'
-        }, inplace=True)
-
-        covenants_df['image_ids'] = covenants_df['image_ids'].apply(lambda x: json.dumps(x))
-
-        covenants_df['geometry'] = gpd.GeoSeries.from_wkt(
-            covenants_df['geometry'], crs='EPSG:4326')
-
-        covenants_geo_df = gpd.GeoDataFrame(
-            covenants_df, geometry='geometry')
-
-        return covenants_geo_df
 
     def save_shp_local(self, gdf, version_slug, schema):
 
@@ -137,18 +71,18 @@ class Command(BaseCommand):
         else:
             workflow = get_workflow_obj(workflow_name)
 
-            covenants_geo_df = self.build_gdf(workflow)
+            covenants_geo_df = build_gdf(workflow)
 
             # Shapefiles don't like datetime format, so specify date in manual schema
             schema = gpd.io.file.infer_schema(covenants_geo_df)
             schema['properties']['deed_date'] = 'date'
-            schema['properties']['date_updated'] = 'date'
-            schema['properties']['zoon_dt_retired'] = 'date'
+            schema['properties']['dt_updated'] = 'date'
+            schema['properties']['zn_dt_ret'] = 'date'
 
             print(covenants_geo_df)
 
             now = datetime.datetime.now()
-            timestamp = now.strftime('%Y%m%d_%H%m')
+            timestamp = now.strftime('%Y%m%d_%H%M')
             version_slug = f"{workflow.slug}_covenants_{timestamp}"
 
             if kwargs['local']:
