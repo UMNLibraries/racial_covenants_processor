@@ -1,56 +1,93 @@
 from django.db.models import Prefetch
 from django.db.models import OuterRef, Subquery, F
+# from django.contrib.postgres.fields.jsonb import KeyTransform
+# from django.contrib.postgres.aggregates import JSONBAgg, StringAgg
 from django.contrib.gis.db import models
 from localflavor.us.us_states import US_STATES
 
 from racial_covenants_processor.storage_backends import PublicMediaStorage
 from apps.plat.models import Plat
 
+# class JsonBuildObject(Func):
+#     function = 'jsonb_build_object'
+#     output_field = JSONField()
+
 
 class CovenantsParcelManager(models.Manager):
     '''This is the main heavy-lifter for exports -- as much work as possible being done here to tag the parcel with the earliest mention of the covenant and its related attributes'''
+
     def get_queryset(self):
         from apps.zoon.models import ZooniverseSubject
-        oldest_deeds = ZooniverseSubject.objects.filter(
-            bool_covenant_final=True,
+
+        oldest_deed = ZooniverseSubject.objects.filter(
             parcel_matches=OuterRef('pk'),
+            bool_covenant_final=True,
             workflow=OuterRef('workflow')
-        ).order_by('deed_date')
+        ).order_by('deed_date')[:1]
+
+        # EXPORT_FIELDS_TRANSFORM = {
+        #     'id': 'db_id',
+        #     'plat_name': 'add_mod',
+        #     'block': 'block_mod',
+        #     'lot': 'lot_mod',
+        #     'plat__pk': 'plat_dbid',
+        #     'street_address': 'street_add',
+        #     'phys_description': 'ph_dsc_mod',
+        #     'county_name': 'cnty_name',
+        #     'county_fips': 'cnty_fips',
+        #     'pin_primary': 'cnty_pin',
+        # }
 
         return super().get_queryset().filter(
             zooniversesubject__bool_covenant_final=True
         ).annotate(
-            deed_date=Subquery(oldest_deeds.values('deed_date')[:1])
-        # ).annotate(
-        #     all_deed_dates=F('zooniversesubject__deed_date')
+            add_mod=F('plat_name')
         ).annotate(
-            covenant_text=Subquery(oldest_deeds.values('covenant_text_final')[:1])
+            block_mod=F('block')
         ).annotate(
-            zoon_subject_id=Subquery(oldest_deeds.values('zoon_subject_id')[:1])
+            lot_mod=F('lot')
         ).annotate(
-            image_ids=Subquery(oldest_deeds.values('image_ids')[:1])
+            street_add=F('street_address')
         ).annotate(
-            zoon_dt_retired=Subquery(oldest_deeds.values('dt_retired')[:1])
+            ph_dsc_mod=F('phys_description')
         ).annotate(
-            median_score=Subquery(oldest_deeds.values('median_score')[:1])
+            cnty_name=F('county_name')
         ).annotate(
-            manual_cx=Subquery(oldest_deeds.values('bool_manual_correction')[:1])
+            cnty_fips=F('county_fips')
         ).annotate(
-            addition_cov=Subquery(oldest_deeds.values('addition_final')[:1])
+            cnty_pin=F('pin_primary')
         ).annotate(
-            lot_cov=Subquery(oldest_deeds.values('lot_final')[:1])
+            deed_date=Subquery(oldest_deed.values('deed_date'))
         ).annotate(
-            block_cov=Subquery(oldest_deeds.values('block_final')[:1])
+            cov_text=Subquery(oldest_deed.values('covenant_text_final'))
         ).annotate(
-            seller=Subquery(oldest_deeds.values('seller_final')[:1])
+            zn_subj_id=Subquery(oldest_deed.values('zoon_subject_id'))
         ).annotate(
-            buyer=Subquery(oldest_deeds.values('buyer_final')[:1])
+            image_ids=Subquery(oldest_deed.values('image_ids'))
         ).annotate(
-            deed_date=Subquery(oldest_deeds.values('deed_date_final')[:1])
+            zn_dt_ret=Subquery(oldest_deed.values('dt_retired'))
         ).annotate(
-            match_type=Subquery(oldest_deeds.values('match_type_final')[:1])
+            med_score=Subquery(oldest_deed.values('median_score'))
         ).annotate(
-            date_updated=Subquery(oldest_deeds.values('date_updated')[:1])
+            manual_cx=Subquery(oldest_deed.values('bool_manual_correction'))
+        ).annotate(
+            add_cov=Subquery(oldest_deed.values('addition_final'))
+        ).annotate(
+            block_cov=Subquery(oldest_deed.values('block_final'))
+        ).annotate(
+            lot_cov=Subquery(oldest_deed.values('lot_final'))
+        ).annotate(
+            seller=Subquery(oldest_deed.values('seller_final'))
+        ).annotate(
+            buyer=Subquery(oldest_deed.values('buyer_final'))
+        ).annotate(
+            deed_date=Subquery(oldest_deed.values('deed_date_final'))
+        ).annotate(
+            match_type=Subquery(oldest_deed.values('match_type_final'))
+        ).annotate(
+            dt_updated=Subquery(oldest_deed.values('date_updated'))
+        ).annotate(
+            join_candidates=Subquery(oldest_deed.values('join_candidates'))
         )
 
 
