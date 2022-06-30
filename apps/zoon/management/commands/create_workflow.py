@@ -42,19 +42,22 @@ class Command(BaseCommand):
         else:
             # This config info comes from local_settings, generally.
             self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
-            self.batch_dir = os.path.join(
-                settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
-
             workflow_slug = workflow_name.lower().replace(" ", "-")
 
-            raw_classifications_csv = os.path.join(
-                self.batch_dir, f"{workflow_slug}-classifications.csv")
+            if 'panoptes_folder' in self.batch_config:
+                self.batch_dir = os.path.join(
+                    settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
-            # Get workflow version from config yaml
-            workflow_version = get_workflow_version(
-                self.batch_dir, self.batch_config['config_yaml'])
+                # Get workflow version from config yaml, or set to None for now
+                workflow_version = get_workflow_version(
+                    self.batch_dir, self.batch_config['config_yaml'])
+            else:
+                workflow_version = None
 
-            workflow_zoon_id = self.batch_config['zoon_workflow_id']
+            if 'zoon_workflow_id' in self.batch_config:
+                workflow_zoon_id = self.batch_config['zoon_workflow_id']
+            else:
+                workflow_zoon_id = None
 
             workflow = self.create_workflow(
                 workflow_zoon_id,

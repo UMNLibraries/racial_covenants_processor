@@ -26,31 +26,58 @@ Once all of the below load scripts have been run, many covenants (ZooniverseSubj
 - pandas and geopandas
 - pipenv
 - PostGIS/PostgreSQL
-
-## Note on legacy code
-The "deed' app is currently not being used, except to port over the legacy classification system for comparison with the new Zooniverse-native methods
+- AWS SAM for lambdas (separate repos)
 
 ## High-level workflow
-
-1. Identify deed image folder structure
-1. Create manifest of multipage deed images to OCR
+1. Start new config entry in local_settings.py
+```
+ZOONIVERSE_QUESTION_LOOKUP = {
+    'WI Milwauke County': {
+    },
+    'Ramsey County': {
+      ...
+    }
+  }
+```
+1. Identify deed image folder structure and add glob and regex parameters to parse deed image metadata that can be gleaned from the filepath.
+```
+ZOONIVERSE_QUESTION_LOOKUP = {
+    'WI Milwauke County': {
+        'deed_image_raw_glob': 'D:/Milwaukee_Books/Images/**/*.tif',
+        'deed_image_regex': r'\/(?P<workflow_slug>[A-z\-]+)\/(?P<doc_date>\d+)\/(?P<doc_num>\d+)_(?P<doc_type>[A-Z]+)_(?P<page_num>\d+)',
+        'deed_image_raw_glob': 'D:/Milwaukee_Books/Images/**/*.tif',
+    },
+    'Ramsey County': {
+      ...
+    }
+  }
+```
 1. Create workflow object
 ```
-python manage.py create_workflow --workflow "Ramsey County"
+python manage.py create_workflow --workflow "WI Milwaukee County"
 ```
-1. Split and OCR deed images
-1. Export list of positive matches for racially restrictive language
-  - Side effect: Create analyzable statistics on which language found
-1. Upload images of positive matches or all tifs to private S3 for web formatting
+1. Upload deed images to private s3 bucket. This will trigger lambdas to OCR the text, generate basic document statistics, check for racial terms and to make web versions of the document images. (Side effect: Create analyzable statistics on which language found)
 ```
-python manage.py upload_deed_images --workflow "Ramsey County" --cache
-python manage.py gather_deed_images --workflow "Ramsey County"
+python manage.py upload_deed_images --workflow "WI Milwaukee County"
 # To delete:
 python manage.py delete_raw_images
 ```
-
+1. Gather results of document image uploads into the Django app
+```
+python manage.py gather_deed_images --workflow "WI Milwaukee County"
+```
+1. Gather list of positive matches for racially restrictive language and join to deed image records in Django app
+```
+TODO: python manage.py gather_image_hits --workflow "WI Milwaukee County"
+```
 1. Upload matching files to Zooniverse (or point to S3 images)
+```
+TODO
+```
 1. Upload batch of records to Zooniverse for community confirmation
+```
+TODO
+```
 1. Export batch results from Zooniverse (Using command line tools)
 1. Load raw and aggregated Zooniverse responses into individual property matches
 ```

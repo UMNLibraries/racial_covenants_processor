@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 
 from django.db.models import Max
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
-from apps.parcel.models import GeoJSONExport, ShpExport, CSVExport, JoinReport
+from apps.parcel.models import GeoJSONExport, ShpExport, CSVExport, JoinReport, Parcel
 
 @login_required(login_url='/admin/login/')
 def index(request):
@@ -23,6 +23,8 @@ def workflow_summary(request, workflow_id):
     last_update = subjects.aggregate(
         last_update=Max('date_updated'))['last_update']
 
+    mapped_count = Parcel.covenant_objects.filter(workflow=workflow).count()
+
     geojson_exports = GeoJSONExport.objects.filter(workflow=workflow).order_by('-created_at')
     shp_exports = ShpExport.objects.filter(workflow=workflow).order_by('-created_at')
     csv_exports = CSVExport.objects.filter(workflow=workflow).order_by('-created_at')
@@ -38,7 +40,7 @@ def workflow_summary(request, workflow_id):
         'subject_count': subjects.count(),
         'covenants_count': subjects.filter(bool_covenant=True).count(),
         'covenants_maybe_count': subjects.filter(bool_covenant=None).count(),
-        'mapped_count': subjects.filter(bool_covenant=True, bool_parcel_match=True).count()
+        'mapped_count': mapped_count
     }
 
     return render(request, 'workflow_summary.html', context)
