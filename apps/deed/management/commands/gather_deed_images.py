@@ -153,15 +153,15 @@ class Command(BaseCommand):
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
-            print('Deleting old DeedPage records (but not their images)...')
-            DeedPage.objects.all().delete()
-
-            # workflow = self.get_workflow(workflow_name)
             workflow = get_workflow_obj(workflow_name)
+
+            print('Deleting old DeedPage records (but not their images)...')
+            DeedPage.objects.filter(workflow=workflow).delete()
 
             matching_keys = self.find_matching_keys(workflow)
 
             image_objs = self.build_django_objects(
                 matching_keys, workflow)
 
+            # TODO: Move this to separate management command to be run post-Zooniverse
             self.join_to_subjects(workflow)
