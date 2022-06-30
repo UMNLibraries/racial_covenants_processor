@@ -27,6 +27,7 @@ djangorestframework = "*"
 markdown = "*"
 django-filter = "*"
 djangorestframework-gis = "*"
+ndjson = "*"
 
 [dev-packages]
 csvkit = "*"

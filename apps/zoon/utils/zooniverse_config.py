@@ -69,12 +69,15 @@ def get_workflow_obj(workflow_name):
 
     workflow_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
 
-    batch_dir = os.path.join(
-        settings.BASE_DIR, 'data', 'zooniverse_exports', workflow_config['panoptes_folder'])
+    if 'panoptes_folder' in workflow_config:
+        batch_dir = os.path.join(
+            settings.BASE_DIR, 'data', 'zooniverse_exports', workflow_config['panoptes_folder'])
 
-    # Get workflow version from config yaml
-    workflow_version = get_workflow_version(
-        batch_dir, workflow_config['config_yaml'])
+        # Get workflow version from config yaml
+        workflow_version = get_workflow_version(
+            batch_dir, workflow_config['config_yaml'])
+    else:
+        workflow_version = None
 
     workflow = ZooniverseWorkflow.objects.get(
         workflow_name=workflow_name,

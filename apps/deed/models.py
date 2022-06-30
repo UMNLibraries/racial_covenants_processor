@@ -12,11 +12,13 @@ class DeedPage(models.Model):
     doc_num = models.CharField(blank=True, max_length=100)
     page_num = models.IntegerField(null=True)
     doc_date = models.DateField(null=True)
+    doc_type = models.CharField(blank=True, max_length=100)
     page_image_web = models.ImageField(
         storage=PrivateMediaStorage(), null=True)
     page_ocr_text = models.FileField(
         storage=PrivateMediaStorage(), null=True)
     bool_match = models.BooleanField(default=False)
+    matched_terms = models.JSONField(null=True)
 
     zooniverse_subject = models.ForeignKey(
         ZooniverseSubject, on_delete=models.SET_NULL, null=True)
@@ -26,6 +28,14 @@ class DeedPage(models.Model):
         if self.page_image_web:
             return mark_safe(f'<a href="{self.page_image_web.url}" target="_blank"><img src="{self.page_image_web.url}" width="100" /></a>')
         return ""
+
+
+class SearchHitReport(models.Model):
+    workflow = models.ForeignKey(
+        ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
+    report_csv = models.FileField(
+        storage=PrivateMediaStorage(), null=True)
+    num_hits = models.IntegerField(null=True)
 
 
 '''NOTE: BELOW HERE THIS IS MOSTLY LEGACY CODE. ACTIVE WORK IS ALL IN THE "ZOON" APP'''
@@ -68,7 +78,7 @@ class DeedPage(models.Model):
 #     workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE)
 #     zoon_subject_id = models.IntegerField(db_index=True)
 #     bool_covenant = models.BooleanField(null=True)
-# 
+#
 #
 # class ZooniverseUser(models.Model):
 #     zoon_id = models.IntegerField(null=True, db_index=True)
