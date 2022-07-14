@@ -84,6 +84,10 @@ TODO
 python manage.py load_zooniverse_export --slow --workflow "Ramsey County"
 ```
   - Side effect: Stats on hit rate, false positives, etc.
+1. Join deed images to zooniverse subjects (hmm maybe not? we'll see later if it makes sense to create these before uploading to Zooniverse. But since you won't have a zoon subject ID maybe you don't need to.)
+```
+python manage.py join_deeds_to_subjects --workflow "Ramsey County"
+```
 1. Load modern parcel shapefiles with unique fields mapped to unified subset
 ```
 python manage.py load_parcel_shp --workflow "Ramsey County"
