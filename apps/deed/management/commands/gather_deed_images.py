@@ -44,7 +44,7 @@ class Command(BaseCommand):
             matching_keys: List of s3 keys matching our workflow
             workflow: Django ZooniverseWorkflow object
         '''
-        print("Creting Django DeedPage objects...")
+        print("Creating Django DeedPage objects...")
 
         deed_pages = []
 
@@ -57,7 +57,7 @@ class Command(BaseCommand):
                     deed_image_regex, mk).groupdict()
                 # print(page_data)
             except:
-                print(f'Could not parse image path data: {mk}')
+                print(f'Could not parse image path data: {mk}. You might need to adjust your deed_image_regex setting.')
 
             if page_data:
                 # We aren't using the slug, so delete before model import
