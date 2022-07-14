@@ -55,7 +55,7 @@ class Command(BaseCommand):
                     workflow.workflow_name]['deed_image_regex']
                 page_data = re.search(
                     deed_image_regex, mk).groupdict()
-                print(page_data)
+                # print(page_data)
             except:
                 print(f'Could not parse image path data: {mk}')
 
