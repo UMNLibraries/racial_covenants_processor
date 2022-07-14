@@ -3,7 +3,7 @@ import re
 import glob
 import boto3
 import pandas as pd
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from multiprocessing.pool import ThreadPool
 
 from django.core.management.base import BaseCommand
@@ -31,15 +31,18 @@ class Command(BaseCommand):
         parser.add_argument('-p', '--pool', type=int,
                             help='How many threads to use? (Default is 8)')
 
-    def gather_raw_image_paths(self, deed_image_raw_glob):
+    def gather_raw_image_paths(self, workflow_slug, deed_image_glob_root, deed_image_glob_remainder):
         print("Gathering all raw images paths for this workflow ...")
-        raw_images = glob.glob(deed_image_raw_glob)
+        print(os.path.join(deed_image_glob_root, deed_image_glob_remainder))
+        raw_images = glob.glob(os.path.join(deed_image_glob_root, deed_image_glob_remainder), recursive=True)
 
         img_df = pd.DataFrame(raw_images, columns=['local_path'])
-        # img_df['last_dir'] = img_df['local_path'].apply(
-        #     lambda x: Path(x).parts[-2])
-        # TODO: You could send part of the folder path or rewrite the filename as you create this in boto if there is worthwhile metadata like DEL number in the path
+        img_df['remainder'] = img_df['local_path'].apply(lambda x: PurePosixPath(x).relative_to(deed_image_glob_root))
         img_df['filename'] = img_df['local_path'].apply(lambda x: Path(x).name)
+
+        img_df['s3_path'] = img_df['remainder'].apply(
+            lambda x: os.path.join('raw', workflow_slug, x)
+        )
         return img_df
 
     def check_already_uploaded(self, workflow_slug, upload_keys):
@@ -92,14 +95,14 @@ class Command(BaseCommand):
                         "Can't read cached file list. Try not using the --cache flag")
                     return False
 
-                raw_img_df['s3_path'] = raw_img_df['filename'].apply(
-                    lambda x: os.path.join('raw', workflow_slug, x)
-                )
+
             else:
                 print(
-                    "Scanning filesystem for local images using 'deed_image_raw_glob' setting...")
+                    "Scanning filesystem for local images using 'deed_image_glob_root', 'deed_image_glob_remainder' setting...")
                 raw_img_df = self.gather_raw_image_paths(
-                    workflow_config['deed_image_raw_glob'])
+                    workflow_slug,
+                    workflow_config['deed_image_glob_root'],
+                    workflow_config['deed_image_glob_remainder'])
 
                 raw_img_df.to_csv(os.path.join(
                     settings.BASE_DIR, 'data', f"{workflow_slug}_raw_images_list.csv"), index=False)
