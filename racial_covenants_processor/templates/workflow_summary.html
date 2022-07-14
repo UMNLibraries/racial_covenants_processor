@@ -60,5 +60,10 @@
   {% for report in join_reports %}
     <p><a href="{{ report.report_csv.url }}">{{ report.created_at }}</a> {{ report.covenant_count|intcomma }} covenants</p>
   {% endfor %}
+
+  <h3>Download OCR hit reports</h3>
+  {% for csv in hit_reports %}
+    <p><a href="{{ csv.report_csv.url }}">{{ csv.created_at }}</a> {{ csv.num_hits|intcomma }} OCR hits</p>
+  {% endfor %}
 </body>
 </html>

@@ -36,6 +36,7 @@ class SearchHitReport(models.Model):
     report_csv = models.FileField(
         storage=PrivateMediaStorage(), null=True)
     num_hits = models.IntegerField(null=True)
+    created_at = models.DateTimeField()
 
 
 '''NOTE: BELOW HERE THIS IS MOSTLY LEGACY CODE. ACTIVE WORK IS ALL IN THE "ZOON" APP'''
