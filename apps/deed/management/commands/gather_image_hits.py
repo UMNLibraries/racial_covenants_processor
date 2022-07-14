@@ -3,9 +3,11 @@ import re
 import boto3
 import ndjson
 import tempfile
+import datetime
 import pandas as pd
 
 from django.core.management.base import BaseCommand
+from django.core.files.base import File
 from django.conf import settings
 
 from apps.deed.models import DeedPage, SearchHitReport
@@ -22,6 +24,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
+
+        parser.add_argument('-l', '--local', action='store_true',
+                            help='Save to local csv in "main_exports" dir, rather than Django object/S3')
 
     def find_matching_keys(self, workflow):
         print("Finding matching s3 keys...")
@@ -76,6 +81,41 @@ class Command(BaseCommand):
             report_df.drop(columns=term_columns.columns, inplace=True)
             print(report_df)
 
+            return report_df
+
+            # class SearchHitReport(models.Model):
+            #     workflow = models.ForeignKey(
+            #         ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
+            #     report_csv = models.FileField(
+            #         storage=PrivateMediaStorage(), null=True)
+            #     num_hits = models.IntegerField(null=True)
+
+    def save_report_local(self, df, version_slug):
+        out_csv = os.path.join(
+            settings.BASE_DIR, 'data', 'main_exports', f"{version_slug}.csv")
+        df.to_csv(out_csv, index=False)
+
+        return out_csv
+
+    def save_report_model(self, df, version_slug, workflow, created_at):
+        # export to .geojson temp file and serve it to the user
+        with tempfile.TemporaryFile() as tmp_file:
+            tmp_file_path = f'{version_slug}.csv'
+            # df.to_geojson(tmp_file_path, index=False)
+            df.to_csv(tmp_file_path, index=False)
+
+            csv_export_obj = SearchHitReport(
+                workflow=workflow,
+                num_hits=df.shape[0],
+                created_at = created_at
+            )
+
+            # Using File
+            with open(tmp_file_path, 'rb') as f:
+                csv_export_obj.report_csv.save(f'{version_slug}.csv', File(f))
+            csv_export_obj.save()
+            return csv_export_obj
+
     # def update_matches(self, workflow, matching_keys):
     #     print('Looking for corresponding DeedPage objects ...')
     #     web_img_keys = [key.replace('ocr/hits', 'web').replace('.json', '.jpg') for key in matching_keys]
@@ -105,6 +145,16 @@ class Command(BaseCommand):
             print(matching_keys)
 
             match_report = self.build_match_report(workflow, matching_keys)
+
+            now = datetime.datetime.now()
+            timestamp = now.strftime('%Y%m%d_%H%M')
+            version_slug = f"{workflow.slug}_hits_{timestamp}"
+
+            if kwargs['local']:
+                match_report_local = self.save_report_local(match_report, version_slug)
+            else:
+                # Save to geojson in Django storages/model
+                match_report_obj = self.save_report_model(match_report, version_slug, workflow, now)
 
             # deed_hits = self.update_matches(workflow, matching_keys)
 
