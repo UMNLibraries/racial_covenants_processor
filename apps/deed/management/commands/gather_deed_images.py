@@ -1,6 +1,7 @@
 # import os
 import re
 import boto3
+import datetime
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -67,8 +68,18 @@ class Command(BaseCommand):
 
                 page_data['workflow_id'] = workflow.id
 
-                # Re-code bool_match as boolean if found
-                if page_data['bool_match']:
+                if 'doc_date_year' in page_data:
+                    page_data['doc_date'] = datetime.datetime(
+                        int(page_data['doc_date_year']),
+                        int(page_data['doc_date_month']),
+                        int(page_data['doc_date_day']),
+                    )
+                    del page_data['doc_date_year']
+                    del page_data['doc_date_month']
+                    del page_data['doc_date_day']
+
+                # Re-code bool_match as boolean if found. This likely is only a legacy feature since generally the OCR step will be done in the Lambda world and collected after this step.
+                if 'bool_match' in page_data:
                     page_data['bool_match'] = True
                 else:
                     page_data['bool_match'] = False
