@@ -25,6 +25,8 @@ class DeedPage(models.Model):
         storage=PrivateMediaStorage(), null=True)
     page_ocr_text = models.FileField(
         storage=PrivateMediaStorage(), null=True)
+    page_ocr_json = models.FileField(
+        storage=PrivateMediaStorage(), null=True)
     bool_match = models.BooleanField(default=False)
     matched_terms = models.ManyToManyField(MatchTerm)
 

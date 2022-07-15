@@ -65,6 +65,8 @@ class Command(BaseCommand):
 
                 # Set image path and s3 lookup
                 page_data['page_image_web'] = mk
+                page_data['page_ocr_text'] = mk.replace("web/", "ocr/txt/").replace(".jpg", ".txt")
+                page_data['page_ocr_json'] = mk.replace("web/", "ocr/json/").replace(".jpg", ".json")
                 page_data['s3_lookup'] = mk.replace(f"web/{workflow.slug}/", "").replace(".jpg", "")
 
                 page_data['workflow_id'] = workflow.id

@@ -19,6 +19,7 @@ class DeedPageAdmin(admin.ModelAdmin):
         's3_lookup',
         'doc_type',
         'page_ocr_text',
+        'page_ocr_json',
         'matched_terms'
     )
     exclude = ['page_image_web']
