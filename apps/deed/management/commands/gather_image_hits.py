@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand
 from django.core.files.base import File
 from django.conf import settings
 
-from apps.deed.models import DeedPage, SearchHitReport
+from apps.deed.models import DeedPage, MatchTerm, SearchHitReport
 # from apps.zoon.models import ZooniverseSubject
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
@@ -99,10 +99,10 @@ class Command(BaseCommand):
 
     def save_report_model(self, df, version_slug, workflow, created_at):
         # export to .geojson temp file and serve it to the user
-        with tempfile.TemporaryFile() as tmp_file:
-            tmp_file_path = f'{version_slug}.csv'
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            # tmp_file_path = f'{version_slug}.csv'
             # df.to_geojson(tmp_file_path, index=False)
-            df.to_csv(tmp_file_path, index=False)
+            df.to_csv(tmp_file, index=False)
 
             csv_export_obj = SearchHitReport(
                 workflow=workflow,
@@ -111,26 +111,51 @@ class Command(BaseCommand):
             )
 
             # Using File
-            with open(tmp_file_path, 'rb') as f:
-                csv_export_obj.report_csv.save(f'{version_slug}.csv', File(f))
+            # with open(tmp_file, 'rb') as f:
+            csv_export_obj.report_csv.save(f'{version_slug}.csv', File(tmp_file))
             csv_export_obj.save()
             return csv_export_obj
 
-    # def update_matches(self, workflow, matching_keys):
-    #     print('Looking for corresponding DeedPage objects ...')
-    #     web_img_keys = [key.replace('ocr/hits', 'web').replace('.json', '.jpg') for key in matching_keys]
-    #     deed_hits = DeedPage.objects.filter(workflow=workflow, page_image_web__in=web_img_keys).only('pk', 'page_image_web')
-    #     num_deedpage_matches = deed_hits.count()
-    #     if num_deedpage_matches > 0:
-    #         print(f'Found {num_deedpage_matches} matching DeedPage records. Setting bool_match to True...')
-    #         deed_hits.update(bool_match=True)
-    #     else:
-    #         print("Couldn't find any matching DeedPage objects.")
-    #
-    #     return deed_hits
-    #     # maybe loop through found terms?
+    def update_matches(self, workflow, matching_keys, hits_df):
+        print('Looking for corresponding DeedPage objects ...')
+        # web_img_keys = [key.replace('ocr/hits', 'web').replace('.json', '.jpg') for key in matching_keys]
+        deed_hits = DeedPage.objects.filter(workflow=workflow, s3_lookup__in=hits_df[hits_df['bool_match'] == True]['lookup'].to_list()).only('pk', 'page_image_web')
+        num_deedpage_matches = deed_hits.count()
+        if num_deedpage_matches > 0:
+            print(f'Found {num_deedpage_matches} matching DeedPage records. Setting bool_match to True...')
+            deed_hits.update(bool_match=True)
+        else:
+            print("Couldn't find any matching DeedPage objects.")
 
+        return deed_hits
+        # maybe loop through found terms?
 
+    def add_matched_terms(self, workflow, deed_objs_with_hits, match_report):
+        match_report['matched_terms'] = match_report['matched_terms'].apply(lambda x: x.split(','))
+        exploded_df = match_report.explode('matched_terms')
+        terms_grouped = exploded_df[[
+            'lookup', 'matched_terms'
+        ]].groupby('matched_terms')['lookup'].apply(list).reset_index(name='lookups')
+        print(terms_grouped)
+        # matched_terms = ','.join(match_report["matched_terms"])
+        # print(matched_terms)
+        for index, row in terms_grouped.iterrows():
+            print(row)
+            term, created = MatchTerm.objects.get_or_create(
+                term=row['matched_terms']
+            )
+            objs = deed_objs_with_hits.filter(s3_lookup__in=row['lookups'])
+
+            # bulk_m2m_updates = []
+            # for obj in objs:
+            #     bulk_m2m_updates.append(
+            #         DeedImage.matched_terms.through(matchterm_id=term.id, )
+            #     )
+            term.deedpage_set.add(*objs)
+            # objs.matched_terms_set.add(term)
+            # photo_tag_1 = Tag.photos.through(photo_id=1, tag_id=1)
+            # photo_tag_2 = Tag.photos.through(photo_id=1, tag_id=2)
+            # Tag.photos.through.objects.bulk_insert([photo_tag_1, photo_tag_2, ...])
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -156,7 +181,11 @@ class Command(BaseCommand):
                 # Save to geojson in Django storages/model
                 match_report_obj = self.save_report_model(match_report, version_slug, workflow, now)
 
-            # deed_hits = self.update_matches(workflow, matching_keys)
+            deed_objs_with_hits = self.update_matches(workflow, matching_keys, match_report)
+
+            self.add_matched_terms(workflow, deed_objs_with_hits, match_report)
+
+
 
             # image_objs = self.build_django_objects(
             #     matching_keys, workflow)

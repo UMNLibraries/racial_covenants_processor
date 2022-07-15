@@ -63,8 +63,9 @@ class Command(BaseCommand):
                 # We aren't using the slug, so delete before model import
                 del page_data['workflow_slug']
 
-                # Set image path
+                # Set image path and s3 lookup
                 page_data['page_image_web'] = mk
+                page_data['s3_lookup'] = mk.replace(f"web/{workflow.slug}/", "").replace(".jpg", "")
 
                 page_data['workflow_id'] = workflow.id
 
