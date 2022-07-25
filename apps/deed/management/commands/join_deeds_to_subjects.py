@@ -1,6 +1,4 @@
 import os
-# import re
-# import boto3
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -11,75 +9,11 @@ from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
 class Command(BaseCommand):
-
-    # session = boto3.Session(
-    #          aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-    #          aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
-
-    # def find_matching_keys(self, workflow):
-    #     print("Finding matching s3 keys...")
-    #     # Then use the session to get the resource
-    #     s3 = self.session.resource('s3')
-    #
-    #     my_bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
-    #
-    #     key_filter = re.compile(f"web/{workflow.slug}/.+\.jpg")
-    #
-    #     matching_keys = [obj.key for obj in my_bucket.objects.filter(
-    #         Prefix=f'web/{workflow.slug}/'
-    #     ) if re.match(key_filter, obj.key)]
-    #
-    #     return matching_keys
-
-    # def build_django_objects(self, matching_keys, workflow):
-    #     '''
-    #     Parses the list of s3 keys from this workflow and creates Django DeedPage instances, saves them to the database
-    #
-    #     Arguments:
-    #         matching_keys: List of s3 keys matching our workflow
-    #         workflow: Django ZooniverseWorkflow object
-    #     '''
-    #     print("Creting Django DeedPage objects...")
-    #
-    #     deed_pages = []
-    #
-    #     for mk in matching_keys:
-    #         page_data = None
-    #         try:
-    #             deed_image_regex = settings.ZOONIVERSE_QUESTION_LOOKUP[
-    #                 workflow.workflow_name]['deed_image_regex']
-    #             page_data = re.search(
-    #                 deed_image_regex, mk).groupdict()
-    #             print(page_data)
-    #         except:
-    #             print(f'Could not parse image path data: {mk}')
-    #
-    #         if page_data:
-    #             # We aren't using the slug, so delete before model import
-    #             del page_data['workflow_slug']
-    #
-    #             # Set image path
-    #             page_data['page_image_web'] = mk
-    #
-    #             page_data['workflow_id'] = workflow.id
-    #
-    #             # Re-code bool_match as boolean if found
-    #             if page_data['bool_match']:
-    #                 page_data['bool_match'] = True
-    #             else:
-    #                 page_data['bool_match'] = False
-    #
-    #             deed_pages.append(DeedPage(
-    #                 **page_data
-    #             ))
-    #
-    #     DeedPage.objects.bulk_create(deed_pages, batch_size=10000)
-    #
-    #     return deed_pages
 
     def build_image_lookup(self, workflow):
         '''
@@ -156,14 +90,3 @@ class Command(BaseCommand):
 
             subject_images = self.build_image_lookup(workflow)
             self.add_image_links(deed_pages, subject_images)
-
-            # print('Deleting old DeedPage records (but not their images)...')
-            # DeedPage.objects.filter(workflow=workflow).delete()
-            #
-            # matching_keys = self.find_matching_keys(workflow)
-            #
-            # image_objs = self.build_django_objects(
-            #     matching_keys, workflow)
-
-            # TODO: Move this to separate management command to be run post-Zooniverse
-            # self.join_to_subjects(workflow)
