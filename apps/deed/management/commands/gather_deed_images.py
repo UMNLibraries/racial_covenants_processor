@@ -2,6 +2,7 @@
 import re
 import boto3
 import datetime
+import pandas as pd
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -36,6 +37,58 @@ class Command(BaseCommand):
 
         return matching_keys
 
+    def add_supplemental_info(self, page_data, workflow):
+        '''
+        deed_supplemental_info': [
+            {
+                'data_csv': '/full/path/to/file.csv',
+                'join_field_deed': 'doc_alt_id',
+                'join_field_supp': 'itemnum',
+                'mapping': {
+                    'doc_num': 'docnum',
+                    'doc_type': 'landtype'
+                }
+            }
+        ],
+        '''
+        if 'deed_supplemental_info' in settings.ZOONIVERSE_QUESTION_LOOKUP[
+            workflow.workflow_name]:
+            print("Supplemental info to join found...")
+            s_info_lookups = settings.ZOONIVERSE_QUESTION_LOOKUP[
+                workflow.workflow_name
+            ]['deed_supplemental_info']
+
+            page_data_df = pd.DataFrame(page_data)
+            for s_info_lookup in s_info_lookups:
+                s_df = pd.read_csv(s_info_lookup['data_csv'], dtype='object')
+                # choose columns to keep
+                cols_to_keep = list(s_info_lookup['mapping'].values()) + [s_info_lookup['join_field_supp']]
+                # drop unneeded columns
+                s_df = s_df[cols_to_keep]
+                # rename to django col names, reverse keys and items for this step, but keep mapping in this order for consistency with other values being set in local_settings
+                inv_map = {v: k for k, v in s_info_lookup['mapping'].items()}
+                s_df.rename(columns=inv_map, inplace=True)
+                page_data_df = page_data_df.merge(
+                    s_df,
+                    how="left",
+                    left_on=s_info_lookup['join_field_deed'],
+                    right_on=s_info_lookup['join_field_supp']
+                )
+                page_data_df.drop(columns=[s_info_lookup['join_field_supp']], inplace=True)
+
+                # coalesce
+                for field in list(s_info_lookup['mapping'].keys()):
+                    if f'{field}_x' in page_data_df.columns:
+                        page_data_df[field] = page_data_df[f'{field}_x'].combine_first(page_data_df[f'{field}_y'])
+                        page_data_df.drop(columns=[f'{field}_x', f'{field}_y'], inplace=True)
+
+            print(page_data_df)
+
+            return page_data_df.to_dict('records')
+        print("No supplemental info to join found, moving on.")
+        return page_data
+
+
     def build_django_objects(self, matching_keys, workflow):
         '''
         Parses the list of s3 keys from this workflow and creates Django DeedPage instances, saves them to the database
@@ -44,7 +97,7 @@ class Command(BaseCommand):
             matching_keys: List of s3 keys matching our workflow
             workflow: Django ZooniverseWorkflow object
         '''
-        print("Creating Django DeedPage objects...")
+        print("Extracting filename data from matching keys...")
 
         deed_pages = []
 
@@ -87,80 +140,16 @@ class Command(BaseCommand):
                 else:
                     page_data['bool_match'] = False
 
-                deed_pages.append(DeedPage(
-                    **page_data
-                ))
+                deed_pages.append(page_data)
 
+        deed_pages = self.add_supplemental_info(deed_pages, workflow)
+        print("Creating Django DeedPage objects...")
+        deed_pages = [DeedPage(**page_data) for page_data in deed_pages]
+        print("Starting Django bulk_create...")
         DeedPage.objects.bulk_create(deed_pages, batch_size=10000)
 
         return deed_pages
 
-    # def build_image_lookup(self, workflow):
-    #     '''
-    #     First step of join_to_subjects. Expands the list of image ids from the ZooniverseSubject instance to create a lookup table from each image id to the ZooniverseSubject primary key
-    #
-    #     Arguments:
-    #         workflow: Django ZooniverseWorkflow object
-    #     '''
-    #
-    #     subject_image_set = ZooniverseSubject.objects.filter(
-    #         workflow=workflow
-    #     ).exclude(
-    #         image_ids__isnull=True
-    #     ).values('id', 'image_ids')
-    #
-    #     expanded_subject_image_set = {}
-    #     for subject in subject_image_set:
-    #         for image in subject['image_ids']:
-    #             if image != '':
-    #                 expanded_subject_image_set[image.replace(
-    #                     '.png', '.jpg')] = subject['id']
-    #
-    #     return expanded_subject_image_set
-
-    # def add_image_links(self, deed_pages, subject_image_lookup):
-    #     '''
-    #     Second step of join_to_subjects. Does the Django work to actually update the database
-    #
-    #     Arguments:
-    #         deed_pages: Django queryset of DeedPage objects from previously selected workflow
-    #         subject_image_lookup: A dictionary where each key is an image id from the Zooniverse subject data, and the value is the pk value for the correct ZooniverseSubject instance
-    #     '''
-    #
-    #     # Build a lookup dict for the DeedImage objects for comparison to subject_image_lookup so we only loop through necessary DeedPage objects
-    #     deed_pages_lookup = {os.path.basename(
-    #         page['page_image_web']): page['id'] for page in deed_pages.values('id', 'page_image_web')}
-    #
-    #     common_keys = [key for key in deed_pages_lookup.keys()
-    #                    & subject_image_lookup.keys()]
-    #
-    #     deed_pages_lookup_filtered = {
-    #         key: deed_pages_lookup[key] for key in common_keys}
-    #
-    #     pages_to_update = []
-    #     for dp in deed_pages.filter(id__in=deed_pages_lookup_filtered.values()):
-    #         dp.zooniverse_subject_id = subject_image_lookup[os.path.basename(
-    #             str(dp.page_image_web))]
-    #         pages_to_update.append(dp)
-    #
-    #     print(f'Linking {len(pages_to_update)} images ...')
-    #     DeedPage.objects.bulk_update(
-    #         pages_to_update, ['zooniverse_subject_id'])
-
-    # def join_to_subjects(self, workflow):
-    #     '''
-    #     Joins DeedImage objects to the correct ZooniverseSubject, if found. Uses helper functions to generate lookups for efficient database updating.
-    #
-    #     Arguments:
-    #         workflow: Django ZooniverseWorkflow object
-    #     '''
-    #     print('Linking DeedPage records to ZooniverseSubject records ...')
-    #     deed_pages = DeedPage.objects.filter(
-    #         workflow=workflow
-    #         )
-    #
-    #     subject_images = self.build_image_lookup(workflow)
-    #     self.add_image_links(deed_pages, subject_images)
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -176,6 +165,3 @@ class Command(BaseCommand):
 
             image_objs = self.build_django_objects(
                 matching_keys, workflow)
-
-            # TODO: Move this to separate management command to be run post-Zooniverse
-            # self.join_to_subjects(workflow)

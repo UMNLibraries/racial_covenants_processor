@@ -17,7 +17,8 @@ class DeedPage(models.Model):
     workflow = models.ForeignKey(
         ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
     s3_lookup = models.CharField(blank=True, max_length=500, db_index=True)
-    doc_num = models.CharField(blank=True, max_length=100)
+    doc_num = models.CharField(blank=True, max_length=100, db_index=True)
+    doc_alt_id = models.CharField(blank=True, max_length=100, db_index=True)
     page_num = models.IntegerField(null=True)
     doc_date = models.DateField(null=True)
     doc_type = models.CharField(blank=True, max_length=100)

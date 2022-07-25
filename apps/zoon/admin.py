@@ -13,10 +13,10 @@ from apps.zoon.models import ZooniverseResponseProcessed, ZooniverseSubject, Man
 class DeedImageInline(admin.TabularInline):
     model = DeedPage
     extra = 0
-    exclude = ['workflow', 'page_image_web', 'page_ocr_text']
+    exclude = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id']
     readonly_fields = ['doc_num', 'page_num',
-                       'doc_date', 'bool_match', 'thumbnail_preview']
-
+                       'doc_date', 'doc_type', 'bool_match', 'matched_terms', 'page_ocr_text',
+                       'thumbnail_preview']
 
 # class ParcelInline(admin.TabularInline):
 #     model = Parcel

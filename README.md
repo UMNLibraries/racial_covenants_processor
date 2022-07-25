@@ -62,7 +62,7 @@ python manage.py upload_deed_images --workflow "WI Milwaukee County"
 # To delete:
 python manage.py delete_raw_images
 ```
-1. Gather results of document image uploads into the Django app
+1. Gather results of document image uploads into the Django app. Optionally, add supplemental info like missing doc nums that have been provided in a separate csv.
 ```
 python manage.py gather_deed_images --workflow "WI Milwaukee County"
 ```
