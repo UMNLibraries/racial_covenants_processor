@@ -1,4 +1,5 @@
 import os
+import boto3
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -9,7 +10,10 @@ from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
 class Command(BaseCommand):
-    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+
+    session = boto3.Session(
+             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
