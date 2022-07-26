@@ -136,9 +136,14 @@ class Command(BaseCommand):
 
                 # Re-code bool_match as boolean if found. This likely is only a legacy feature since generally the OCR step will be done in the Lambda world and collected after this step.
                 if 'bool_match' in page_data:
-                    page_data['bool_match'] = True
+                    if page_data['bool_match']:
+                        page_data['bool_match'] = True
+                    else:
+                        page_data['bool_match'] = False
                 else:
                     page_data['bool_match'] = False
+                # else:
+                #     page_data['bool_match'] = False
 
                 deed_pages.append(page_data)
 
