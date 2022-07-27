@@ -152,9 +152,11 @@ class ZooniverseSubject(models.Model):
     def set_geom_union(self):
         if self.bool_parcel_match:
             self.geom_union_4326 = self.get_geom_union()
+        else:
+            self.geom_union_4326 = None
 
     def check_bool_manual_update(self):
-        if self.manualcorrection_set.count() > 0:
+        if self.manualcorrection_set.count() > 0 or self.extraparcelcandidate_set.count() > 0:
             self.bool_manual_correction = True
         else:
             self.bool_manual_correction = False
@@ -395,6 +397,12 @@ class ExtraParcelCandidate(models.Model):
 
 
 @receiver(models.signals.post_delete, sender=ManualCorrection)
+def model_delete(sender, instance, **kwargs):
+    instance.zooniverse_subject.get_final_values()
+    instance.zooniverse_subject.save()
+
+
+@receiver(models.signals.post_delete, sender=ExtraParcelCandidate)
 def model_delete(sender, instance, **kwargs):
     instance.zooniverse_subject.get_final_values()
     instance.zooniverse_subject.save()
