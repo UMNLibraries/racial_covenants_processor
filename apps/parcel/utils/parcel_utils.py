@@ -128,7 +128,7 @@ def write_join_strings(addition_raw, block_raw, lot_raw):
 
 
 def get_covenant_parcel_options(subject_obj):
-    '''Get all possibilities for this ZooniverseSubject or ExtraParcelCandidate
+    '''Get all possibilities for this ZooniverseSubject, ExtraParcelCandidate or ManualParcel
     that can be attempted to be mapped,
     and characterize the number of lots found'''
     if hasattr(subject_obj, 'lot_final'):
@@ -206,4 +206,10 @@ def gather_all_covenant_candidates(subject_obj):
         for extra_parcel in subject_obj.extraparcelcandidate_set.all():
             candidates += get_covenant_parcel_options(extra_parcel)
 
+    return list({v['join_string']: v for v in candidates}.values())
+
+
+def gather_all_manual_covenant_candidates(manualcovenant_obj):
+    # Might need to add alternative extra parcel candidate model here in the future
+    candidates = get_covenant_parcel_options(manualcovenant_obj)
     return list({v['join_string']: v for v in candidates}.values())

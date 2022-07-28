@@ -241,6 +241,10 @@ class CovenantsParcelManager(models.Manager):
                     Exists(oldest_deed),
                     then=Subquery(oldest_deed.values('join_candidates'))
                 ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('join_candidates'))
+                ),
                 default=Value("[]"),
                 output_field=JSONField()
             )

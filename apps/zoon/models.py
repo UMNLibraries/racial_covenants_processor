@@ -10,7 +10,7 @@ from postgres_copy import CopyManager
 
 from racial_covenants_processor.storage_backends import PublicMediaStorage
 from apps.plat.models import Plat, PlatAlternateName
-from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_all_covenant_candidates, standardize_addition
+from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_all_covenant_candidates, gather_all_manual_covenant_candidates, standardize_addition
 
 
 class ZooniverseWorkflow(models.Model):
@@ -413,8 +413,8 @@ def model_delete(sender, instance, **kwargs):
 
 MANUAL_COV_OPTIONS = (
     ('PS', 'Public submission (single property)'),
-    ('PL', 'Plat covenant'),  # TODO: Change to PT
     ('SE', 'Something else'),
+    ('PT', 'Plat covenant'),
 )
 
 
@@ -435,40 +435,71 @@ class ManualCovenant(models.Model):
     cov_type = models.CharField(choices=MANUAL_COV_OPTIONS, max_length=4, null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
 
+    join_candidates = models.JSONField(null=True, blank=True)
     parcel_matches = models.ManyToManyField('parcel.Parcel')
     bool_parcel_match = models.BooleanField(default=False, verbose_name="Parcel match?")
 
     date_added = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
-    # supporting_documents (upload)
-    # manual geometries
+    # TODO: manual geometries
+
+    def __str__(self):
+        return f"{self.workflow} {self.addition} {self.block} {self.lot}"
+
+    @property
+    def join_strings(self):
+        if self.join_candidates:
+            return "; ".join([c['join_string'] for c in self.join_candidates])
+        return None
 
     def check_parcel_match(self):
         self.parcel_matches.clear()
         self.bool_parcel_match = False
+        self.join_candidates = ''
+        parcel_lookup = None
+        join_strings = []
 
         # For plat covenant, separate routine to find all with matching addition
-        # TODO: Add method for one-off covenants that is more similar to previous joinstring setup
-        if self.bool_confirmed and self.cov_type == 'PL':
-            plat_name_standardized = standardize_addition(self.addition)
+        if self.bool_confirmed:
+            if self.cov_type == 'PL':
+                plat_name_standardized = standardize_addition(self.addition)
 
-            # Lookup by plat
-            matching_plats = Plat.objects.filter(plat_name_standardized=plat_name_standardized)
-            matching_plat_alternates = PlatAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
+                # Lookup by plat
+                matching_plats = Plat.objects.filter(plat_name_standardized=plat_name_standardized)
+                matching_plat_alternates = PlatAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
 
-            if matching_plats.count() > 0:
-                self.bool_parcel_match = True
-                for p in matching_plats:
-                    self.parcel_matches.add(*p.parcel_set.all())
+                if matching_plats.count() > 0:
+                    self.bool_parcel_match = True
+                    for p in matching_plats:
+                        self.parcel_matches.add(*p.parcel_set.all())
 
-            # Lookup by alternate name
-            elif matching_plat_alternates.count() > 0:
-                self.bool_parcel_match = True
-                for p in matching_plat_alternates:
-                    self.parcel_matches.add(*p.plat.parcel_set.all())
+                # Lookup by alternate name
+                elif matching_plat_alternates.count() > 0:
+                    self.bool_parcel_match = True
+                    for p in matching_plat_alternates:
+                        self.parcel_matches.add(*p.plat.parcel_set.all())
 
-            # TODO: filter by parcel other? Or just make someone add plat or plat alternate. If so, need way to manually add plat
+                # TODO: filter by parcel other? Or just make someone add plat or plat alternate. If so, need way to manually add plat
+            # Method for one-off covenants that is more similar to previous joinstring setup
+            elif self.lot != '':
+                parcel_lookup = build_parcel_spatial_lookups(self.workflow)
+                self.join_candidates = gather_all_manual_covenant_candidates(self)
+                print(self.join_candidates)
+
+                for c in self.join_candidates:
+                    join_strings.append(c['join_string'])
+                    try:
+                        lot_match = parcel_lookup[c['join_string']]
+                        print(f"MATCH: {c['join_string']}")
+
+                        # There can be more than one modern parcel with same lot designation -- weird!
+                        for parcel_id in lot_match['parcel_ids']:
+                            self.parcel_matches.add(parcel_id)
+                        # self.parcel_matches.add(lot_match['parcel_id'])
+                        self.bool_parcel_match = True
+                    except:
+                        print(f"NO MATCH: {c['join_string']}")
 
 
 @receiver(models.signals.post_save, sender=ManualCovenant)
