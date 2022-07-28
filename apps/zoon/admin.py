@@ -121,6 +121,8 @@ class ManualCovenantAdmin(admin.ModelAdmin):
 
     list_display = ('__str__', 'addition', 'block', 'lot', 'deed_date', 'cov_type', )
 
+    exclude = ['join_candidates']
+
     list_filter = (
         'workflow__workflow_name',
         'cov_type',
@@ -134,6 +136,7 @@ class ManualCovenantAdmin(admin.ModelAdmin):
     readonly_fields = [
         'parcel_matches',
         'bool_parcel_match',
+        'join_strings',
     ]
 
 
