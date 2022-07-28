@@ -1,4 +1,4 @@
-from django.db.models import OuterRef, Subquery, F
+from django.db.models import OuterRef, Subquery, F, Case, Value, When, Exists, BooleanField, DateField, CharField, IntegerField, JSONField, FloatField
 from django.contrib.gis.db import models
 from localflavor.us.us_states import US_STATES
 
@@ -10,7 +10,7 @@ class CovenantsParcelManager(models.Manager):
     '''This is the main heavy-lifter for exports -- as much work as possible being done here to tag the parcel with the earliest mention of the covenant and its related attributes'''
 
     def get_queryset(self):
-        from apps.zoon.models import ZooniverseSubject
+        from apps.zoon.models import ZooniverseSubject, ManualCovenant
 
         oldest_deed = ZooniverseSubject.objects.filter(
             parcel_matches=OuterRef('pk'),
@@ -18,8 +18,41 @@ class CovenantsParcelManager(models.Manager):
             workflow=OuterRef('workflow')
         ).order_by('deed_date')[:1]
 
-        return super().get_queryset().filter(
-            zooniversesubject__bool_covenant_final=True
+        oldest_deed_manual = ManualCovenant.objects.filter(
+            parcel_matches=OuterRef('pk'),
+            bool_confirmed=True,
+            workflow=OuterRef('workflow')
+        ).order_by('deed_date')[:1]
+
+        return super().get_queryset().annotate(
+            bool_covenant=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Value(True)
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Value(True)
+                ),
+                default=Value(False),
+                output_field=BooleanField()
+            )
+        ).annotate(
+            cov_type=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Value("zooniverse")
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Value("manual")
+                ),
+                default=Value(""),
+                output_field=CharField()
+            )
+        ).filter(
+            bool_covenant=True
+            # zooniversesubject__bool_covenant_final=True
         ).annotate(
             add_mod=F('plat_name')
         ).annotate(
@@ -37,38 +70,214 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             cnty_pin=F('pin_primary')
         ).annotate(
-            deed_date=Subquery(oldest_deed.values('deed_date'))
+            deed_date=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('deed_date'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('deed_date'))
+                ),
+                default=Value(None),
+                output_field=DateField()
+            )
         ).annotate(
-            cov_text=Subquery(oldest_deed.values('covenant_text_final'))
+            cov_text=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('covenant_text_final'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('covenant_text'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         ).annotate(
-            zn_subj_id=Subquery(oldest_deed.values('zoon_subject_id'))
+            zn_subj_id=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('zoon_subject_id'))
+                ),
+                default=Value(None),
+                output_field=IntegerField()
+            )
         ).annotate(
-            image_ids=Subquery(oldest_deed.values('image_ids'))
+            image_ids=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('image_ids'))
+                ),
+                default=Value("[]"),
+                output_field=JSONField()
+            )
         ).annotate(
-            zn_dt_ret=Subquery(oldest_deed.values('dt_retired'))
+            zn_dt_ret=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('dt_retired'))
+                ),
+                default=Value(None),
+                output_field=DateField()
+            )
         ).annotate(
-            med_score=Subquery(oldest_deed.values('median_score'))
+            med_score=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('median_score'))
+                ),
+                default=Value(None),
+                output_field=FloatField()
+            )
         ).annotate(
-            manual_cx=Subquery(oldest_deed.values('bool_manual_correction'))
+            manual_cx=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('bool_manual_correction'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Value(True)
+                ),
+                default=Value(False),
+                output_field=BooleanField()
+            )
         ).annotate(
-            add_cov=Subquery(oldest_deed.values('addition_final'))
+            add_cov=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('addition_final'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('addition'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         ).annotate(
-            block_cov=Subquery(oldest_deed.values('block_final'))
+            block_cov=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('block_final'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('block'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         ).annotate(
-            lot_cov=Subquery(oldest_deed.values('lot_final'))
+            lot_cov=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('lot_final'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('lot'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         ).annotate(
-            seller=Subquery(oldest_deed.values('seller_final'))
+            seller=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('seller_final'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('seller'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         ).annotate(
-            buyer=Subquery(oldest_deed.values('buyer_final'))
+            buyer=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('buyer_final'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('buyer'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         ).annotate(
-            deed_date=Subquery(oldest_deed.values('deed_date_final'))
+            match_type=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('match_type_final'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('cov_type'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         ).annotate(
-            match_type=Subquery(oldest_deed.values('match_type_final'))
+            dt_updated=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('date_updated'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('date_updated'))
+                ),
+                default=Value(None),
+                output_field=DateField()
+            )
         ).annotate(
-            dt_updated=Subquery(oldest_deed.values('date_updated'))
-        ).annotate(
-            join_candidates=Subquery(oldest_deed.values('join_candidates'))
+            join_candidates=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('join_candidates'))
+                ),
+                default=Value("[]"),
+                output_field=JSONField()
+            )
         )
+        # .annotate(
+        #     deed_date=Subquery(oldest_deed.values('deed_date'))
+        # ).annotate(
+        #     cov_text=Subquery(oldest_deed.values('covenant_text_final'))
+        # ).annotate(
+        #     zn_subj_id=Subquery(oldest_deed.values('zoon_subject_id'))
+        # ).annotate(
+        #     image_ids=Subquery(oldest_deed.values('image_ids'))
+        # ).annotate(
+        #     zn_dt_ret=Subquery(oldest_deed.values('dt_retired'))
+        # ).annotate(
+        #     med_score=Subquery(oldest_deed.values('median_score'))
+        # ).annotate(
+        #     manual_cx=Subquery(oldest_deed.values('bool_manual_correction'))
+        # ).annotate(
+        #     add_cov=Subquery(oldest_deed.values('addition_final'))
+        # ).annotate(
+        #     block_cov=Subquery(oldest_deed.values('block_final'))
+        # ).annotate(
+        #     lot_cov=Subquery(oldest_deed.values('lot_final'))
+        # ).annotate(
+        #     seller=Subquery(oldest_deed.values('seller_final'))
+        # ).annotate(
+        #     buyer=Subquery(oldest_deed.values('buyer_final'))
+        # ).annotate(
+        #     deed_date=Subquery(oldest_deed.values('deed_date_final'))
+        # ).annotate(
+        #     match_type=Subquery(oldest_deed.values('match_type_final'))
+        # ).annotate(
+        #     dt_updated=Subquery(oldest_deed.values('date_updated'))
+        # ).annotate(
+        #     join_candidates=Subquery(oldest_deed.values('join_candidates'))
+        # )
 
 
 class Parcel(models.Model):

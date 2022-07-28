@@ -34,6 +34,7 @@ EXPORT_FIELDS_ORDERED = [
     'join_strgs',
     'geocd_addr',
     'geocd_dist',
+    'cov_type',
     'match_type',
     'manual_cx',
     'dt_updated',
@@ -60,6 +61,7 @@ def build_gdf(workflow):
         'deed_date',
         'seller',
         'buyer',
+        'cov_type',
         'cov_text',
 
         'zn_subj_id',

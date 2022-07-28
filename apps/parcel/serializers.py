@@ -12,6 +12,7 @@ covenant_api_fields = [
     'deed_date',
     'seller',
     'buyer',
+    'cov_type',
     'cov_text',
 
     'zn_subj_id',
@@ -44,6 +45,7 @@ covenant_api_fields = [
 # Serializers define the API representation.
 class ParcelNoGeoSerializer(serializers.ModelSerializer):
     # mostly defined in annotations on model manager in  models.py
+    cov_type = serializers.CharField()
     cov_text = serializers.CharField()
     zn_subj_id = serializers.CharField()
     image_ids = serializers.CharField()
@@ -74,6 +76,7 @@ class ParcelNoGeoSerializer(serializers.ModelSerializer):
 
 class ParcelGeoSerializer(GeoFeatureModelSerializer):
     # mostly defined in annotations on model manager in  models.py
+    cov_type = serializers.CharField()
     cov_text = serializers.CharField()
     zn_subj_id = serializers.CharField()
     image_ids = serializers.CharField()
