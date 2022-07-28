@@ -119,12 +119,31 @@ class AdditionScoreRangeListFilter(ScoreRangeListFilter):
 class ManualCovenantAdmin(admin.ModelAdmin):
     search_fields = ['addition', 'covenant_text', 'comments']
 
-    list_display = ('__str__', 'addition', 'block', 'lot', 'deed_date', 'cov_type', )
+    list_display = ('__str__', 'bool_parcel_match', 'bool_confirmed', 'addition', 'block', 'lot', 'deed_date', 'cov_type', )
 
-    exclude = ['join_candidates']
+    # exclude = ['join_candidates']
+
+    fields = [
+        'workflow',
+        'cov_type',
+        'bool_confirmed',
+        'bool_parcel_match',
+        'covenant_text',
+        'addition',
+        'block',
+        'lot',
+        'city',
+        'buyer',
+        'seller',
+        'deed_date',
+        'comments',
+        'parcel_matches',
+        'join_strings'
+    ]
 
     list_filter = (
         'workflow__workflow_name',
+        'bool_parcel_match',
         'cov_type',
         ('deed_date', DateRangeFilter),
     )
