@@ -4,7 +4,7 @@ import geopandas as gpd
 from django.contrib.gis.db.models.functions import AsWKT
 
 from apps.parcel.models import Parcel
-from apps.zoon.models import MATCH_TYPE_OPTIONS
+from apps.zoon.models import MATCH_TYPE_OPTIONS, MANUAL_COV_OPTIONS
 
 
 EXPORT_FIELDS_ORDERED = [
@@ -96,7 +96,9 @@ def build_gdf(workflow):
 
     covenants_df['deed_year'] = pd.DatetimeIndex(covenants_df['deed_date']).year
     covenants_df['join_strgs'] = covenants_df['join_candidates'].apply(lambda x: ';'.join([jc['join_string'] for jc in x]))
-    covenants_df['match_type'] = covenants_df['match_type'].apply(lambda x: [mt[1] for mt in MATCH_TYPE_OPTIONS if mt[0] == x][0] if x is not None else 'Automatic match')
+
+    MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
+    covenants_df['match_type'] = covenants_df['match_type'].apply(lambda x: [mt[1] for mt in MATCH_TYPES if mt[0] == x][0] if x is not None else 'Automatic match')
 
     covenants_df['image_ids'] = covenants_df['image_ids'].apply(lambda x: ','.join([img for img in x]))
 
