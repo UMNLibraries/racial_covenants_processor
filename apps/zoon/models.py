@@ -3,7 +3,6 @@ from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Union
 from django.contrib.gis import geos
 from django.dispatch import receiver
-# from django.db.models.signals import post_save
 from django.utils.text import slugify
 
 from postgres_copy import CopyManager
@@ -454,6 +453,7 @@ class ManualCovenant(models.Model):
         return None
 
     def check_parcel_match(self):
+        ''' Triggered by post_save signal'''
         self.parcel_matches.clear()
         self.bool_parcel_match = False
         self.join_candidates = ''
@@ -462,7 +462,7 @@ class ManualCovenant(models.Model):
 
         # For plat covenant, separate routine to find all with matching addition
         if self.bool_confirmed:
-            if self.cov_type == 'PL':
+            if self.cov_type == 'PT':
                 plat_name_standardized = standardize_addition(self.addition)
 
                 # Lookup by plat
