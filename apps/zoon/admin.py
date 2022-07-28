@@ -7,7 +7,7 @@ from rangefilter.filters import DateRangeFilter
 
 from apps.deed.models import DeedPage
 from apps.parcel.models import Parcel
-from apps.zoon.models import ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection, ExtraParcelCandidate
+from apps.zoon.models import ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection, ExtraParcelCandidate, ManualCovenant, ManualSupportingDocument
 
 
 class DeedImageInline(admin.TabularInline):
@@ -17,6 +17,12 @@ class DeedImageInline(admin.TabularInline):
     readonly_fields = ['doc_num', 'page_num',
                        'doc_date', 'doc_type', 'bool_match', 'matched_terms', 'page_ocr_text',
                        'thumbnail_preview']
+
+
+class ManualSupportingDocumentInline(admin.StackedInline):
+    model = ManualSupportingDocument
+    extra = 0
+    exclude = ['workflow']
 
 # class ParcelInline(admin.TabularInline):
 #     model = Parcel
@@ -107,6 +113,28 @@ class DateScoreRangeListFilter(ScoreRangeListFilter):
 class AdditionScoreRangeListFilter(ScoreRangeListFilter):
     title = _('addition score')
     parameter_name = 'addition_score'
+
+
+@ admin.register(ManualCovenant)
+class ManualCovenantAdmin(admin.ModelAdmin):
+    search_fields = ['addition', 'covenant_text', 'comments']
+
+    list_display = ('__str__', 'addition', 'block', 'lot', 'deed_date', 'cov_type', )
+
+    list_filter = (
+        'workflow__workflow_name',
+        'cov_type',
+        ('deed_date', DateRangeFilter),
+    )
+
+    inlines = [
+        ManualSupportingDocumentInline
+    ]
+
+    readonly_fields = [
+        'parcel_matches',
+        'bool_parcel_match',
+    ]
 
 
 @ admin.register(ZooniverseSubject)

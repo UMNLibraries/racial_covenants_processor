@@ -3,11 +3,14 @@ from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Union
 from django.contrib.gis import geos
 from django.dispatch import receiver
+# from django.db.models.signals import post_save
 from django.utils.text import slugify
 
 from postgres_copy import CopyManager
 
-from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_all_covenant_candidates
+from racial_covenants_processor.storage_backends import PublicMediaStorage
+from apps.plat.models import Plat, PlatAlternateName
+from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_all_covenant_candidates, standardize_addition
 
 
 class ZooniverseWorkflow(models.Model):
@@ -406,3 +409,97 @@ def model_delete(sender, instance, **kwargs):
 def model_delete(sender, instance, **kwargs):
     instance.zooniverse_subject.get_final_values()
     instance.zooniverse_subject.save()
+
+
+MANUAL_COV_OPTIONS = (
+    ('PS', 'Public submission (single property)'),
+    ('PL', 'Plat covenant'),  # TODO: Change to PT
+    ('SE', 'Something else'),
+)
+
+
+class ManualCovenant(models.Model):
+    workflow = models.ForeignKey(
+        ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
+    bool_confirmed = models.BooleanField(default=False)
+    covenant_text = models.TextField(blank=True)
+    addition = models.CharField(max_length=500, blank=True)
+    lot = models.TextField(blank=True)
+    block = models.CharField(max_length=500, blank=True)
+    seller = models.CharField(max_length=100, blank=True)
+    buyer = models.CharField(max_length=100, blank=True)
+    deed_date = models.DateField(null=True, blank=True)
+
+    city = models.CharField(max_length=500, null=True, blank=True, verbose_name="City")
+
+    cov_type = models.CharField(choices=MANUAL_COV_OPTIONS, max_length=4, null=True, blank=True)
+    comments = models.TextField(null=True, blank=True)
+
+    parcel_matches = models.ManyToManyField('parcel.Parcel')
+    bool_parcel_match = models.BooleanField(default=False, verbose_name="Parcel match?")
+
+    date_added = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    # supporting_documents (upload)
+    # manual geometries
+
+    def check_parcel_match(self):
+        self.parcel_matches.clear()
+        self.bool_parcel_match = False
+
+        # For plat covenant, separate routine to find all with matching addition
+        # TODO: Add method for one-off covenants that is more similar to previous joinstring setup
+        if self.bool_confirmed and self.cov_type == 'PL':
+            plat_name_standardized = standardize_addition(self.addition)
+
+            # Lookup by plat
+            matching_plats = Plat.objects.filter(plat_name_standardized=plat_name_standardized)
+            matching_plat_alternates = PlatAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
+
+            if matching_plats.count() > 0:
+                self.bool_parcel_match = True
+                for p in matching_plats:
+                    self.parcel_matches.add(*p.parcel_set.all())
+
+            # Lookup by alternate name
+            elif matching_plat_alternates.count() > 0:
+                self.bool_parcel_match = True
+                for p in matching_plat_alternates:
+                    self.parcel_matches.add(*p.plat.parcel_set.all())
+
+            # TODO: filter by parcel other? Or just make someone add plat or plat alternate. If so, need way to manually add plat
+
+
+@receiver(models.signals.post_save, sender=ManualCovenant)
+def manual_cov_post_save(sender, instance=None, created=False, **kwargs):
+
+    if not instance:
+        return
+
+    if hasattr(instance, '_dirty'):
+        return
+
+    instance.check_parcel_match()
+
+    try:
+        instance._dirty = True
+        instance.save()
+    finally:
+        del instance._dirty
+
+SUPPORTING_DOC_TYPES = (
+    ('Dd', 'Deed'),
+    ('Ot', 'Other')
+)
+
+class ManualSupportingDocument(models.Model):
+    workflow = models.ForeignKey(
+        ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
+    manual_covenant = models.ForeignKey(ManualCovenant, on_delete=models.CASCADE)
+    doc_type = models.CharField(choices=SUPPORTING_DOC_TYPES, max_length=4, blank=True)
+    doc_upload = models.FileField(
+        storage=PublicMediaStorage(), upload_to="supporting_docs/", null=True)
+    comments = models.TextField(blank=True)
+    date_added = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
