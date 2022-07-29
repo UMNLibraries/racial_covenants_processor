@@ -16,7 +16,7 @@ class CovenantsParcelManager(models.Manager):
             parcel_matches=OuterRef('pk'),
             bool_covenant_final=True,
             workflow=OuterRef('workflow')
-        ).order_by('deed_date')[:1]
+        ).order_by('deed_date_final')[:1]
 
         oldest_deed_manual = ManualCovenant.objects.filter(
             parcel_matches=OuterRef('pk'),
@@ -73,7 +73,7 @@ class CovenantsParcelManager(models.Manager):
             deed_date=Case(
                 When(
                     Exists(oldest_deed),
-                    then=Subquery(oldest_deed.values('deed_date'))
+                    then=Subquery(oldest_deed.values('deed_date_final'))
                 ),
                 When(
                     Exists(oldest_deed_manual),
