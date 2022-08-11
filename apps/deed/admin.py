@@ -6,7 +6,7 @@ from .models import DeedPage
 @admin.register(DeedPage)
 class DeedPageAdmin(admin.ModelAdmin):
     list_filter = ['workflow', 'bool_match', 'matched_terms__term']
-    list_display = ['doc_num', 'bool_match', 'get_matched_terms', 'page_image_web', 'zooniverse_subject']
+    list_display = ['doc_num', 'bool_match', 'page_num', 'get_matched_terms', 'page_image_web', 'zooniverse_subject']
     search_fields = ['doc_num']
     readonly_fields = (
         'workflow',

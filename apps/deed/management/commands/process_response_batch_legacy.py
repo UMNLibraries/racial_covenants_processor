@@ -11,7 +11,7 @@ from django.core import management
 from django.conf import settings
 
 class Command(BaseCommand):
-    '''Processes normalized Zooniverse responses to extract real-estate fields and calculate reliability scores. Process brought into the Django world, but based on work by Kevin Ehrman and StarEightyTwo'''
+    '''DEPRECATED: Processes normalized Zooniverse responses to extract real-estate fields and calculate reliability scores. Process brought into the Django world, but based on work by Kevin Ehrman and StarEightyTwo'''
 
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str, help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')

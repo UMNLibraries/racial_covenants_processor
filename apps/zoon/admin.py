@@ -117,7 +117,7 @@ class AdditionScoreRangeListFilter(ScoreRangeListFilter):
 
 @ admin.register(ManualCovenant)
 class ManualCovenantAdmin(admin.ModelAdmin):
-    search_fields = ['addition', 'covenant_text', 'comments']
+    search_fields = ['addition', 'covenant_text', 'doc_num', 'comments']
 
     list_display = ('__str__', 'bool_parcel_match', 'bool_confirmed', 'addition', 'block', 'lot', 'deed_date', 'cov_type', )
 
@@ -136,6 +136,7 @@ class ManualCovenantAdmin(admin.ModelAdmin):
         'buyer',
         'seller',
         'deed_date',
+        'doc_num',
         'comments',
         'parcel_matches',
         'join_strings'
