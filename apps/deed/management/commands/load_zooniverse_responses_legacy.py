@@ -7,7 +7,7 @@ from django.conf import settings
 
 
 class Command(BaseCommand):
-    '''Bulk load raw Zooniverse export data for further processing'''
+    '''DEPRECATED: Bulk load raw Zooniverse export data for further processing'''
     question_lookup = None  # Set in handle
 
     def add_arguments(self, parser):

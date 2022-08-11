@@ -428,6 +428,7 @@ class ManualCovenant(models.Model):
     seller = models.CharField(max_length=100, blank=True)
     buyer = models.CharField(max_length=100, blank=True)
     deed_date = models.DateField(null=True, blank=True)
+    doc_num = models.CharField(blank=True, max_length=100, db_index=True)
 
     city = models.CharField(max_length=500, null=True, blank=True, verbose_name="City")
 
