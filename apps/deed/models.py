@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.html import mark_safe
 from postgres_copy import CopyManager
 
-from racial_covenants_processor.storage_backends import PrivateMediaStorage, PublicMediaStorage
+from racial_covenants_processor.storage_backends import PrivateMediaStorage, PublicMediaStorage, PublicDeedStorage
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
 
 
@@ -22,7 +22,10 @@ class DeedPage(models.Model):
     page_num = models.IntegerField(null=True)
     doc_date = models.DateField(null=True)
     doc_type = models.CharField(blank=True, max_length=100)
+    public_uuid = models.CharField(blank=True, max_length=50, db_index=True)
     page_image_web = models.ImageField(
+        storage=PublicDeedStorage(), null=True)
+    page_stats = models.FileField(
         storage=PrivateMediaStorage(), null=True)
     page_ocr_text = models.FileField(
         storage=PrivateMediaStorage(), null=True)

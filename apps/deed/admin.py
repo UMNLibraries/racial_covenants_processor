@@ -18,6 +18,7 @@ class DeedPageAdmin(admin.ModelAdmin):
         'doc_date',
         's3_lookup',
         'doc_type',
+        'page_stats',
         'page_ocr_text',
         'page_ocr_json',
         'matched_terms'
