@@ -3,12 +3,12 @@ import re
 import boto3
 import datetime
 import pandas as pd
+from pathlib import PurePath
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from apps.deed.models import DeedPage
-# from apps.zoon.models import ZooniverseSubject
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
@@ -29,10 +29,10 @@ class Command(BaseCommand):
 
         my_bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
-        key_filter = re.compile(f"web/{workflow.slug}/.+\.jpg")
+        key_filter = re.compile(f"ocr/stats/{workflow.slug}/.+\.json")
 
         matching_keys = [obj.key for obj in my_bucket.objects.filter(
-            Prefix=f'web/{workflow.slug}/'
+            Prefix=f'ocr/stats/{workflow.slug}/'
         ) if re.match(key_filter, obj.key)]
 
         return matching_keys
@@ -102,25 +102,30 @@ class Command(BaseCommand):
         deed_pages = []
 
         for mk in matching_keys:
-            page_data = None
             try:
                 deed_image_regex = settings.ZOONIVERSE_QUESTION_LOOKUP[
                     workflow.workflow_name]['deed_image_regex']
                 page_data = re.search(
                     deed_image_regex, mk).groupdict()
+                public_uuid = re.search(r'__([a-z0-9]+)\.json', mk).group(1)
                 # print(page_data)
             except:
+                raise
                 print(f'Could not parse image path data: {mk}. You might need to adjust your deed_image_regex setting.')
+                page_data = None
 
             if page_data:
                 # We aren't using the slug, so delete before model import
                 del page_data['workflow_slug']
 
                 # Set image path and s3 lookup
-                page_data['page_image_web'] = mk
-                page_data['page_ocr_text'] = mk.replace("web/", "ocr/txt/").replace(".jpg", ".txt")
-                page_data['page_ocr_json'] = mk.replace("web/", "ocr/json/").replace(".jpg", ".json")
-                page_data['s3_lookup'] = mk.replace(f"web/{workflow.slug}/", "").replace(".jpg", "")
+                page_data['public_uuid'] = public_uuid
+                page_data['s3_lookup'] = mk.replace(f"ocr/stats/{workflow.slug}/", "").replace(f"__{public_uuid}.json", "")
+
+                page_data['page_stats'] = mk
+                page_data['page_image_web'] = str(PurePath(mk).with_name(public_uuid + '.jpg')).replace("ocr/stats/", "web/")
+                page_data['page_ocr_text'] = mk.replace("ocr/stats/", "ocr/txt/").replace(f"__{public_uuid}.json", ".txt")
+                page_data['page_ocr_json'] = mk.replace("ocr/stats/", "ocr/json/").replace(f"__{public_uuid}.json", ".json")
 
                 page_data['workflow_id'] = workflow.id
 
