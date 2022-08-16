@@ -29,7 +29,7 @@ class Command(BaseCommand):
         if file_name == '':
             return ''
         try:
-            return self.media_storage.url(file_name)
+            return self.media_storage.url(file_name).split('?')[0]
         except:
             return ''
 
@@ -52,7 +52,7 @@ class Command(BaseCommand):
             pages_with_hits = DeedPage.objects.filter(
                 workflow=workflow,
                 bool_match=True
-            ).values('pk', 'doc_num', 'page_num', 'page_image_web')
+            ).values('pk', 'doc_num', 'page_num', 'page_image_web', 's3_lookup')
 
             # Get all pages from all of those docs
             hits_all_pages = DeedPage.objects.filter(
@@ -65,8 +65,8 @@ class Command(BaseCommand):
             for p in pages_with_hits:
                 p['all_pages'] = [ap for ap in hits_all_pages if ap['doc_num'] == p['doc_num']]
                 p['page_count'] = len(p['all_pages'])
-                if p['page_count'] <= 3:
-                    p['default_frame'] = int(p['page_num'])
+                if int(p['page_num']) == 1:
+                    p['default_frame'] = 1
                     p['image1'] = self.url_or_blank(p['all_pages'], 1)
                     p['image2'] = self.url_or_blank(p['all_pages'], 2)
                     p['image3'] = self.url_or_blank(p['all_pages'], 3)
@@ -87,4 +87,4 @@ class Command(BaseCommand):
             now = datetime.datetime.now()
             timestamp = now.strftime('%Y%m%d_%H%M')
             version_slug = f"{workflow.slug}_zooniverse_manifest_{timestamp}"
-            self.save_manifest_local(manifest_df.drop(columns=['all_pages']), version_slug)
+            self.save_manifest_local(manifest_df.drop(columns=['all_pages', 'page_image_web']), version_slug)

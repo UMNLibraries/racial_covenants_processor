@@ -56,10 +56,17 @@ ZOONIVERSE_QUESTION_LOOKUP = {
 ```
 python manage.py create_workflow --workflow "WI Milwaukee County"
 ```
-1. Upload deed images to private s3 bucket. This will trigger lambdas to OCR the text, generate basic document statistics, check for racial terms and to make web versions of the document images. (Side effect: Create analyzable statistics on which language found)
+1. Upload deed images to private s3 bucket. This will trigger lambdas to OCR the text, generate basic document statistics, check for racial terms and to make web versions of the document images.
 ```
 python manage.py upload_deed_images --workflow "WI Milwaukee County"
-# To delete:
+
+ # To go back and re-OCR records that had errors:
+python manage.py trigger_ocr_cleanup --workflow "WI Milwaukee County"
+
+ # To re-do the search terms and image optimization steps, while skipping OCR:
+python manage.py trigger_lambda_refresh --workflow "WI Milwaukee County"
+
+ # To delete:
 python manage.py delete_raw_images
 ```
 1. Gather results of document image uploads into the Django app. Optionally, add supplemental info like missing doc nums that have been provided in a separate csv.
@@ -68,11 +75,11 @@ python manage.py gather_deed_images --workflow "WI Milwaukee County"
 ```
 1. Gather list of positive matches for racially restrictive language and join to deed image records in Django app
 ```
-TODO: python manage.py gather_image_hits --workflow "WI Milwaukee County"
+python manage.py gather_image_hits --workflow "WI Milwaukee County"
 ```
-1. Upload matching files to Zooniverse (or point to S3 images)
+1. Export manifest in order to upload matching files to Zooniverse (or point to S3 images)
 ```
-TODO
+python manage.py build_zooniverse_manifest --workflow "WI Milwaukee County"
 ```
 1. Upload batch of records to Zooniverse for community confirmation
 ```
@@ -129,6 +136,18 @@ python manage.py connect_manual_corrections --workflow "Ramsey County"
 python manage.py connect_extra_parcels --workflow "Ramsey County"
 python manage.py connect_plat_alternate_names --workflow "Ramsey County"
 ```
+
+## Standalone deed uploader
+Often deed images are stored on a local machine or network drive, and it's not feasible or efficient to move them. This standalone uploader is designed to avoid the user having to do a full install on this computer.
+
+- [mp-upload-deed-images-standalone](https://github.com/UMNLibraries/mp-upload-deed-images-standalone)
+
+## Lambda functions used for OCR step machine
+The individual lambda functions that make up the OCR, term search and web image optimization processes are in separate repositories:
+- [mp-covenants-ocr-page](https://github.com/UMNLibraries/mp-covenants-ocr-page)
+- [mp-covenants-term-search-basic](https://github.com/UMNLibraries/mp-covenants-term-search-basic)
+- [mp-covenants-resize-image](https://github.com/UMNLibraries/mp-covenants-resize-image)
+- [mp-covenants-fake-ocr](https://github.com/UMNLibraries/mp-covenants-fake-ocr)
 
 ## Django installation process
 

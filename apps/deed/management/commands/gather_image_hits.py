@@ -11,7 +11,6 @@ from django.core.files.base import File
 from django.conf import settings
 
 from apps.deed.models import DeedPage, MatchTerm, SearchHitReport
-# from apps.zoon.models import ZooniverseSubject
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
@@ -62,7 +61,7 @@ class Command(BaseCommand):
             # Turn columns of terms into a list of terms found in each row
             # https://stackoverflow.com/questions/59487709/select-column-names-where-row-values-are-not-null-pandas-dataframe
             term_columns = report_df.drop(
-                columns=['workflow', 'lookup']
+                columns=['workflow', 'lookup', 'uuid']
             )
             report_df['matched_terms'] = term_columns.notna().dot(term_columns.columns+',').str.rstrip(',')
 
@@ -82,13 +81,6 @@ class Command(BaseCommand):
             print(report_df)
 
             return report_df
-
-            # class SearchHitReport(models.Model):
-            #     workflow = models.ForeignKey(
-            #         ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
-            #     report_csv = models.FileField(
-            #         storage=PrivateMediaStorage(), null=True)
-            #     num_hits = models.IntegerField(null=True)
 
     def save_report_local(self, df, version_slug):
         out_csv = os.path.join(
@@ -128,7 +120,6 @@ class Command(BaseCommand):
             print("Couldn't find any matching DeedPage objects.")
 
         return deed_hits
-        # maybe loop through found terms?
 
     def add_matched_terms(self, workflow, deed_objs_with_hits, match_report):
         match_report['matched_terms'] = match_report['matched_terms'].apply(lambda x: x.split(','))
@@ -136,26 +127,15 @@ class Command(BaseCommand):
         terms_grouped = exploded_df[[
             'lookup', 'matched_terms'
         ]].groupby('matched_terms')['lookup'].apply(list).reset_index(name='lookups')
-        print(terms_grouped)
-        # matched_terms = ','.join(match_report["matched_terms"])
-        # print(matched_terms)
+
         for index, row in terms_grouped.iterrows():
             print(row)
             term, created = MatchTerm.objects.get_or_create(
                 term=row['matched_terms']
             )
             objs = deed_objs_with_hits.filter(s3_lookup__in=row['lookups'])
-
-            # bulk_m2m_updates = []
-            # for obj in objs:
-            #     bulk_m2m_updates.append(
-            #         DeedImage.matched_terms.through(matchterm_id=term.id, )
-            #     )
             term.deedpage_set.add(*objs)
-            # objs.matched_terms_set.add(term)
-            # photo_tag_1 = Tag.photos.through(photo_id=1, tag_id=1)
-            # photo_tag_2 = Tag.photos.through(photo_id=1, tag_id=2)
-            # Tag.photos.through.objects.bulk_insert([photo_tag_1, photo_tag_2, ...])
+
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -181,14 +161,9 @@ class Command(BaseCommand):
                 # Save to geojson in Django storages/model
                 match_report_obj = self.save_report_model(match_report, version_slug, workflow, now)
 
+            print('Clearing previous bool_match values...')
+            DeedPage.objects.filter(workflow=workflow).update(bool_match=False)
+
             deed_objs_with_hits = self.update_matches(workflow, matching_keys, match_report)
 
             self.add_matched_terms(workflow, deed_objs_with_hits, match_report)
-
-
-
-            # image_objs = self.build_django_objects(
-            #     matching_keys, workflow)
-
-            # TODO: Move this to separate management command to be run post-Zooniverse
-            # self.join_to_subjects(workflow)

@@ -110,7 +110,6 @@ class Command(BaseCommand):
                 public_uuid = re.search(r'__([a-z0-9]+)\.json', mk).group(1)
                 # print(page_data)
             except:
-                raise
                 print(f'Could not parse image path data: {mk}. You might need to adjust your deed_image_regex setting.')
                 page_data = None
 
