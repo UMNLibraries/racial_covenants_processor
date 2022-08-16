@@ -1,12 +1,13 @@
 from django.contrib import admin
+from rangefilter.filters import DateRangeFilter
 
 from .models import DeedPage
 
 
 @admin.register(DeedPage)
 class DeedPageAdmin(admin.ModelAdmin):
-    list_filter = ['workflow', 'bool_match', 'matched_terms__term']
-    list_display = ['doc_num', 'bool_match', 'page_num', 'get_matched_terms', 'page_image_web', 'zooniverse_subject']
+    list_filter = ['workflow', 'bool_match', 'matched_terms__term', ('doc_date', DateRangeFilter), 'doc_type',]
+    list_display = ['doc_num', 'bool_match', 's3_lookup', 'page_num', 'get_matched_terms', 'page_image_web', 'zooniverse_subject']
     search_fields = ['doc_num']
     readonly_fields = (
         'workflow',
