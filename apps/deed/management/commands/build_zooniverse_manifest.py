@@ -67,21 +67,25 @@ class Command(BaseCommand):
                 p['page_count'] = len(p['all_pages'])
                 if int(p['page_num']) == 1:
                     p['default_frame'] = 1
-                    p['image1'] = self.url_or_blank(p['all_pages'], 1)
-                    p['image2'] = self.url_or_blank(p['all_pages'], 2)
-                    p['image3'] = self.url_or_blank(p['all_pages'], 3)
+                    p['#image1'] = self.url_or_blank(p['all_pages'], 1)
+                    p['#image2'] = self.url_or_blank(p['all_pages'], 2)
+                    p['#image3'] = self.url_or_blank(p['all_pages'], 3)
                 else:
                     # Put match page at frame 2 and get page before and after to surround it
                     p['default_frame'] = 2
-                    p['image1'] = self.url_or_blank(p['all_pages'], int(p['page_num']) - 1)
-                    p['image2'] = p['page_image_web']
-                    p['image3'] = self.url_or_blank(p['all_pages'], int(p['page_num']) + 1)
+                    p['#image1'] = self.url_or_blank(p['all_pages'], int(p['page_num']) - 1)
+                    p['#image2'] = p['page_image_web']
+                    p['#image3'] = self.url_or_blank(p['all_pages'], int(p['page_num']) + 1)
 
 
             manifest_df = pd.DataFrame(pages_with_hits)
-            manifest_df['image1'] = manifest_df['image1'].apply(lambda x: self.get_full_url(x))
-            manifest_df['image2'] = manifest_df['image2'].apply(lambda x: self.get_full_url(x))
-            manifest_df['image3'] = manifest_df['image3'].apply(lambda x: self.get_full_url(x))
+            manifest_df['#image1'] = manifest_df['#image1'].apply(lambda x: self.get_full_url(x))
+            manifest_df['#image2'] = manifest_df['#image2'].apply(lambda x: self.get_full_url(x))
+            manifest_df['#image3'] = manifest_df['#image3'].apply(lambda x: self.get_full_url(x))
+
+            manifest_df.rename(columns={
+                's3_lookup': '#s3_lookup'
+            }, inplace=True)
             print(manifest_df)
 
             now = datetime.datetime.now()
