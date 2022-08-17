@@ -32,6 +32,7 @@ class DeedPage(models.Model):
     page_ocr_json = models.FileField(
         storage=PrivateMediaStorage(), null=True)
     bool_match = models.BooleanField(default=False)
+    bool_exception = models.BooleanField(default=False)
     matched_terms = models.ManyToManyField(MatchTerm)
 
     zooniverse_subject = models.ForeignKey(

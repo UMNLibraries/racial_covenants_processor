@@ -1,6 +1,7 @@
 import os
 import re
 import boto3
+import json
 import ndjson
 import tempfile
 import datetime
@@ -8,6 +9,7 @@ import pandas as pd
 
 from django.core.management.base import BaseCommand
 from django.core.files.base import File
+from django.db.models import Count
 from django.conf import settings
 
 from apps.deed.models import DeedPage, MatchTerm, SearchHitReport
@@ -73,6 +75,8 @@ class Command(BaseCommand):
             else:
                 report_df['white_count'] = 0
 
+            # TODO: Put exceptions work here?
+
             # Set bool_match to True, unless there's a suspect only white value
             report_df['bool_match'] = True
             report_df.loc[(report_df['num_terms'] == 1) & (report_df['white_count'] > 1), 'bool_match'] = False
@@ -137,6 +141,30 @@ class Command(BaseCommand):
             term.deedpage_set.add(*objs)
 
 
+    def exempt_exceptions(self, workflow):
+        print('Handling exceptions to racial term matches...')
+        s3 = self.session.client('s3')
+        bucket = settings.AWS_STORAGE_BUCKET_NAME
+
+        exceptions = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow.workflow_name]['term_exceptions']
+        for term in exceptions.keys():
+            print(term)
+            term_pages = DeedPage.objects.filter(workflow=workflow, matched_terms__term=term).annotate(num_terms=Count('matched_terms'))
+
+            for page in term_pages:
+                num_terms = page.num_terms
+                ocr_json = s3.get_object(Bucket=bucket, Key=page.page_ocr_text.name)
+                page_text = str(ocr_json['Body'].read()).lower()
+                for e in exceptions[term]:
+                    e_count = page_text.count(e.lower())
+                    if e_count > 0:
+                        num_terms -= 1
+
+                if num_terms <= 0:
+                    page.bool_exception = True
+                    page.bool_match = False
+                    page.save()
+
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -167,3 +195,4 @@ class Command(BaseCommand):
             deed_objs_with_hits = self.update_matches(workflow, matching_keys, match_report)
 
             self.add_matched_terms(workflow, deed_objs_with_hits, match_report)
+            self.exempt_exceptions(workflow)
