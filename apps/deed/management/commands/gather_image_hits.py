@@ -161,6 +161,7 @@ class Command(BaseCommand):
                         num_terms -= 1
 
                 if num_terms <= 0:
+                    # TODO: Change to bulk update or, better, incorporate into original term search
                     page.bool_exception = True
                     page.bool_match = False
                     page.save()

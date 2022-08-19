@@ -28,6 +28,7 @@ markdown = "*"
 django-filter = "*"
 djangorestframework-gis = "*"
 ndjson = "*"
+panoptes-client = "*"
 
 [dev-packages]
 csvkit = "*"

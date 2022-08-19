@@ -27,6 +27,7 @@ Once all of the below load scripts have been run, many covenants (ZooniverseSubj
 - pipenv
 - PostGIS/PostgreSQL
 - AWS SAM for lambdas (separate repos)
+- libmagic (mostly to silence panoptes/zooniverse warnings)
 
 ## High-level workflow
 1. Start new config entry in local_settings.py
