@@ -20,7 +20,7 @@ class DeedPage(models.Model):
     doc_num = models.CharField(blank=True, max_length=100, db_index=True)
     doc_alt_id = models.CharField(blank=True, max_length=100, db_index=True)
     page_num = models.IntegerField(null=True)
-    doc_date = models.DateField(null=True)
+    doc_date = models.DateField(null=True, db_index=True)
     doc_type = models.CharField(blank=True, max_length=100)
     public_uuid = models.CharField(blank=True, max_length=50, db_index=True)
     page_image_web = models.ImageField(
