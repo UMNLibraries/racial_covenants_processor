@@ -43,6 +43,12 @@ class Command(BaseCommand):
 
         return matching_keys
 
+    def split_or_1(self, x):
+        try:
+            return len(x)
+        except:
+            return 1
+
     def build_match_report(self, workflow, matching_keys):
         '''Aggregate all the hits, their keys and terms into a single file'''
 
@@ -70,8 +76,10 @@ class Command(BaseCommand):
             report_df['num_terms'] = report_df['matched_terms'].apply(lambda x: len(x.split(',')))
 
             # create special flag for multiple occurences of "white"
-            if 'white' in report_df.columns:
-                report_df.loc[~report_df['white'].isna(), 'white_count'] = report_df['white'].apply(lambda x: len(x))
+            if ' white' in report_df.columns:
+                print(report_df[' white'].apply(lambda x: self.split_or_1(x)))
+
+                report_df.loc[~report_df[' white'].isna(), 'white_count'] = report_df[' white'].apply(lambda x: self.split_or_1(x))
             else:
                 report_df['white_count'] = 0
 
@@ -79,7 +87,9 @@ class Command(BaseCommand):
 
             # Set bool_match to True, unless there's a suspect only white value
             report_df['bool_match'] = True
+            report_df['bool_exception'] = False
             report_df.loc[(report_df['num_terms'] == 1) & (report_df['white_count'] > 1), 'bool_match'] = False
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['white_count'] > 1), 'bool_exception'] = True
 
             report_df.drop(columns=term_columns.columns, inplace=True)
             print(report_df)
@@ -190,8 +200,9 @@ class Command(BaseCommand):
                 # Save to geojson in Django storages/model
                 match_report_obj = self.save_report_model(match_report, version_slug, workflow, now)
 
-            print('Clearing previous bool_match values...')
-            DeedPage.objects.filter(workflow=workflow).update(bool_match=False)
+            print('Clearing previous bool_match and bool_exception values...')
+            DeedPage.objects.filter(workflow=workflow, bool_match=True).update(bool_match=False)
+            DeedPage.objects.filter(workflow=workflow, bool_exception=True).update(bool_exception=False)
 
             deed_objs_with_hits = self.update_matches(workflow, matching_keys, match_report)
 
