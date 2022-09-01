@@ -31,8 +31,8 @@ class DeedPage(models.Model):
         storage=PrivateMediaStorage(), null=True)
     page_ocr_json = models.FileField(
         storage=PrivateMediaStorage(), null=True)
-    bool_match = models.BooleanField(default=False)
-    bool_exception = models.BooleanField(default=False)
+    bool_match = models.BooleanField(default=False, db_index=True)
+    bool_exception = models.BooleanField(default=False, db_index=True)
     matched_terms = models.ManyToManyField(MatchTerm)
 
     zooniverse_subject = models.ForeignKey(
@@ -59,3 +59,6 @@ class SearchHitReport(models.Model):
         storage=PublicMediaStorage(), upload_to="analysis/", null=True)
     num_hits = models.IntegerField(null=True)
     created_at = models.DateTimeField()
+
+    def __str__(self):
+        return f"{self.workflow.workflow_name}, {self.created_at}"
