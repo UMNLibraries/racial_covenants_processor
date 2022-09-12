@@ -67,6 +67,8 @@ class Command(BaseCommand):
         for columns in df['answer_columns'].drop_duplicates().tolist():
             all_task_answer_cols += columns
 
+        print(all_task_answer_cols)
+
         # Drop all rows from df with no answers for any of the possible questions. Not sure if this happens or not.
         df = df.dropna(subset=all_task_answer_cols, how='all')
 
@@ -77,14 +79,15 @@ class Command(BaseCommand):
 
             answers = df[df['task_num'] == task_num]['answers'].values[0]
             answers_lookup = {answer['value_column']: answer['value'] for answer in answers}
+            print(answers_lookup)
 
             df.loc[df['task_num'] == task_num,
-                   'best_answer_column'] = df[answer_columns].idxmax(axis=1)
+                   'best_answer_column'] = df[df['task_num'] == task_num][answer_columns].idxmax(axis=1)
 
             df.loc[df['task_num'] == task_num,
-                   'best_answer_score'] = df[answer_columns].max(axis=1)
+                   'best_answer_score'] = df[df['task_num'] == task_num][answer_columns].max(axis=1)
 
-            df.loc[df['task_num'] == task_num, 'best_answer'] = df['best_answer_column'].apply(
+            df.loc[df['task_num'] == task_num, 'best_answer'] = df[df['task_num'] == task_num]['best_answer_column'].apply(
                 lambda x: self.find_best_answer(x, answers_lookup))
 
             # df.loc[df['task_num'] == task_num,
@@ -92,7 +95,7 @@ class Command(BaseCommand):
             # df.loc[df['task_num'] == task_num,
             #        'total_votes'] = self.batch_config['zooniverse_config']['num_to_retire']
 
-            df.loc[df['task_num'] == task_num, 'answer_scores'] = df[answer_columns].to_json(
+            df.loc[df['task_num'] == task_num, 'answer_scores'] = df[df['task_num'] == task_num][answer_columns].to_json(
                 orient='records', lines=True).splitlines()
 
         df = df.rename(columns={
