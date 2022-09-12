@@ -6,6 +6,7 @@ import ndjson
 import tempfile
 import datetime
 import pandas as pd
+from multiprocessing.pool import ThreadPool
 
 from django.core.management.base import BaseCommand
 from django.core.files.base import File
@@ -21,6 +22,9 @@ class Command(BaseCommand):
     session = boto3.Session(
              aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
              aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+
+    s3 = session.client('s3')
+    temp_ndjson = None
 
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
@@ -41,6 +45,7 @@ class Command(BaseCommand):
             Prefix=f'ocr/hits/{workflow.slug}/'
         ) if re.match(key_filter, obj.key)]
 
+        print(f"Found {len(matching_keys)} matching hit objects.")
         return matching_keys
 
     def split_or_1(self, x):
@@ -49,21 +54,21 @@ class Command(BaseCommand):
         except:
             return 1
 
+    def write_to_ndjson(self, key):
+        content_object = self.s3.get_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=key)
+        file_content = content_object['Body'].read()  # Keeping it in binary, not decoding
+        self.temp_ndjson.write(file_content + b'\n')
+
     def build_match_report(self, workflow, matching_keys):
         '''Aggregate all the hits, their keys and terms into a single file'''
 
-        s3 = self.session.client('s3')
-        bucket = settings.AWS_STORAGE_BUCKET_NAME
+        with tempfile.TemporaryFile() as self.temp_ndjson:
 
-        with tempfile.TemporaryFile() as temp_ndjson:
+            pool = ThreadPool(processes=12)
+            pool.map(self.write_to_ndjson, matching_keys)
 
-            for key in matching_keys:
-                content_object = s3.get_object(Bucket=bucket, Key=key)
-                file_content = content_object['Body'].read()  # Keeping it in binary, not decoding
-                temp_ndjson.write(file_content + b'\n')
-
-            temp_ndjson.seek(0)
-            report_obj = ndjson.loads(temp_ndjson.read())
+            self.temp_ndjson.seek(0)
+            report_obj = ndjson.loads(self.temp_ndjson.read())
             report_df = pd.DataFrame(report_obj)
 
             # Turn columns of terms into a list of terms found in each row
@@ -76,20 +81,20 @@ class Command(BaseCommand):
             report_df['num_terms'] = report_df['matched_terms'].apply(lambda x: len(x.split(',')))
 
             # create special flag for multiple occurences of "white"
-            if ' white' in report_df.columns:
-                print(report_df[' white'].apply(lambda x: self.split_or_1(x)))
+            if 'occupied by any' in report_df.columns:
+                print(report_df['occupied by any'].apply(lambda x: self.split_or_1(x)))
 
-                report_df.loc[~report_df[' white'].isna(), 'white_count'] = report_df[' white'].apply(lambda x: self.split_or_1(x))
+                report_df.loc[~report_df['occupied by any'].isna(), 'occupied_count'] = report_df['occupied by any'].apply(lambda x: self.split_or_1(x))
             else:
-                report_df['white_count'] = 0
+                report_df['occupied_count'] = 0
 
             # TODO: Put exceptions work here?
 
-            # Set bool_match to True, unless there's a suspect only white value
+            # Set bool_match to True, unless there's a suspect value or combination
             report_df['bool_match'] = True
             report_df['bool_exception'] = False
-            report_df.loc[(report_df['num_terms'] == 1) & (report_df['white_count'] > 1), 'bool_match'] = False
-            report_df.loc[(report_df['num_terms'] == 1) & (report_df['white_count'] > 1), 'bool_exception'] = True
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['occupied_count'] > 0), 'bool_match'] = False
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['occupied_count'] > 0), 'bool_exception'] = True
 
             report_df.drop(columns=term_columns.columns, inplace=True)
             print(report_df)
@@ -104,10 +109,7 @@ class Command(BaseCommand):
         return out_csv
 
     def save_report_model(self, df, version_slug, workflow, created_at):
-        # export to .geojson temp file and serve it to the user
         with tempfile.NamedTemporaryFile() as tmp_file:
-            # tmp_file_path = f'{version_slug}.csv'
-            # df.to_geojson(tmp_file_path, index=False)
             df.to_csv(tmp_file, index=False)
 
             csv_export_obj = SearchHitReport(
@@ -116,22 +118,33 @@ class Command(BaseCommand):
                 created_at = created_at
             )
 
-            # Using File
-            # with open(tmp_file, 'rb') as f:
             csv_export_obj.report_csv.save(f'{version_slug}.csv', File(tmp_file))
             csv_export_obj.save()
             return csv_export_obj
 
     def update_matches(self, workflow, matching_keys, hits_df):
         print('Looking for corresponding DeedPage objects ...')
-        # web_img_keys = [key.replace('ocr/hits', 'web').replace('.json', '.jpg') for key in matching_keys]
-        deed_hits = DeedPage.objects.filter(workflow=workflow, s3_lookup__in=hits_df[hits_df['bool_match'] == True]['lookup'].to_list()).only('pk', 'page_image_web')
+        deed_hits = DeedPage.objects.filter(
+            workflow=workflow,
+            s3_lookup__in=hits_df[hits_df['bool_match'] == True]['lookup'].to_list()
+        ).only('pk', 'page_image_web')
+
         num_deedpage_matches = deed_hits.count()
         if num_deedpage_matches > 0:
             print(f'Found {num_deedpage_matches} matching DeedPage records. Setting bool_match to True...')
             deed_hits.update(bool_match=True)
         else:
-            print("Couldn't find any matching DeedPage objects.")
+            print("Couldn't find any matching DeedPage objects to set bool_match to True.")
+
+        deed_exceptions = DeedPage.objects.filter(workflow=workflow, s3_lookup__in=hits_df[hits_df['bool_exception'] == True]['lookup'].to_list()).only('pk', 'page_image_web')
+
+        print('Looking for corresponding DeedPage objects for exceptions...')
+        num_deedpage_exceptions = deed_exceptions.count()
+        if num_deedpage_exceptions > 0:
+            print(f'Found {num_deedpage_exceptions} matching DeedPage records. Setting bool_exception to True...')
+            deed_exceptions.update(bool_exception=True)
+        else:
+            print("Couldn't find any matching DeedPage objects to set bool_exception to True.")
 
         return deed_hits
 
@@ -150,31 +163,31 @@ class Command(BaseCommand):
             objs = deed_objs_with_hits.filter(s3_lookup__in=row['lookups'])
             term.deedpage_set.add(*objs)
 
-
     def exempt_exceptions(self, workflow):
         print('Handling exceptions to racial term matches...')
         s3 = self.session.client('s3')
         bucket = settings.AWS_STORAGE_BUCKET_NAME
 
-        exceptions = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow.workflow_name]['term_exceptions']
-        for term in exceptions.keys():
-            print(term)
-            term_pages = DeedPage.objects.filter(workflow=workflow, matched_terms__term=term).annotate(num_terms=Count('matched_terms'))
+        if 'term_exceptions' in settings.ZOONIVERSE_QUESTION_LOOKUP[workflow.workflow_name]:
+            exceptions = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow.workflow_name]['term_exceptions']
+            for term in exceptions.keys():
+                print(term)
+                term_pages = DeedPage.objects.filter(workflow=workflow, matched_terms__term=term).annotate(num_terms=Count('matched_terms'))
 
-            for page in term_pages:
-                num_terms = page.num_terms
-                ocr_json = s3.get_object(Bucket=bucket, Key=page.page_ocr_text.name)
-                page_text = str(ocr_json['Body'].read()).lower()
-                for e in exceptions[term]:
-                    e_count = page_text.count(e.lower())
-                    if e_count > 0:
-                        num_terms -= 1
+                for page in term_pages:
+                    num_terms = page.num_terms
+                    ocr_json = s3.get_object(Bucket=bucket, Key=page.page_ocr_text.name)
+                    page_text = str(ocr_json['Body'].read()).lower()
+                    for e in exceptions[term]:
+                        e_count = page_text.count(e.lower())
+                        if e_count > 0:
+                            num_terms -= 1
 
-                if num_terms <= 0:
-                    # TODO: Change to bulk update or, better, incorporate into original term search
-                    page.bool_exception = True
-                    page.bool_match = False
-                    page.save()
+                    if num_terms <= 0:
+                        # TODO: Change to bulk update or, better, incorporate into original term search
+                        page.bool_exception = True
+                        page.bool_match = False
+                        page.save()
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -183,10 +196,8 @@ class Command(BaseCommand):
         else:
 
             workflow = get_workflow_obj(workflow_name)
-            print(workflow.slug)
 
             matching_keys = self.find_matching_keys(workflow)
-            print(matching_keys)
 
             match_report = self.build_match_report(workflow, matching_keys)
 
@@ -197,7 +208,7 @@ class Command(BaseCommand):
             if kwargs['local']:
                 match_report_local = self.save_report_local(match_report, version_slug)
             else:
-                # Save to geojson in Django storages/model
+                # Save to csv in Django storages/model
                 match_report_obj = self.save_report_model(match_report, version_slug, workflow, now)
 
             print('Clearing previous bool_match and bool_exception values...')

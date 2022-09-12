@@ -2,6 +2,8 @@ import os
 import re
 import yaml
 
+from django.utils.text import slugify
+
 from apps.zoon.models import ZooniverseWorkflow
 from django.conf import settings
 
@@ -10,8 +12,10 @@ def parse_labels_question_type(task_num, label_config):
     answer_nodes = []
     label_regex = fr'{task_num}\.answers\.(\d+)\.label'
     for key, value in label_config.items():
+        print(key, value)
         if re.match(label_regex, key):
-            slugified_value = value.replace("'", "-").replace(" ", "-").lower()
+            # slugified_value = value.replace("'", "-").replace(" ", "-").lower()
+            slugified_value = slugify(value.replace('/', '-'))
             answer_nodes.append({
                 'key': key,
                 'value': value,
