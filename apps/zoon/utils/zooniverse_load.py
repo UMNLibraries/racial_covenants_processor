@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 
-from django.db.models import Count, OuterRef, Subquery, F, Case, When, Value
+from django.db.models import Count, Sum, OuterRef, Subquery, F, Case, When, Value
 from django.contrib.postgres.aggregates import StringAgg
 
 from racial_covenants_processor.storage_backends import PrivateMediaStorage
@@ -17,7 +17,7 @@ def get_full_url(url_prefix, file_name):
     except:
         return ''
 
-def build_zooniverse_manifest(workflow):
+def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
     # Subquery for counting all pages
     doc_page_count = DeedPage.objects.filter(
         workflow=workflow,
@@ -34,6 +34,8 @@ def build_zooniverse_manifest(workflow):
     pages_with_hits = DeedPage.objects.filter(
         workflow=workflow,
         bool_match=True
+    ).exclude(
+        s3_lookup__in=exclude_ids
     ).annotate(
         matched_terms_list=StringAgg('matched_terms__term', delimiter=', ')
     ).annotate(
@@ -71,12 +73,11 @@ def build_zooniverse_manifest(workflow):
                 DeedPage.objects.filter(workflow=workflow, doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') + 1).order_by('-pk').values('page_image_web')[:1]
             )
         ),
-    ).values('pk', 'doc_num', 'page_num', 'page_count', 'default_frame', 'page_image_web', 'image1', 'image2', 'image3', 's3_lookup', 'matched_terms_list')
+    ).values('pk', 'doc_num', 'page_num', 'page_count', 'default_frame', 'page_image_web', 'image1', 'image2', 'image3', 's3_lookup', 'matched_terms_list')[0:num_rows]
 
     url_prefix = PrivateMediaStorage().url(
         pages_with_hits[0]['page_image_web']
     ).split('?')[0].replace(pages_with_hits[0]['page_image_web'], '')
-    print(url_prefix)
 
     manifest_df = pd.DataFrame(pages_with_hits)
     manifest_df.rename(columns={
@@ -92,5 +93,5 @@ def build_zooniverse_manifest(workflow):
         's3_lookup': '#s3_lookup',
         'matched_terms_list': 'matched_terms'
     }, inplace=True)
-    print(manifest_df)
+    # print(manifest_df)
     return manifest_df.drop(columns=['page_image_web'])
