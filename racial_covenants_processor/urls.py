@@ -19,7 +19,7 @@ from rest_framework import routers
 
 from apps.zoon import views
 from apps.zoon.serializers import SubjectNoGeoViewSet, SubjectGeoViewSet
-from apps.parcel.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet, ShpExportViewSet, GeoJSONExportViewSet
+from apps.parcel.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet, ShpExportViewSet, GeoJSONExportViewSet, CSVExportViewSet
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
@@ -31,6 +31,7 @@ router.register(r'covenants-geo', CovenantGeoViewSet, basename='covenantsgeo')
 
 router.register(r'shp-exports', ShpExportViewSet)
 router.register(r'geojson-exports', GeoJSONExportViewSet)
+router.register(r'csv-exports', CSVExportViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
