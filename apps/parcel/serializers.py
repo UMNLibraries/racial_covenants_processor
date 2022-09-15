@@ -1,7 +1,7 @@
 from rest_framework import serializers, viewsets
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
-from .models import Parcel, GeoJSONExport
+from .models import Parcel, ShpExport, GeoJSONExport
 from apps.zoon.models import ZooniverseSubject
 
 covenant_api_fields = [
@@ -108,6 +108,13 @@ class ParcelGeoSerializer(GeoFeatureModelSerializer):
         geo_field = 'geom_4326'
 
 
+class ShpExportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShpExport
+
+        fields = '__all__'
+
+
 class GeoJSONExportSerializer(serializers.ModelSerializer):
     class Meta:
         model = GeoJSONExport
@@ -124,6 +131,11 @@ class CovenantNoGeoViewSet(viewsets.ModelViewSet):
 class CovenantGeoViewSet(viewsets.ModelViewSet):
     queryset = Parcel.covenant_objects.all()
     serializer_class = ParcelGeoSerializer
+
+
+class ShpExportViewSet(viewsets.ModelViewSet):
+    queryset = ShpExport.objects.all()
+    serializer_class = ShpExportSerializer
 
 
 class GeoJSONExportViewSet(viewsets.ModelViewSet):

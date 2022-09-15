@@ -7,6 +7,7 @@ from pathlib import PurePath
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.db.models import Count
 
 from apps.deed.models import DeedPage
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
@@ -37,7 +38,7 @@ class Command(BaseCommand):
 
         return matching_keys
 
-    def add_supplemental_info(self, page_data, workflow):
+    def add_supplemental_info(self, page_data_df, workflow):
         '''
         deed_supplemental_info': [
             {
@@ -58,7 +59,7 @@ class Command(BaseCommand):
                 workflow.workflow_name
             ]['deed_supplemental_info']
 
-            page_data_df = pd.DataFrame(page_data)
+            # page_data_df = pd.DataFrame(page_data)
             for s_info_lookup in s_info_lookups:
                 s_df = pd.read_csv(s_info_lookup['data_csv'], dtype='object')
                 # choose columns to keep
@@ -84,9 +85,9 @@ class Command(BaseCommand):
 
             print(page_data_df)
 
-            return page_data_df.to_dict('records')
+            return page_data_df
         print("No supplemental info to join found, moving on.")
-        return page_data
+        return page_data_df
 
 
     def build_django_objects(self, matching_keys, workflow):
@@ -101,6 +102,7 @@ class Command(BaseCommand):
 
         deed_pages = []
 
+        # TODO: It would probably be more efficient to rewrite this loop in pandas
         for mk in matching_keys:
             try:
                 deed_image_regex = settings.ZOONIVERSE_QUESTION_LOOKUP[
@@ -151,13 +153,46 @@ class Command(BaseCommand):
 
                 deed_pages.append(page_data)
 
-        deed_pages = self.add_supplemental_info(deed_pages, workflow)
+        # dedupe
+        deed_pages_df = pd.DataFrame(deed_pages)
+        deed_pages_df = deed_pages_df.drop_duplicates(subset=['s3_lookup'])
+
+        deed_pages_df = self.add_supplemental_info(deed_pages_df, workflow)
+
         print("Creating Django DeedPage objects...")
-        deed_pages = [DeedPage(**page_data) for page_data in deed_pages]
+        deed_pages = [DeedPage(**page_data) for page_data in deed_pages_df.to_dict('records')]
         print("Starting Django bulk_create...")
         DeedPage.objects.bulk_create(deed_pages, batch_size=10000)
 
         return deed_pages
+
+    # def dedupe_deedpage_objects(self, workflow):
+    #     ''' This is hopefully unnecessary for future workflows since deduping
+    #     is now built into the creation process, which is much more efficient'''
+    #     duplicate_counts = DeedPage.objects.filter(
+    #         workflow=workflow
+    #     ).values(
+    #         's3_lookup'
+    #     ).annotate(doc_count=Count('s3_lookup')).filter(doc_count__gt=1)
+    #
+    #     duplicates = DeedPage.objects.filter(
+    #         workflow=workflow,
+    #         s3_lookup__in=[dc['s3_lookup'] for dc in duplicate_counts]
+    #     ).values(
+    #         's3_lookup',
+    #         'pk'
+    #     )
+    #
+    #     duplicates_df = pd.DataFrame(duplicates)
+    #     keep_df = duplicates_df.drop_duplicates(subset=['s3_lookup'])
+    #
+    #     # Identify what values are in TableB and not in TableA
+    #     key_diff = set(duplicates_df.pk).difference(keep_df.pk)
+    #     delete_df = duplicates_df[duplicates_df['pk'].isin(key_diff)]
+    #
+    #     delete_pks = delete_df['pk'].to_list()
+    #     print(len(delete_pks))
+    #     DeedPage.objects.filter(pk__in=delete_pks).delete()
 
 
     def handle(self, *args, **kwargs):
@@ -174,3 +209,5 @@ class Command(BaseCommand):
 
             image_objs = self.build_django_objects(
                 matching_keys, workflow)
+
+            # self.dedupe_deedpage_objects(workflow)
