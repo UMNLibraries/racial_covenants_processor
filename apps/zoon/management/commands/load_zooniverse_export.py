@@ -314,10 +314,16 @@ class Command(BaseCommand):
 
         # Parse bool_covenant and "I can't figure this out"
         final_df['bool_problem'] = False
-        final_df.loc[final_df['bool_covenant']
-                     == "I can't figure this one out", 'bool_problem'] = True
-        final_df.loc[final_df['bool_covenant']
-                     == "I can't figure this one out", 'bool_covenant'] = None
+        final_df.loc[final_df['bool_covenant'].isin([
+            "I can't figure this one out",
+            "I can't figure this one out.",
+            "There are multiple covenants on this page."
+        ]), 'bool_problem'] = True
+        final_df.loc[final_df['bool_covenant'].isin([
+            "I can't figure this one out",
+            "I can't figure this one out.",
+            "There are multiple covenants on this page."
+        ]), 'bool_covenant'] = None
         final_df.loc[final_df['bool_covenant']
                      == "Yes", 'bool_covenant'] = True
         final_df.loc[final_df['bool_covenant']
