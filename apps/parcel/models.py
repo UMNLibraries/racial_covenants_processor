@@ -52,7 +52,6 @@ class CovenantsParcelManager(models.Manager):
             )
         ).filter(
             bool_covenant=True
-            # zooniversesubject__bool_covenant_final=True
         ).annotate(
             add_mod=F('plat_name')
         ).annotate(
@@ -249,39 +248,6 @@ class CovenantsParcelManager(models.Manager):
                 output_field=JSONField()
             )
         )
-        # .annotate(
-        #     deed_date=Subquery(oldest_deed.values('deed_date'))
-        # ).annotate(
-        #     cov_text=Subquery(oldest_deed.values('covenant_text_final'))
-        # ).annotate(
-        #     zn_subj_id=Subquery(oldest_deed.values('zoon_subject_id'))
-        # ).annotate(
-        #     image_ids=Subquery(oldest_deed.values('image_ids'))
-        # ).annotate(
-        #     zn_dt_ret=Subquery(oldest_deed.values('dt_retired'))
-        # ).annotate(
-        #     med_score=Subquery(oldest_deed.values('median_score'))
-        # ).annotate(
-        #     manual_cx=Subquery(oldest_deed.values('bool_manual_correction'))
-        # ).annotate(
-        #     add_cov=Subquery(oldest_deed.values('addition_final'))
-        # ).annotate(
-        #     block_cov=Subquery(oldest_deed.values('block_final'))
-        # ).annotate(
-        #     lot_cov=Subquery(oldest_deed.values('lot_final'))
-        # ).annotate(
-        #     seller=Subquery(oldest_deed.values('seller_final'))
-        # ).annotate(
-        #     buyer=Subquery(oldest_deed.values('buyer_final'))
-        # ).annotate(
-        #     deed_date=Subquery(oldest_deed.values('deed_date_final'))
-        # ).annotate(
-        #     match_type=Subquery(oldest_deed.values('match_type_final'))
-        # ).annotate(
-        #     dt_updated=Subquery(oldest_deed.values('date_updated'))
-        # ).annotate(
-        #     join_candidates=Subquery(oldest_deed.values('join_candidates'))
-        # )
 
 
 class Parcel(models.Model):
