@@ -5,7 +5,8 @@ SQL_ALCHEMY_DB_CONNECTION_URL = 'postgresql+psycopg2://racial_covenants_processo
 
 ZOONIVERSE_QUESTION_LOOKUP = {
     'Ramsey County': {
-        'panoptes_folder': 'mn_ramsey',  # relative to data/aggregation folder
+        'panoptes_folder': 'mn_ramsey',  # relative to data/aggregation folder,
+        'zoon_workflow_id': 12435,
         'config_yaml': 'Extractor_config_workflow_13143_V4.10.yaml',
         'deed_image_regex': r'\/(?P<workflow_slug>[A-z\-]+)\/(?P<doc_num>\d+)(?:_page_(?P<page_num>\d+))?(?P<bool_match>_match)?',
         'deed_image_raw_glob': '/Volumes/MappingPrejudice/MappingPrejudice/MP_Ramsey_County_Deeds/Raw_Deed_Imgs/**/*.tif',
