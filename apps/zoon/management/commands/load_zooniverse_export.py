@@ -127,6 +127,9 @@ class Command(BaseCommand):
             # In some workflows the key for the match number is just a number, which will throw off querying of it later, so fix that
             response.subject_data_flat = {re.sub(
                 r'^(\d+)$', r'image_\1', key): value for key, value in response.subject_data_flat.items()}
+            response.subject_data_flat = {re.sub(
+                r'^image(\d+)$', r'image_\1', key): value for key, value in response.subject_data_flat.items()}
+
 
         ZooniverseResponseRaw.objects.bulk_update(
             responses, ['subject_data_flat'], 10000)  # Batches of 10,000 records at a time
@@ -144,6 +147,8 @@ class Command(BaseCommand):
         try:
             workflow = ZooniverseWorkflow.objects.get(
                 workflow_name=workflow_name)
+
+            print(workflow, workflow.zoon_id)
 
             ReducedResponse_Question.objects.filter(
                 zoon_workflow_id=workflow.zoon_id
@@ -317,11 +322,13 @@ class Command(BaseCommand):
         final_df.loc[final_df['bool_covenant'].isin([
             "I can't figure this one out",
             "I can't figure this one out.",
+            "I can't figure this out.",
             "There are multiple covenants on this page."
         ]), 'bool_problem'] = True
         final_df.loc[final_df['bool_covenant'].isin([
             "I can't figure this one out",
             "I can't figure this one out.",
+            "I can't figure this out.",
             "There are multiple covenants on this page."
         ]), 'bool_covenant'] = None
         final_df.loc[final_df['bool_covenant']
