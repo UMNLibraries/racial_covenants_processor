@@ -1,4 +1,5 @@
 import os
+import random
 import pandas as pd
 
 from django.db.models import Count, Sum, OuterRef, Subquery, F, Case, When, Value
@@ -18,6 +19,21 @@ def get_full_url(url_prefix, file_name):
         return ''
 
 def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
+
+    # Get random IDs
+    matching_ids = DeedPage.objects.filter(
+        workflow=workflow,
+        bool_match=True
+    ).exclude(
+        s3_lookup__in=exclude_ids
+    ).values_list('id', flat=True)
+
+
+    if num_rows:
+        final_set = random.sample(list(matching_ids), num_rows)
+    else:
+        final_set = matching_ids
+
     # Subquery for counting all pages
     doc_page_count = DeedPage.objects.filter(
         workflow=workflow,
@@ -32,10 +48,12 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
 
     # Get all doc nums with at least one hit
     pages_with_hits = DeedPage.objects.filter(
-        workflow=workflow,
-        bool_match=True
-    ).exclude(
-        s3_lookup__in=exclude_ids
+        id__in=final_set
+    # pages_with_hits = DeedPage.objects.filter(
+    #     workflow=workflow,
+    #     bool_match=True
+    # ).exclude(
+    #     s3_lookup__in=exclude_ids
     ).annotate(
         matched_terms_list=StringAgg('matched_terms__term', delimiter=', ')
     ).annotate(

@@ -41,5 +41,6 @@ urlpatterns = [
     path('', views.index, name='index'),
 
     path('api/', include(router.urls)),
-    path('api-auth/', include('rest_framework.urls'))
+    path('api-auth/', include('rest_framework.urls')),
+    # path('__debug__/', include('debug_toolbar.urls')),
 ]

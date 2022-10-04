@@ -20,8 +20,8 @@ class SearchHitReportAdmin(admin.ModelAdmin):
 @admin.register(DeedPage)
 class DeedPageAdmin(admin.ModelAdmin):
     show_full_result_count = False
-    list_filter = ['workflow', 'bool_match', 'bool_exception', 'matched_terms__term', ('doc_date', DateRangeFilter), 'doc_type',]
-    list_display = ['doc_num', 'bool_match', 'bool_exception', 'get_matched_terms', 's3_lookup', 'page_num', 'page_image_web', 'zooniverse_subject']
+    list_filter = ['workflow', 'bool_match', 'bool_exception', 'matched_terms__term', ('doc_date', DateRangeFilter),]
+    list_display = ['doc_num', 'bool_match', 'bool_exception', 'get_matched_terms', 's3_lookup', 'page_num', 'zooniverse_subject']
     search_fields = ['doc_num']
     readonly_fields = (
         'workflow',
@@ -40,6 +40,10 @@ class DeedPageAdmin(admin.ModelAdmin):
         'matched_terms'
     )
     exclude = ['page_image_web']
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).defer('page_stats', 'page_ocr_json', 'page_ocr_text', 'zooniverse_subject', 'doc_alt_id', 'public_uuid', 'page_image_web')
+        return qs
 
     def thumbnail_preview(self, obj):
         return obj.thumbnail_preview
