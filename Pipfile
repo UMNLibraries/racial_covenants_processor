@@ -29,6 +29,7 @@ django-filter = "*"
 djangorestframework-gis = "*"
 ndjson = "*"
 panoptes-client = "*"
+django-debug-toolbar = "*"
 
 [dev-packages]
 csvkit = "*"

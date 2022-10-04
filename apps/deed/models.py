@@ -38,6 +38,14 @@ class DeedPage(models.Model):
     zooniverse_subject = models.ForeignKey(
         ZooniverseSubject, on_delete=models.SET_NULL, null=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['-id'], name='id_desc'),
+            models.Index(fields=['-id', 'workflow_id'], name='id_workflow_index'),
+            models.Index(fields=['workflow_id', '-id'], name='workflow_id_index'),
+            models.Index(fields=['workflow_id'], name='workflow_only_index')
+        ]
+
     @property
     def thumbnail_preview(self):
         if self.page_image_web:

@@ -24,6 +24,7 @@ SECRET_KEY = 'django-insecure-hzse32*#gs73ew9re9$-5@yz0l5n2n(_tq_kv56-d4o2#ziy&2
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+# INTERNAL_IPS = ["127.0.0.1",]
 
 ALLOWED_HOSTS = ['*']
 
@@ -49,10 +50,15 @@ INSTALLED_APPS = ['apps.deed',
                   'localflavor',
                   'rest_framework',
                   'rest_framework_gis',
+
+                  # 'debug_toolbar'
                   ]
 
 MIDDLEWARE = [
     'racial_covenants_processor.middleware.HealthCheckMiddleware',
+
+    # "debug_toolbar.middleware.DebugToolbarMiddleware",
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
