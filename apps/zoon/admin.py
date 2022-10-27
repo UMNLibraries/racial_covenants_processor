@@ -16,7 +16,7 @@ class DeedImageInline(admin.TabularInline):
     exclude = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id']
     readonly_fields = ['doc_num', 'page_num',
                        'doc_date', 'doc_type', 'bool_match', 'matched_terms', 'page_ocr_text',
-                       'thumbnail_preview']
+                       'thumbnail_preview', 'public_uuid']
 
 
 class ManualSupportingDocumentInline(admin.StackedInline):
