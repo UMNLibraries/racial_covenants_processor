@@ -78,15 +78,18 @@ python manage.py gather_deed_images --workflow "WI Milwaukee County"
 ```
 python manage.py gather_image_hits --workflow "WI Milwaukee County"
 ```
-1. Export manifest in order to upload matching files to Zooniverse (or point to S3 images)
+1. Upload batch of records to Zooniverse for community confirmation
+```
+python manage.py upload_to_zooniverse --workflow "WI Milwaukee County" -n 200
+```
+1. (Or, optionally) Export manifest in order to upload matching files to Zooniverse (or point to S3 images)
 ```
 python manage.py build_zooniverse_manifest --workflow "WI Milwaukee County"
 ```
-1. Upload batch of records to Zooniverse for community confirmation
+1. IN PROGRESS: Export batch results from Zooniverse (Using command line tools)
 ```
-TODO
+python manage.py generate_zooniverse_export --workflow "WI Milwaukee County"
 ```
-1. Export batch results from Zooniverse (Using command line tools)
 1. Load raw and aggregated Zooniverse responses into individual property matches
 ```
 python manage.py load_zooniverse_export --slow --workflow "Ramsey County"

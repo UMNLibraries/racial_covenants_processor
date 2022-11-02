@@ -51,8 +51,9 @@ class Command(BaseCommand):
         '''
 
         df = pd.read_csv(os.path.join(
-            batch_dir, f'question_reducer_{workflow_slug}_questions.csv'))
+            batch_dir, f'question_reducer_{workflow_slug}.csv'))
         config_df = pd.DataFrame(master_config)
+        print(config_df)
 
         # Join responses to config so we know the possible answers to each question
         df = df.merge(
@@ -62,12 +63,17 @@ class Command(BaseCommand):
             right_on="task_num"
         )
 
+        # print(df['answer_columns'])
         # Find all possible answers in the spreadsheet for all questions
         all_task_answer_cols = []
         for columns in df['answer_columns'].drop_duplicates().tolist():
             all_task_answer_cols += columns
 
-        print(all_task_answer_cols)
+        # print(all_task_answer_cols)
+        # all_task_answer_cols = all_task_answer_cols.replace('can-t', 'cant')
+        # handle odd logic in label yaml handling of apostrophes in question labels
+        df.columns = df.columns.str.replace("can-t", "cant")
+        all_task_answer_cols = list(map(lambda x: x.replace('can-t', 'cant'), all_task_answer_cols))
 
         # Drop all rows from df with no answers for any of the possible questions. Not sure if this happens or not.
         df = df.dropna(subset=all_task_answer_cols, how='all')
@@ -79,7 +85,7 @@ class Command(BaseCommand):
 
             answers = df[df['task_num'] == task_num]['answers'].values[0]
             answers_lookup = {answer['value_column']: answer['value'] for answer in answers}
-            print(answers_lookup)
+            # print(answers_lookup)
 
             df.loc[df['task_num'] == task_num,
                    'best_answer_column'] = df[df['task_num'] == task_num][answer_columns].idxmax(axis=1)
@@ -114,7 +120,7 @@ class Command(BaseCommand):
         df['total_votes'] = self.batch_config['zooniverse_config']['num_to_retire']
         df['question_type'] = 'q'
 
-        print(df)
+        # print(df)
 
         print('Sending reducer QUESTION results to Django ...')
         sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
@@ -132,7 +138,7 @@ class Command(BaseCommand):
         '''
 
         df = pd.read_csv(os.path.join(
-            batch_dir, f'dropdown_reducer_{workflow_slug}_dropdowns.csv'))
+            batch_dir, f'dropdown_reducer_{workflow_slug}.csv'))
         config_df = pd.DataFrame(master_config)
 
         # Join responses to config so we know the possible answers to each question
@@ -173,7 +179,7 @@ class Command(BaseCommand):
         df['answer_scores'] = df['answer_scores'].apply(
             lambda x: json.dumps(x))
 
-        print(df)
+        # print(df)
 
         print('Sending reducer DROPDOWN results to Django ...')
         sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
@@ -191,7 +197,7 @@ class Command(BaseCommand):
         '''
 
         df = pd.read_csv(os.path.join(
-            batch_dir, f'text_reducer_{workflow_slug}_texts.csv'))
+            batch_dir, f'text_reducer_{workflow_slug}.csv'))
         config_df = pd.DataFrame(master_config)
 
         # We're not really doing anything with the config data for text-type questions, but just to maintain parallel structure...
@@ -229,8 +235,6 @@ class Command(BaseCommand):
         ]]
         df['total_votes'] = self.batch_config['zooniverse_config']['num_to_retire']
 
-        print(df)
-
         print('Sending reducer TEXT results to Django ...')
         sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
         df.to_sql('zoon_reducedresponse_text',
@@ -245,8 +249,11 @@ class Command(BaseCommand):
             self.batch_dir = os.path.join(
                 settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
+            # self.config_yaml = os.path.join(
+            #     self.batch_dir, self.batch_config['config_yaml'])
+
             self.config_yaml = os.path.join(
-                self.batch_dir, self.batch_config['config_yaml'])
+                self.batch_dir, f"Extractor_config_workflow_{self.batch_config['zoon_workflow_id']}_V{self.batch_config['zoon_workflow_version']}.yaml")
 
             master_config = parse_config_yaml(self.config_yaml)
 

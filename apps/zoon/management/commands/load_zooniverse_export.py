@@ -29,29 +29,31 @@ class Command(BaseCommand):
         parser.add_argument('-s', '--slow', action='store_true',
                             help="Don't use bulk copy to avoid I/O limitations")
 
-    def load_csv_bulk(self, infile: str):
+    def load_csv_bulk(self, infile: str, workflow: object):
         '''
         Implements a django-postgres-copy loader to bulk load raw Zooniverse responses into the ZooniverseResponseRaw model.
 
         Arguments:
             infile: path to raw classifications CSV
+            workflow: Django ZooniverseWorkflow object
         '''
         print('Bulk-loading raw classifications CSV...')
 
         # Make custom mapping from model fields to drop IP column
         mapping = {f.name: f.name for f in ZooniverseResponseRaw._meta.get_fields(
-        ) if f.name not in ['id', 'subject_data_flat', 'subject', 'zooniverseresponseprocessed']}
+        ) if f.name not in ['id', 'subject_data_flat', 'subject', 'zooniverseresponseprocessed', 'workflow_name']}
 
         insert_count = ZooniverseResponseRaw.objects.from_csv(
-            infile, mapping=mapping)
+            infile, mapping=mapping, static_mapping={'workflow_name': workflow.workflow_name})
         print("{} records inserted".format(insert_count))
 
-    def load_csv_by_record(self, infile: str):
+    def load_csv_by_record(self, infile: str, workflow: object):
         '''
         An alternative, more traditional load script for the ZooniverseResponseRaw model. On local machines, COPY will be much faster, but you can run into issues on servers where you may have I/O constraints, like RDS.
 
         Arguments:
             infile: path to raw classifications CSV
+            workflow: Django ZooniverseWorkflow object
         '''
         print("Loading raw Zooniverse export data using an old-fashioned load script (--slow mode)...")
 
@@ -61,6 +63,9 @@ class Command(BaseCommand):
         raw_df['metadata'] = raw_df['metadata'].apply(lambda x: json.loads(x))
         raw_df['annotations'] = raw_df['annotations'].apply(lambda x: json.loads(x))
         raw_df['subject_data'] = raw_df['subject_data'].apply(lambda x: json.loads(x))
+
+        # TODO: # Overwrite Zooniverse "workflow_name" to match your config
+        raw_df['worfkflow_name'] = workflow.workflow_name
 
         objs = [
             ZooniverseResponseRaw(
@@ -84,32 +89,6 @@ class Command(BaseCommand):
         msg = ZooniverseResponseRaw.objects.bulk_create(objs, 10000)
         return msg
 
-
-        # with open(infile, 'r') as csv_file:
-        #     raw_csv = csv.DictReader(csv_file)
-        #
-        #     objs = [
-        #         ZooniverseResponseRaw(
-        #             classification_id=row['classification_id'],
-        #             user_name=row['user_name'],
-        #             user_id=row['user_id'],
-        #             workflow_id=row['workflow_id'],
-        #             workflow_name=row['workflow_name'],
-        #             workflow_version=row['workflow_version'],
-        #             created_at=row['created_at'],
-        #             gold_standard=row['gold_standard'],
-        #             expert=row['expert'],
-        #             metadata=row['metadata'],
-        #             annotations=row['annotations'],
-        #             subject_data=row['subject_data'],
-        #             subject_ids=row['subject_ids'],
-        #         )
-        #         for row in raw_csv
-        #     ]
-        #
-        #     msg = ZooniverseResponseRaw.objects.bulk_create(objs, 10000)
-        #     return msg
-
     def flatten_subject_data(self, workflow):
         '''
         The raw "subject_data" coming back from Zooniverse is a JSON object with the key of the "subject_id". The data being stored behind this key cannot easily be queried by Django, but if we flatten it, we can. This creates a flattened copy of the subject_data field to make querying easier, and updates the raw responses in bulk.
@@ -117,7 +96,7 @@ class Command(BaseCommand):
         print("Creating flattened version of subject_data...")
         responses = ZooniverseResponseRaw.objects.filter(
             workflow_name=workflow.workflow_name,
-            workflow_version=workflow.version
+            # workflow_version=workflow.version
         ).only('subject_data')
 
         for response in responses:
@@ -129,6 +108,8 @@ class Command(BaseCommand):
                 r'^(\d+)$', r'image_\1', key): value for key, value in response.subject_data_flat.items()}
             response.subject_data_flat = {re.sub(
                 r'^image(\d+)$', r'image_\1', key): value for key, value in response.subject_data_flat.items()}
+            response.subject_data_flat = {re.sub(
+                r'^#image(\d+)$', r'image_\1', key): value for key, value in response.subject_data_flat.items()}
 
 
         ZooniverseResponseRaw.objects.bulk_update(
@@ -166,34 +147,15 @@ class Command(BaseCommand):
                 zoon_workflow_id__in=all_workflow_ids
             ).delete()
 
-    # def create_workflow(self, workflow_name: str, workflow_version: str):
-    #     # Check if this name exists in raw responses
-    #     matches = ZooniverseResponseRaw.objects.filter(
-    #         workflow_name=workflow_name).values('workflow_id').distinct()
-    #     if matches.count() > 0:
-    #         workflow, w_created = ZooniverseWorkflow.objects.get_or_create(
-    #             zoon_id=matches[0]['workflow_id'],
-    #             workflow_name=workflow_name,
-    #             version=workflow_version
-    #         )
-    #         if w_created:
-    #             print(f"New workflow record created for {workflow_name}.")
-    #         else:
-    #             print(f"Existing workflow record found for {workflow_name}.")
-    #         return workflow
-    #     else:
-    #         print("No matching workflow found in Zooniverse responses.")
-    #         raise
-
-    def sql_df_writer(self, conn, var_name, question_lookup):
+    def sql_df_writer(self, conn, var_name, question_lookup, workflow):
         '''Help pandas return a sensible response for each question that can be joined back to a unique subject id. Scores are put into percentages to handle possible changes to what's required to retire.'''
-        return pd.read_sql(f"SELECT zoon_subject_id, best_answer AS {var_name}, cast(best_answer_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_question WHERE task_id = '{question_lookup[var_name]}'",
+        return pd.read_sql(f"SELECT zoon_subject_id, best_answer AS {var_name}, cast(best_answer_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_question WHERE zoon_workflow_id = '{workflow.zoon_id}' AND task_id = '{question_lookup[var_name]}'",
                            conn)
         # , id AS {var_name}_reducer_db_id
 
-    def sql_df_writer_text(self, conn, var_name, question_lookup):
+    def sql_df_writer_text(self, conn, var_name, question_lookup, workflow):
         '''Help pandas return a sensible response for each question that can be joined back to a unique subject id. Scores are put into percentages to handle possible changes to what's required to retire.'''
-        return pd.read_sql(f"SELECT zoon_subject_id, consensus_text AS {var_name}, cast(consensus_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_text WHERE task_id = '{question_lookup[var_name]}'",
+        return pd.read_sql(f"SELECT zoon_subject_id, consensus_text AS {var_name}, cast(consensus_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_text WHERE zoon_workflow_id = '{workflow.zoon_id}' AND task_id = '{question_lookup[var_name]}'",
                            conn)
         # , id AS {var_name}_reducer_db_id
 
@@ -210,11 +172,14 @@ class Command(BaseCommand):
         # Only get retired subjects
         subject_df = pd.DataFrame(ZooniverseResponseRaw.objects.filter(
             workflow_name=workflow.workflow_name,
-            workflow_version=workflow.version
+            # workflow_version=workflow.version
         ).exclude(
             subject_data_flat__retired=None  # Only loading retired subjects for now
         ).values(
             'subject_ids',
+            'subject_data_flat__pk',
+            'subject_data_flat__doc_num',
+            'subject_data_flat__#s3_lookup',
             'subject_data_flat__retired__retired_at',
             'subject_data_flat__image_1',
             'subject_data_flat__image_2',
@@ -239,6 +204,9 @@ class Command(BaseCommand):
         subject_df.rename(columns={
             'subject_ids': 'zoon_subject_id',
             'subject_data_flat__retired__retired_at': 'dt_retired',
+            'subject_data_flat__pk': 'deedpage_pk',
+            'subject_data_flat__doc_num': 'deedpage_doc_num',
+            'subject_data_flat__#s3_lookup': 'deedpage_s3_lookup',
         }, inplace=True)
         print(subject_df)
 
@@ -246,28 +214,36 @@ class Command(BaseCommand):
 
         # Make a DF for each question, then left join to subject IDs to create subject records
         bool_covenant_df = self.sql_df_writer(
-            sa_engine, 'bool_covenant', question_lookup)
+            sa_engine, 'bool_covenant', question_lookup, workflow=workflow)
+        bool_handwritten_df = self.sql_df_writer(
+            sa_engine, 'bool_handwritten', question_lookup, workflow=workflow)
+        match_type_df = self.sql_df_writer_text(
+            sa_engine, 'match_type', question_lookup, workflow=workflow)
         covenant_text_df = self.sql_df_writer_text(
-            sa_engine, 'covenant_text', question_lookup)
+            sa_engine, 'covenant_text', question_lookup, workflow=workflow)
         addition_df = self.sql_df_writer_text(
-            sa_engine, 'addition', question_lookup)
-        lot_df = self.sql_df_writer_text(sa_engine, 'lot', question_lookup)
-        block_df = self.sql_df_writer_text(sa_engine, 'block', question_lookup)
+            sa_engine, 'addition', question_lookup, workflow=workflow)
+        lot_df = self.sql_df_writer_text(sa_engine, 'lot', question_lookup, workflow=workflow)
+        block_df = self.sql_df_writer_text(sa_engine, 'block', question_lookup, workflow=workflow)
         seller_df = self.sql_df_writer_text(
-            sa_engine, 'seller', question_lookup)
-        buyer_df = self.sql_df_writer_text(sa_engine, 'buyer', question_lookup)
+            sa_engine, 'seller', question_lookup, workflow=workflow)
+        buyer_df = self.sql_df_writer_text(sa_engine, 'buyer', question_lookup, workflow=workflow)
 
         # deed_date
         deed_date_year_df = self.sql_df_writer(
-            sa_engine, 'year', question_lookup['deed_date'])
+            sa_engine, 'year', question_lookup['deed_date'], workflow=workflow)
         deed_date_month_df = self.sql_df_writer(
-            sa_engine, 'month', question_lookup['deed_date'])
+            sa_engine, 'month', question_lookup['deed_date'], workflow=workflow)
         deed_date_day_df = self.sql_df_writer(
-            sa_engine, 'day', question_lookup['deed_date'])
+            sa_engine, 'day', question_lookup['deed_date'], workflow=workflow)
 
         # Join back to subject ids/retired dates
         final_df = subject_df.merge(
             bool_covenant_df, how="left", on="zoon_subject_id"
+        ).merge(
+            bool_handwritten_df, how="left", on="zoon_subject_id"
+        ).merge(
+            match_type_df, how="left", on="zoon_subject_id"
         ).merge(
             covenant_text_df, how="left", on="zoon_subject_id"
         ).merge(
@@ -300,6 +276,8 @@ class Command(BaseCommand):
         # Calculate median score
         score_cols = [
             'bool_covenant_score',
+            'bool_handwritten_score',
+            'match_type_score',
             'covenant_text_score',
             'addition_score',
             'lot_score',
@@ -323,18 +301,29 @@ class Command(BaseCommand):
             "I can't figure this one out",
             "I can't figure this one out.",
             "I can't figure this out.",
-            "There are multiple covenants on this page."
+            "I can't figure this out. ",
+            "There are multiple covenants on this page.",
+            "There are multiple racial covenants on this page."
         ]), 'bool_problem'] = True
         final_df.loc[final_df['bool_covenant'].isin([
             "I can't figure this one out",
             "I can't figure this one out.",
             "I can't figure this out.",
-            "There are multiple covenants on this page."
+            "I can't figure this out. ",
+            "There are multiple covenants on this page.",
+            "There are multiple racial covenants on this page."
         ]), 'bool_covenant'] = None
         final_df.loc[final_df['bool_covenant']
                      == "Yes", 'bool_covenant'] = True
         final_df.loc[final_df['bool_covenant']
                      == "No", 'bool_covenant'] = False
+
+        # Parse bool_handwritten
+        final_df.loc[final_df['bool_handwritten']
+                    == "Handwritten", 'bool_handwritten'] = True
+        final_df.loc[final_df['bool_handwritten']
+                    == "Mostly Typed", 'bool_handwritten'] = False
+
 
         # Fill NAs in text fields with empty strings
         string_fields = ['covenant_text', 'addition',
@@ -350,6 +339,10 @@ class Command(BaseCommand):
 
         # Set initial bool_parcel_match to False
         final_df['bool_parcel_match'] = False
+
+        # Set initial "final" values
+        for field in ['bool_covenant', 'covenant_text', 'addition', 'lot', 'block', 'seller', 'buyer', 'match_type', 'bool_handwritten', 'deed_date']:
+            final_df[f'{field}_final'] = final_df[field]
 
         print(final_df)
 
@@ -369,10 +362,16 @@ class Command(BaseCommand):
                             for a in input_obj if type(a['value']) is list]
             combined_list = list(chain(*nested_lists))
             try:
+                # Pulldown (select) version
                 return [a['value'][0]['label']
                         for a in combined_list if a['task'] == q_id][0]
             except:
-                return ''
+                try:
+                    # Nested text entry
+                    return [a['value']
+                            for a in combined_list if a['task'] == q_id][0]
+                except:
+                    return ''
         return ''
 
     def extract_individual_responses(self, workflow, question_lookup: dict):
@@ -446,23 +445,25 @@ class Command(BaseCommand):
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
+            workflow = get_workflow_obj(workflow_name)
+
             # This config info comes from local_settings, generally.
             self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
             self.batch_dir = os.path.join(
                 settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
-            workflow_slug = workflow_name.lower().replace(" ", "-")
+            # workflow_slug = workflow_name.lower().replace(" ", "-")
 
             raw_classifications_csv = os.path.join(
-                self.batch_dir, f"{workflow_slug}-classifications.csv")
-
-            workflow = get_workflow_obj(workflow_name)
+                self.batch_dir, f"{workflow.slug}-classifications.csv")
+            # raw_classifications_csv = os.path.join(
+            #     self.batch_dir, f"{workflow.slug}-denested.csv")
 
             self.clear_all_tables(workflow_name)
             if bool_use_slow:
-                self.load_csv_by_record(raw_classifications_csv)
+                self.load_csv_by_record(raw_classifications_csv, workflow)
             else:
-                self.load_csv_bulk(raw_classifications_csv)
+                self.load_csv_bulk(raw_classifications_csv, workflow)
 
             self.flatten_subject_data(workflow)
 

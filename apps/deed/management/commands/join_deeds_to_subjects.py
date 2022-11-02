@@ -4,6 +4,7 @@ import boto3
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
+from racial_covenants_processor.storage_backends import PrivateMediaStorage
 from apps.deed.models import DeedPage
 from apps.zoon.models import ZooniverseSubject
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
@@ -33,12 +34,28 @@ class Command(BaseCommand):
             image_ids__isnull=True
         ).values('id', 'image_ids')
 
+        # remote_root = f'https://{settings.AWS_S3_CUSTOM_DOMAIN}/'
+        # print(remote_root)
+
+        # sample_deed_page = DeedPage.objects.filter(workflow=workflow).first()
+
+        # url_prefix = PrivateMediaStorage().url(
+        #     sample_deed_page.page_image_web.url
+        # ).split('?')[0].replace(sample_deed_page.page_image_web.path, '')
+        #
+        # # Get AWS prefix of images so you can trim it off for lookup
+        # # print(f"{PrivateMediaStorage().url_protocol}//{})
+        # # url_prefix = PrivateMediaStorage().url(
+        # #     subject_image_set[0]['image_ids'][0]
+        # # ).split('?')[0].replace(subject_image_set[0]['image_ids'][0], '')
+        # print(url_prefix)
+
         expanded_subject_image_set = {}
         for subject in subject_image_set:
             for image in subject['image_ids']:
-                if image != '':
-                    expanded_subject_image_set[image.replace(
-                        '.png', '.jpg')] = subject['id']
+                if image not in ['', None]:
+                    expanded_subject_image_set[os.path.basename(image.replace(
+                        '.png', '.jpg'))] = subject['id']
 
         return expanded_subject_image_set
 
