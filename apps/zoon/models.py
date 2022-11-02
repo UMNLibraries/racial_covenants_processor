@@ -59,9 +59,17 @@ class ZooniverseSubject(models.Model):
 
     # Match type not a part of Ramsey County workflow but will be used in future.
     match_type = models.CharField(choices=MATCH_TYPE_OPTIONS, max_length=4, null=True, blank=True)
+    bool_handwritten = models.BooleanField(null=True)
+
+    # Data used to join back to deedpage
+    deedpage_pk = models.IntegerField(null=True, blank=True)
+    deedpage_doc_num = models.CharField(max_length=25, blank=True)
+    deedpage_s3_lookup = models.CharField(max_length=100, blank=True)
 
     # Scores, also from the reducers
     bool_covenant_score = models.FloatField(null=True)
+    bool_handwritten_score = models.FloatField(null=True)
+    match_type_score = models.FloatField(null=True)
     covenant_text_score = models.FloatField(null=True)
     addition_score = models.FloatField(null=True)
     lot_score = models.FloatField(null=True)
@@ -100,6 +108,7 @@ class ZooniverseSubject(models.Model):
     city_final = models.CharField(
         max_length=500, null=True, blank=True, verbose_name="City")
     match_type_final = models.CharField(choices=MATCH_TYPE_OPTIONS, max_length=4, null=True, blank=True)
+    bool_handwritten_final = models.BooleanField(null=True, verbose_name="Handwritten?")
 
     parcel_matches = models.ManyToManyField('parcel.Parcel')
     # parcel_manual = models.ManyToManyField(ManualParcel)  # TODO
@@ -194,6 +203,7 @@ class ZooniverseSubject(models.Model):
         self.seller_final = self.get_final_value('seller')
         self.buyer_final = self.get_final_value('buyer')
         self.match_type_final = self.get_final_value('match_type')
+        self.bool_handwritten_final = self.get_final_value('bool_handwritten')
         self.deed_date_final = self.get_final_value('deed_date', None)
 
         self.street_address_final = self.get_from_parcel_or_cx(
@@ -269,8 +279,10 @@ class ZooniverseResponseProcessed(models.Model):
     addition = models.CharField(max_length=500, blank=True)
     lot = models.TextField(blank=True)
     block = models.CharField(max_length=500, blank=True)
-    seller = models.CharField(max_length=100, blank=True)
-    buyer = models.CharField(max_length=100, blank=True)
+    seller = models.CharField(max_length=500, blank=True)
+    buyer = models.CharField(max_length=500, blank=True)
+    match_type = models.CharField(max_length=100, null=True, blank=True)
+    bool_handwritten = models.CharField(max_length=50, null=True, blank=True)
     deed_date_year = models.CharField(max_length=10, blank=True)
     deed_date_month = models.CharField(max_length=100, blank=True)
     deed_date_day = models.CharField(max_length=10, blank=True)
@@ -347,6 +359,7 @@ class ManualCorrection(models.Model):
     date_updated = models.DateTimeField(auto_now=True)
 
     match_type = models.CharField(choices=MATCH_TYPE_OPTIONS, max_length=4, null=True, blank=True)
+    bool_handwritten = models.BooleanField(null=True)
     comments = models.TextField(null=True, blank=True)
 
     objects = CopyManager()

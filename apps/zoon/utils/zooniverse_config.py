@@ -12,7 +12,7 @@ def parse_labels_question_type(task_num, label_config):
     answer_nodes = []
     label_regex = fr'{task_num}\.answers\.(\d+)\.label'
     for key, value in label_config.items():
-        print(key, value)
+        # print(key, value)
         if re.match(label_regex, key):
             # slugified_value = value.replace("'", "-").replace(" ", "-").lower()
             slugified_value = slugify(value.replace('/', '-'))
@@ -48,7 +48,7 @@ def parse_labels_dropdown_type(task_num, label_config):
     for key, value in label_config.items():
         if re.match(options_regex, key):
             for hash, option in value.items():
-                options[hash] = option
+                options[str(hash)] = option
 
     return {
         'task_num': task_num,
@@ -78,10 +78,15 @@ def get_workflow_obj(workflow_name):
             settings.BASE_DIR, 'data', 'zooniverse_exports', workflow_config['panoptes_folder'])
 
         # Get workflow version from config yaml
-        workflow_version = get_workflow_version(
-            batch_dir, workflow_config['config_yaml'])
-    else:
+        # workflow_version = get_workflow_version(
+        #     batch_dir, workflow_config['config_yaml'])
+
         workflow_version = None
+        if 'config_yaml' in workflow_config:
+            # Get workflow version from config yaml
+            workflow_version = get_workflow_version(
+                batch_dir, workflow_config['config_yaml'])
+
 
     workflow = ZooniverseWorkflow.objects.get(
         workflow_name=workflow_name,

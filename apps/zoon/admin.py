@@ -13,10 +13,10 @@ from apps.zoon.models import ZooniverseResponseProcessed, ZooniverseSubject, Man
 class DeedImageInline(admin.TabularInline):
     model = DeedPage
     extra = 0
-    exclude = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id']
+    exclude = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id', 'doc_type', 'page_stats', 'public_uuid']
     readonly_fields = ['doc_num', 'page_num',
-                       'doc_date', 'doc_type', 'bool_match', 'matched_terms', 'page_ocr_text',
-                       'thumbnail_preview', 'public_uuid']
+                       'doc_date', 'bool_match', 'matched_terms', 'page_ocr_text',
+                       'thumbnail_preview']
 
 
 class ManualSupportingDocumentInline(admin.StackedInline):
@@ -55,7 +55,7 @@ class ResponseInline(admin.TabularInline):
     readonly_fields = [
         'bool_covenant', 'covenant_text', 'addition',
         'lot', 'block', 'seller',
-        'buyer', 'deed_date_year', 'deed_date_month', 'deed_date_day', 'user_name', 'created_at'
+        'buyer', 'deed_date_year', 'deed_date_month', 'deed_date_day', 'user_name', 'created_at', 'match_type', 'bool_handwritten'
     ]
 
 
