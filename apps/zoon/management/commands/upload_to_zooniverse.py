@@ -1,8 +1,4 @@
-# import os
-# import ast
-# import json
 import pandas as pd
-# from sqlalchemy import create_engine
 
 import panoptes_client
 from panoptes_client import Panoptes, Project, Subject, SubjectSet
@@ -10,20 +6,9 @@ from panoptes_client import Panoptes, Project, Subject, SubjectSet
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-# from apps.zoon.utils.zooniverse_config import parse_config_yaml
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest
 from apps.deed.models import DeedPage
-
-# import argparse
-# import textwrap
-# import csv
-# import os
-# import io
-# import validators
-# from datetime import datetime
-# import panoptes_client
-
 
 
 class Command(BaseCommand):
@@ -63,15 +48,6 @@ class Command(BaseCommand):
             print(f"Found existing subjet set {workflow.workflow_name} ({subject_set.id}).")
 
         except StopIteration:
-        #     # create a new subject set link it to the project above
-        #     build_part += 'You have chosen to upload {} subjects to a new subject set {}'.format(total_rows, set_name) + '\n'
-        #     print(build_part)
-        #     retry = input('Enter "n" to cancel this upload, any other key to continue' + '\n')
-        #     if retry.lower() == 'n':
-        #         quit()
-        #     if save:
-        #         build_file += build_part
-        #     # nothing happens until the subject_set.save(). For testing comment out that line
             print(f"No matching subject set found. Creating '{workflow.workflow_name}'...")
             subject_set = SubjectSet()
             subject_set.links.project = project
@@ -81,7 +57,7 @@ class Command(BaseCommand):
         return subject_set
 
     def get_existing_subjects(self, subject_set):
-        # return [subject.metadata for subject in subject_set.subjects]
+        print("Getting existing subjects in subject set...")
         return [subject.metadata['#s3_lookup'] for subject in subject_set.subjects]
 
     def handle(self, *args, **kwargs):
@@ -104,23 +80,19 @@ class Command(BaseCommand):
 
             existing_subject_ids = self.get_existing_subjects(subject_set)
 
-            print(existing_subject_ids)
+            print(f"Found {len(existing_subject_ids)} existing subjects. Building manifest...")
 
             upload_manifest = build_zooniverse_manifest(workflow, existing_subject_ids, num_subjects)
-            print(upload_manifest[['doc_num', 'page_num', 'page_count']])
             columns = upload_manifest.columns
 
             for index, row in upload_manifest.iterrows():
                 try:
                     subject = Subject()
                     subject.links.project = zooniverse_project
-                    #  find the files in the metadata and add their locations
 
                     for image_col in ['#image1', '#image2', '#image3']:
                         if row[image_col] != '':
                             subject.add_location({'image/jpeg': row[image_col]})
-                    # subject.add_location({'image/jpeg': row['#image2']})
-                    # subject.add_location({'image/jpeg': row['#image3']})
 
                     subject.metadata.update(row)
 
