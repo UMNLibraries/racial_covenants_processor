@@ -73,6 +73,8 @@ def get_workflow_obj(workflow_name):
 
     workflow_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
 
+    workflow_version = None
+
     if 'panoptes_folder' in workflow_config:
         batch_dir = os.path.join(
             settings.BASE_DIR, 'data', 'zooniverse_exports', workflow_config['panoptes_folder'])

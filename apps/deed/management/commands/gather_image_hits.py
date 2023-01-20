@@ -80,13 +80,20 @@ class Command(BaseCommand):
 
             report_df['num_terms'] = report_df['matched_terms'].apply(lambda x: len(x.split(',')))
 
-            # create special flag for multiple occurences of "white"
+            # create special flag for exceptions like "occupied by any"
             if 'occupied by any' in report_df.columns:
                 print(report_df['occupied by any'].apply(lambda x: self.split_or_1(x)))
 
                 report_df.loc[~report_df['occupied by any'].isna(), 'occupied_count'] = report_df['occupied by any'].apply(lambda x: self.split_or_1(x))
             else:
                 report_df['occupied_count'] = 0
+
+            if 'citizen' in report_df.columns:
+                print(report_df['citizen'].apply(lambda x: self.split_or_1(x)))
+
+                report_df.loc[~report_df['citizen'].isna(), 'citizen_count'] = report_df['citizen'].apply(lambda x: self.split_or_1(x))
+            else:
+                report_df['citizen_count'] = 0
 
             # TODO: Put exceptions work here?
 
@@ -95,6 +102,9 @@ class Command(BaseCommand):
             report_df['bool_exception'] = False
             report_df.loc[(report_df['num_terms'] == 1) & (report_df['occupied_count'] > 0), 'bool_match'] = False
             report_df.loc[(report_df['num_terms'] == 1) & (report_df['occupied_count'] > 0), 'bool_exception'] = True
+
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_match'] = False
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_exception'] = True
 
             report_df.drop(columns=term_columns.columns, inplace=True)
             print(report_df)
@@ -146,7 +156,7 @@ class Command(BaseCommand):
         else:
             print("Couldn't find any matching DeedPage objects to set bool_exception to True.")
 
-        return deed_hits
+        return deed_hits | deed_exceptions
 
     def add_matched_terms(self, workflow, deed_objs_with_hits, match_report):
         match_report['matched_terms'] = match_report['matched_terms'].apply(lambda x: x.split(','))

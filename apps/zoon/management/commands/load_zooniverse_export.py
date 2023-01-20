@@ -149,15 +149,19 @@ class Command(BaseCommand):
 
     def sql_df_writer(self, conn, var_name, question_lookup, workflow):
         '''Help pandas return a sensible response for each question that can be joined back to a unique subject id. Scores are put into percentages to handle possible changes to what's required to retire.'''
-        return pd.read_sql(f"SELECT zoon_subject_id, best_answer AS {var_name}, cast(best_answer_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_question WHERE zoon_workflow_id = '{workflow.zoon_id}' AND task_id = '{question_lookup[var_name]}'",
+        if var_name in question_lookup:
+            return pd.read_sql(f"SELECT zoon_subject_id, best_answer AS {var_name}, cast(best_answer_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_question WHERE zoon_workflow_id = '{workflow.zoon_id}' AND task_id = '{question_lookup[var_name]}'",
                            conn)
         # , id AS {var_name}_reducer_db_id
+        return pd.DataFrame()
 
     def sql_df_writer_text(self, conn, var_name, question_lookup, workflow):
         '''Help pandas return a sensible response for each question that can be joined back to a unique subject id. Scores are put into percentages to handle possible changes to what's required to retire.'''
-        return pd.read_sql(f"SELECT zoon_subject_id, consensus_text AS {var_name}, cast(consensus_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_text WHERE zoon_workflow_id = '{workflow.zoon_id}' AND task_id = '{question_lookup[var_name]}'",
+        if var_name in question_lookup:
+            return pd.read_sql(f"SELECT zoon_subject_id, consensus_text AS {var_name}, cast(consensus_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_text WHERE zoon_workflow_id = '{workflow.zoon_id}' AND task_id = '{question_lookup[var_name]}'",
                            conn)
         # , id AS {var_name}_reducer_db_id
+        return pd.DataFrame()
 
     def parse_deed_date(self, row, month_lookup):
         try:
@@ -211,6 +215,8 @@ class Command(BaseCommand):
         print(subject_df)
 
         sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
+
+        question_lookup = {k:v for k, v in question_lookup.items() if v}
 
         # Make a DF for each question, then left join to subject IDs to create subject records
         bool_covenant_df = self.sql_df_writer(

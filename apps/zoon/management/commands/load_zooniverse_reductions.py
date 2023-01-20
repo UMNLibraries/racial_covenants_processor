@@ -75,6 +75,9 @@ class Command(BaseCommand):
         df.columns = df.columns.str.replace("can-t", "cant")
         all_task_answer_cols = list(map(lambda x: x.replace('can-t', 'cant'), all_task_answer_cols))
 
+        # TODO: Check if each of all_task_answer_cols exists before attempting dropna
+        all_task_answer_cols = [a for a in all_task_answer_cols if a in df.columns]
+
         # Drop all rows from df with no answers for any of the possible questions. Not sure if this happens or not.
         df = df.dropna(subset=all_task_answer_cols, how='all')
 
@@ -82,6 +85,9 @@ class Command(BaseCommand):
         for task_num in df['task_num'].drop_duplicates().to_list():
             answer_columns = df[df['task_num']
                                 == task_num]['answer_columns'].values[0]
+
+            # TODO: Drop missing answer columns
+            answer_columns = [a for a in answer_columns if a in df.columns]
 
             answers = df[df['task_num'] == task_num]['answers'].values[0]
             answers_lookup = {answer['value_column']: answer['value'] for answer in answers}

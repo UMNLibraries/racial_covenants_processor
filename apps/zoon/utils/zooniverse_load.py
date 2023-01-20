@@ -1,4 +1,5 @@
 import os
+import urllib
 import random
 import pandas as pd
 
@@ -9,14 +10,21 @@ from racial_covenants_processor.storage_backends import PrivateMediaStorage
 from apps.deed.models import DeedPage
 
 
+def get_image_url_prefix(img_rel_path):
+    url_prefix = PrivateMediaStorage().url(
+        img_rel_path
+    ).split('?')[0].replace(urllib.parse.quote(img_rel_path), '')
+    return url_prefix
+
 def get_full_url(url_prefix, file_name):
     if file_name == '':
         return ''
     try:
-        return os.path.join(url_prefix, file_name)
+        return os.path.join(url_prefix, urllib.parse.quote(file_name))
         # return PrivateMediaStorage().url(file_name).split('?')[0]
     except:
         return ''
+
 
 def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
 
@@ -93,9 +101,10 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
         ),
     ).values('pk', 'doc_num', 'page_num', 'page_count', 'default_frame', 'page_image_web', 'image1', 'image2', 'image3', 's3_lookup', 'matched_terms_list')[0:num_rows]
 
-    url_prefix = PrivateMediaStorage().url(
-        pages_with_hits[0]['page_image_web']
-    ).split('?')[0].replace(pages_with_hits[0]['page_image_web'], '')
+    url_prefix = get_image_url_prefix(pages_with_hits[0]['page_image_web'])
+    # url_prefix = PrivateMediaStorage().url(
+    #     pages_with_hits[0]['page_image_web']
+    # ).split('?')[0].replace(pages_with_hits[0]['page_image_web'], '')
 
     manifest_df = pd.DataFrame(pages_with_hits)
     manifest_df.rename(columns={

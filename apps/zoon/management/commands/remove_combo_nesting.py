@@ -37,6 +37,7 @@ class Command(BaseCommand):
             file_output = os.path.join(
                 self.batch_dir, f"{workflow.slug}-denested.csv")
 
+            # TODO: This shouldn't be hard-coded
             combo_task_ids = ["T7", "T13"]
 
             # file_input = args.classification_export

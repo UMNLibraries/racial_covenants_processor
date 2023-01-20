@@ -56,6 +56,7 @@ def build_gdf(workflow):
         'workflow',
         'cnty_name',
         'cnty_fips',
+        'doc_num',
         'cnty_pin',
 
         'deed_date',
@@ -104,7 +105,7 @@ def build_gdf(workflow):
 
     # Currently blank fields in existing workflows
     covenants_df[[
-        'doc_num',
+        # 'doc_num',
         'exec_date',
         'geocd_addr',
         'geocd_dist',

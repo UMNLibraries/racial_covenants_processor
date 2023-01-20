@@ -32,6 +32,7 @@ panoptes-client = "*"
 django-debug-toolbar = "*"
 panoptes-aggregation = "*"
 joblib = "==1.1.0"  # TEMP to get around bug, but leaves security vulnerability in place
+fiona = "*"
 
 [dev-packages]
 csvkit = "*"

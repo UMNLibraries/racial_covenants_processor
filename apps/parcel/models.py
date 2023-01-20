@@ -247,6 +247,19 @@ class CovenantsParcelManager(models.Manager):
                 default=Value("[]"),
                 output_field=JSONField()
             )
+        ).annotate(
+            doc_num=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('deedpage_doc_num'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('doc_num'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         )
 
 

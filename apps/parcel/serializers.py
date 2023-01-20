@@ -10,6 +10,7 @@ covenant_api_fields = [
     'cnty_fips',
 
     'deed_date',
+    'doc_num',
     'seller',
     'buyer',
     'cov_type',
@@ -58,6 +59,7 @@ class ParcelNoGeoSerializer(serializers.ModelSerializer):
     seller = serializers.CharField()
     buyer = serializers.CharField()
     deed_date = serializers.DateField()
+    doc_num = serializers.CharField()
     match_type = serializers.CharField()
     dt_updated = serializers.DateTimeField()
     cnty_name = serializers.CharField()
@@ -89,6 +91,7 @@ class ParcelGeoSerializer(GeoFeatureModelSerializer):
     seller = serializers.CharField()
     buyer = serializers.CharField()
     deed_date = serializers.DateField()
+    doc_num = serializers.CharField()
     match_type = serializers.CharField()
     dt_updated = serializers.DateTimeField()
     cnty_name = serializers.CharField()
