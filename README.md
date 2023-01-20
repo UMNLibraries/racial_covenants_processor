@@ -19,10 +19,8 @@ Once all of the below load scripts have been run, many covenants (ZooniverseSubj
 1. Choose a "match type" value to indicate how this parcel was matched (or how it will need to be matched in the future).
 
 ## Software requirements
-- Tesseract OCR engine
 - geos and gdal
 - proj
-- pytesseract
 - pandas and geopandas
 - pipenv
 - PostGIS/PostgreSQL
