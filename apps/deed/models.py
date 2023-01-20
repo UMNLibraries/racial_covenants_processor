@@ -19,18 +19,20 @@ class DeedPage(models.Model):
     s3_lookup = models.CharField(blank=True, max_length=500, db_index=True)
     doc_num = models.CharField(blank=True, max_length=100, db_index=True)
     doc_alt_id = models.CharField(blank=True, max_length=100, db_index=True)
+    batch_id = models.CharField(blank=True, max_length=255)
+    book_id = models.CharField(blank=True, max_length=100, db_index=True)
     page_num = models.IntegerField(null=True)
     doc_date = models.DateField(null=True, db_index=True)
     doc_type = models.CharField(blank=True, max_length=100)
     public_uuid = models.CharField(blank=True, max_length=50, db_index=True)
     page_image_web = models.ImageField(
-        storage=PublicDeedStorage(), null=True)
+        storage=PublicDeedStorage(), max_length=200, null=True)
     page_stats = models.FileField(
-        storage=PrivateMediaStorage(), null=True)
+        storage=PrivateMediaStorage(), max_length=200, null=True)
     page_ocr_text = models.FileField(
-        storage=PrivateMediaStorage(), null=True)
+        storage=PrivateMediaStorage(), max_length=200, null=True)
     page_ocr_json = models.FileField(
-        storage=PrivateMediaStorage(), null=True)
+        storage=PrivateMediaStorage(), max_length=200, null=True)
     bool_match = models.BooleanField(default=False, db_index=True)
     bool_exception = models.BooleanField(default=False, db_index=True)
     matched_terms = models.ManyToManyField(MatchTerm)

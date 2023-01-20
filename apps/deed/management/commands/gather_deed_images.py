@@ -2,6 +2,7 @@
 import re
 import boto3
 import datetime
+import numpy as np
 import pandas as pd
 from pathlib import PurePath
 
@@ -59,13 +60,21 @@ class Command(BaseCommand):
                 workflow.workflow_name
             ]['deed_supplemental_info']
 
-            # page_data_df = pd.DataFrame(page_data)
             for s_info_lookup in s_info_lookups:
                 s_df = pd.read_csv(s_info_lookup['data_csv'], dtype='object')
+
+                join_field_supp = s_info_lookup['join_field_supp']
+                
                 # choose columns to keep
-                cols_to_keep = list(s_info_lookup['mapping'].values()) + [s_info_lookup['join_field_supp']]
+                cols_to_keep = list(s_info_lookup['mapping'].values()) + [join_field_supp]
                 # drop unneeded columns
                 s_df = s_df[cols_to_keep]
+
+                # Avoid dropping join fields with the same name by renaming now
+                if s_info_lookup['join_field_deed'] == join_field_supp:
+                    s_df.rename(columns={join_field_supp: join_field_supp + '_right'}, inplace=True)
+                    join_field_supp = join_field_supp + '_right'
+
                 # rename to django col names, reverse keys and items for this step, but keep mapping in this order for consistency with other values being set in local_settings
                 inv_map = {v: k for k, v in s_info_lookup['mapping'].items()}
                 s_df.rename(columns=inv_map, inplace=True)
@@ -73,9 +82,10 @@ class Command(BaseCommand):
                     s_df,
                     how="left",
                     left_on=s_info_lookup['join_field_deed'],
-                    right_on=s_info_lookup['join_field_supp']
+                    right_on=join_field_supp
                 )
-                page_data_df.drop(columns=[s_info_lookup['join_field_supp']], inplace=True)
+
+                page_data_df.drop(columns=[join_field_supp], inplace=True)
 
                 # coalesce
                 for field in list(s_info_lookup['mapping'].keys()):
@@ -157,7 +167,13 @@ class Command(BaseCommand):
         deed_pages_df = pd.DataFrame(deed_pages)
         deed_pages_df = deed_pages_df.drop_duplicates(subset=['s3_lookup'])
 
+        # Remove fake Nones
+        # deed_pages_df[['page_num']].loc[df['shield'] > 35] = 0
+        deed_pages_df['page_num'].replace('NONE', None, inplace=True)
+
         deed_pages_df = self.add_supplemental_info(deed_pages_df, workflow)
+
+        print(deed_pages_df.to_dict('records'))
 
         print("Creating Django DeedPage objects...")
         deed_pages = [DeedPage(**page_data) for page_data in deed_pages_df.to_dict('records')]

@@ -53,12 +53,18 @@ class Command(BaseCommand):
 
         print(raw_imgs[0:5])
 
+        # Replace .json with TIF, ocr/json with raw, and also get rid of SPLITPAGE component for images that have been split
         ocred_keys = [obj.key.replace('.json', '.tif').replace('ocr/json/', 'raw/') for obj in self.bucket.objects.filter(
             Prefix=f'ocr/json/{workflow.slug}/'
         )]
+
+        # Add in originals to go with each splitpage
+        splitpage_ocred_keys = [key for key in ocred_keys if 'SPLITPAGE' in key]
+        splitpage_orig_keys = [re.sub(r'_SPLITPAGE_\d+', '', key) for key in splitpage_ocred_keys]
+
         print(ocred_keys[0:5])
 
-        un_ocred_keys = set(raw_imgs) - set(ocred_keys)
+        un_ocred_keys = set(raw_imgs) - set(ocred_keys) - set(splitpage_orig_keys)
 
         print(f"Found {len(un_ocred_keys)} out of {len(raw_imgs)} total raw images...")
 

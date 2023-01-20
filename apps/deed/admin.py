@@ -21,15 +21,18 @@ class SearchHitReportAdmin(admin.ModelAdmin):
 class DeedPageAdmin(admin.ModelAdmin):
     show_full_result_count = False
     list_filter = ['workflow', 'bool_match', 'bool_exception', 'matched_terms__term', ('doc_date', DateRangeFilter),]
-    list_display = ['doc_num', 'bool_match', 'bool_exception', 'get_matched_terms', 's3_lookup', 'page_num', 'zooniverse_subject']
+    list_display = ['doc_num', 'bool_match', 'bool_exception', 'get_matched_terms', 'book_id', 'page_num', 's3_lookup', 'zooniverse_subject']
     search_fields = ['doc_num']
     readonly_fields = (
         'workflow',
         'bool_match',
         'bool_exception',
+        'doc_alt_id',
+        'batch_id',
         'thumbnail_preview',
         'zooniverse_subject',
         'doc_num',
+        'book_id',
         'page_num',
         'doc_date',
         's3_lookup',
@@ -37,6 +40,7 @@ class DeedPageAdmin(admin.ModelAdmin):
         'page_stats',
         'page_ocr_text',
         'page_ocr_json',
+        'public_uuid',
         'matched_terms'
     )
     exclude = ['page_image_web']

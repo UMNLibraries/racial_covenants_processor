@@ -80,6 +80,7 @@ python manage.py gather_image_hits --workflow "WI Milwaukee County"
 ```
 1. Upload batch of records to Zooniverse for community confirmation
 ```
+# TODO: How to handle splitpage page nums
 python manage.py upload_to_zooniverse --workflow "WI Milwaukee County" -n 200
 ```
 1. (Or, optionally) Export manifest in order to upload matching files to Zooniverse (or point to S3 images)
