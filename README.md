@@ -149,6 +149,7 @@ Often deed images are stored on a local machine or network drive, and it's not f
 
 ## Lambda functions used for OCR step machine
 The individual lambda functions that make up the OCR, term search and web image optimization processes are in separate repositories:
+- [mp-covenants-split-pages](https://github.com/UMNLibraries/mp-covenants-split-pages)
 - [mp-covenants-ocr-page](https://github.com/UMNLibraries/mp-covenants-ocr-page)
 - [mp-covenants-term-search-basic](https://github.com/UMNLibraries/mp-covenants-term-search-basic)
 - [mp-covenants-resize-image](https://github.com/UMNLibraries/mp-covenants-resize-image)
