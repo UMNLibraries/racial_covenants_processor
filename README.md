@@ -1,8 +1,8 @@
 # Racial Covenants Processor
 
-This is the roadmap and future home for a generalized set of tools to OCR property deeds to look for racially restrictive covenant language, then map the results.
+This is the main repository for The Deed Machine, a generalized set of tools to OCR property deeds to look for racially restrictive covenant language, then map the results.
 
-Current collaborators include Michael Corey, Justin Schell and Nicholas Boren.
+The Deed Machine was created at Mapping Prejudice at the University of Minnesota Libraries. Current collaborators include Michael Corey, Justin Schell and Nicholas Boren.
 
 ## How to map a covenant
 
@@ -85,11 +85,11 @@ python manage.py upload_to_zooniverse --workflow "WI Milwaukee County" -n 200
 ```
 python manage.py build_zooniverse_manifest --workflow "WI Milwaukee County"
 ```
-1. IN PROGRESS: Export batch results from Zooniverse (Using command line tools)
+1. Export batch results from Zooniverse (Using command line tools)
 ```
 python manage.py generate_zooniverse_export --workflow "WI Milwaukee County"
 ```
-1. Load raw and aggregated Zooniverse responses into individual property matches
+1. IN PROGRESS: Load raw and aggregated Zooniverse responses into individual property matches
 ```
 python manage.py load_zooniverse_export --slow --workflow "Ramsey County"
 ```
