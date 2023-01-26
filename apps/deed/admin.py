@@ -21,8 +21,8 @@ class SearchHitReportAdmin(admin.ModelAdmin):
 class DeedPageAdmin(admin.ModelAdmin):
     show_full_result_count = False
     list_filter = ['workflow', 'bool_match', 'bool_exception', 'matched_terms__term', ('doc_date', DateRangeFilter),]
-    list_display = ['doc_num', 'bool_match', 'bool_exception', 'get_matched_terms', 'book_id', 'page_num', 's3_lookup', 'zooniverse_subject']
-    search_fields = ['doc_num']
+    list_display = ['doc_num', 'bool_match', 'bool_exception', 'get_matched_terms', 'book_id', 'page_num', 'split_page_num', 's3_lookup', 'zooniverse_subject']
+    search_fields = ['doc_num', 's3_lookup', 'book_id']
     readonly_fields = (
         'workflow',
         'bool_match',

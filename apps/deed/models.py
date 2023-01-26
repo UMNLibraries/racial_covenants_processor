@@ -22,6 +22,7 @@ class DeedPage(models.Model):
     batch_id = models.CharField(blank=True, max_length=255)
     book_id = models.CharField(blank=True, max_length=100, db_index=True)
     page_num = models.IntegerField(null=True)
+    split_page_num = models.IntegerField(null=True)  # Alternate page numbering that happens when a multipage image file has been split by the ingestion process
     doc_date = models.DateField(null=True, db_index=True)
     doc_type = models.CharField(blank=True, max_length=100)
     public_uuid = models.CharField(blank=True, max_length=50, db_index=True)
