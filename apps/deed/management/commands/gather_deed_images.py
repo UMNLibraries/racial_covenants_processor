@@ -12,6 +12,7 @@ from django.db.models import Count
 
 from apps.deed.models import DeedPage
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
+from apps.deed.utils.deed_pagination import get_doc_num_page_counts, sort_doc_nums_by_page_count, update_docs_with_page_counts
 
 
 class Command(BaseCommand):
@@ -64,11 +65,11 @@ class Command(BaseCommand):
                 s_df = pd.read_csv(s_info_lookup['data_csv'], dtype='object')
 
                 join_field_supp = s_info_lookup['join_field_supp']
-                
+
                 # choose columns to keep
                 cols_to_keep = list(s_info_lookup['mapping'].values()) + [join_field_supp]
                 # drop unneeded columns
-                s_df = s_df[cols_to_keep]
+                s_df = s_df[cols_to_keep].drop_duplicates()
 
                 # Avoid dropping join fields with the same name by renaming now
                 if s_info_lookup['join_field_deed'] == join_field_supp:
@@ -173,6 +174,11 @@ class Command(BaseCommand):
 
         deed_pages_df = self.add_supplemental_info(deed_pages_df, workflow)
 
+        # TODO: Do the deed pagination hereish to avoid an update query later
+
+        # Drop duplicates again just in case
+        deed_pages_df = deed_pages_df.drop_duplicates(subset=['s3_lookup'])
+
         print(deed_pages_df.to_dict('records'))
 
         print("Creating Django DeedPage objects...")
@@ -182,34 +188,14 @@ class Command(BaseCommand):
 
         return deed_pages
 
-    # def dedupe_deedpage_objects(self, workflow):
-    #     ''' This is hopefully unnecessary for future workflows since deduping
-    #     is now built into the creation process, which is much more efficient'''
-    #     duplicate_counts = DeedPage.objects.filter(
-    #         workflow=workflow
-    #     ).values(
-    #         's3_lookup'
-    #     ).annotate(doc_count=Count('s3_lookup')).filter(doc_count__gt=1)
-    #
-    #     duplicates = DeedPage.objects.filter(
-    #         workflow=workflow,
-    #         s3_lookup__in=[dc['s3_lookup'] for dc in duplicate_counts]
-    #     ).values(
-    #         's3_lookup',
-    #         'pk'
-    #     )
-    #
-    #     duplicates_df = pd.DataFrame(duplicates)
-    #     keep_df = duplicates_df.drop_duplicates(subset=['s3_lookup'])
-    #
-    #     # Identify what values are in TableB and not in TableA
-    #     key_diff = set(duplicates_df.pk).difference(keep_df.pk)
-    #     delete_df = duplicates_df[duplicates_df['pk'].isin(key_diff)]
-    #
-    #     delete_pks = delete_df['pk'].to_list()
-    #     print(len(delete_pks))
-    #     DeedPage.objects.filter(pk__in=delete_pks).delete()
-
+    def tag_deed_page_counts(self, workflow):
+        '''We tag each doc with the page count for each doc number to help with figuring out previous/next images.
+        NOTE: This is not really the last word on the true "page number" for each deed, but rather
+        a way to help create that pagination based on what we know about the data we received.
+        See apps.deed.models.HitsDeedPageManager for more pagination/image steps. '''
+        page_counts = get_doc_num_page_counts(workflow)
+        page_count_records = sort_doc_nums_by_page_count(page_counts)
+        update_docs_with_page_counts(workflow, page_count_records)
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -226,4 +212,4 @@ class Command(BaseCommand):
             image_objs = self.build_django_objects(
                 matching_keys, workflow)
 
-            # self.dedupe_deedpage_objects(workflow)
+            self.tag_deed_page_counts(workflow)

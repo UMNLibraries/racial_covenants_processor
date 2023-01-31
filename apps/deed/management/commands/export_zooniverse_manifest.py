@@ -15,6 +15,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str, help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
+        parser.add_argument('-n', '--num_subjects', type=int,
+                            help='Number of subjects to export')
+
     def save_manifest_local(self, df, version_slug):
 
         out_csv = os.path.join(
@@ -30,7 +33,11 @@ class Command(BaseCommand):
         else:
             workflow = get_workflow_obj(workflow_name)
 
-            manifest_df = build_zooniverse_manifest(workflow)
+            if not kwargs['num_subjects']:
+                print("Missing number of subjects. Will return all hits. To return a subset, please specify with -n or --num_subjects.")
+                manifest_df = build_zooniverse_manifest(workflow)
+            else:
+                manifest_df = build_zooniverse_manifest(workflow, [], kwargs['num_subjects'])
 
             now = datetime.datetime.now()
             timestamp = now.strftime('%Y%m%d_%H%M')

@@ -43,6 +43,7 @@ class Command(BaseCommand):
             'page_num',
             'batch_id',
             'doc_date',
+            'bool_match',
             'matched_terms__term',
             's3_lookup',
             'page_image_web'
