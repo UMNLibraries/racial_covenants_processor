@@ -3,8 +3,8 @@ import urllib
 import random
 import pandas as pd
 
-from django.db.models import Count, Sum, OuterRef, Subquery, F, Q, Case, When, Exists, Value
-# from django.contrib.postgres.aggregates import StringAgg
+from django.db.models import Count, Sum, OuterRef, Subquery, F, Q, Case, When, Exists, Value, ImageField
+from django.contrib.postgres.aggregates import StringAgg
 
 from racial_covenants_processor.storage_backends import PrivateMediaStorage
 from apps.deed.models import DeedPage
@@ -55,7 +55,7 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
     # )
 
     # Get all doc nums with at least one hit
-    pages_with_hits = DeedPage.hit_objects.filter(
+    pages_with_hits = DeedPage.objects.filter(
         id__in=final_set
     # pages_with_hits = DeedPage.objects.filter(
     #     workflow=workflow,
@@ -66,6 +66,93 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
     #     matched_terms_list=StringAgg('matched_terms__term', delimiter=', ')
     # ).annotate(
     #     page_count=Subquery(doc_page_count)
+    ).annotate(
+        matched_terms_list=StringAgg('matched_terms__term', delimiter=', ')
+    ).annotate(
+        prev_page_image_web=Case(
+            When(
+                bool_match=False, then=Value('')
+            ),
+            # same doc num with multiple pages + splitpage
+            When(
+                Q(doc_page_count__gt=1) & Q(split_page_num__gte=1), then=Subquery(
+                    DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), split_page_num=OuterRef('split_page_num') - 1).order_by('-pk').values('page_image_web')[:1]
+                )
+            ),
+            # no doc_num, book and page only, splitpage
+            When(
+                Q(doc_page_count=1) & Q(split_page_num__gte=1), then=Subquery(
+                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), split_page_num=OuterRef('split_page_num') - 1).order_by('-pk').values('page_image_web')[:1]
+                )
+            ),
+            # no doc_num, book and page only, no splitpage
+            When(
+                Q(doc_page_count=1), then=Subquery(
+                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), page_num=OuterRef('page_num') - 1).order_by('-pk').values('page_image_web')[:1]
+                )
+            ),
+            default=Subquery(
+                # same doc num with multiple pages
+                DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') - 1).order_by('-pk').values('page_image_web')[:1]
+            ),
+            output_field=ImageField()
+        ),
+        next_page_image_web=Case(
+            When(
+                bool_match=False, then=Value('')
+            ),
+            # same doc num with multiple pages + splitpage
+            When(
+                Q(doc_page_count__gt=1) & Q(split_page_num__gte=1), then=Subquery(
+                    DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), split_page_num=OuterRef('split_page_num') + 1).order_by('-pk').values('page_image_web')[:1]
+                )
+            ),
+            # no doc_num, book and page only, splitpage
+            When(
+                Q(doc_page_count=1) & Q(split_page_num__gte=1), then=Subquery(
+                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), split_page_num=OuterRef('split_page_num') + 1).order_by('-pk').values('page_image_web')[:1]
+                )
+            ),
+            # no doc_num, book and page only, no splitpage
+            When(
+                Q(doc_page_count=1), then=Subquery(
+                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), page_num=OuterRef('page_num') + 1).order_by('-pk').values('page_image_web')[:1]
+                )
+            ),
+            default=Subquery(
+                # same doc num with multiple pages
+                DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') + 1).order_by('-pk').values('page_image_web')[:1]
+            ),
+            output_field=ImageField()
+        ),
+        next_next_page_image_web=Case(
+            When(
+                bool_match=False, then=Value('')
+            ),
+            # same doc num with multiple pages + splitpage
+            When(
+                Q(doc_page_count__gt=1) & Q(split_page_num__gte=1), then=Subquery(
+                    DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), split_page_num=OuterRef('split_page_num') + 2).order_by('-pk').values('page_image_web')[:1]
+                )
+            ),
+            # no doc_num, book and page only, splitpage
+            When(
+                Q(doc_page_count=1) & Q(split_page_num__gte=1), then=Subquery(
+                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), split_page_num=OuterRef('split_page_num') + 2).order_by('-pk').values('page_image_web')[:1]
+                )
+            ),
+            # no doc_num, book and page only, no splitpage
+            When(
+                Q(doc_page_count=1), then=Subquery(
+                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), page_num=OuterRef('page_num') + 2).order_by('-pk').values('page_image_web')[:1]
+                )
+            ),
+            default=Subquery(
+                # same doc num with multiple pages
+                DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') + 2).order_by('-pk').values('page_image_web')[:1]
+            ),
+            output_field=ImageField()
+        )
     ).annotate(
         default_frame=Case(
             When(

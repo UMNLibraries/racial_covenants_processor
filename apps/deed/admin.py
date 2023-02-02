@@ -34,6 +34,8 @@ class DeedPageAdmin(admin.ModelAdmin):
         'doc_num',
         'book_id',
         'page_num',
+        'split_page_num',
+        'doc_page_count',
         'doc_date',
         's3_lookup',
         'doc_type',
