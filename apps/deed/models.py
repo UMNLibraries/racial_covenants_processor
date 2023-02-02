@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import OuterRef, Subquery, Case, When, Count, Q
+from django.db.models import OuterRef, Subquery, Case, When, Count, Q, Value, ImageField
 from django.contrib.postgres.aggregates import StringAgg
 from django.utils.html import mark_safe
 from postgres_copy import CopyManager
@@ -37,6 +37,9 @@ class HitsDeedPageManager(models.Manager):
             matched_terms_list=StringAgg('matched_terms__term', delimiter=', ')
         ).annotate(
             prev_page_image_web=Case(
+                When(
+                    bool_match=False, then=Value('')
+                ),
                 # same doc num with multiple pages + splitpage
                 When(
                     Q(doc_page_count__gt=1) & Q(split_page_num__gte=1), then=Subquery(
@@ -58,9 +61,13 @@ class HitsDeedPageManager(models.Manager):
                 default=Subquery(
                     # same doc num with multiple pages
                     DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') - 1).order_by('-pk').values('page_image_web')[:1]
-                )
+                ),
+                output_field=ImageField()
             ),
             next_page_image_web=Case(
+                When(
+                    bool_match=False, then=Value('')
+                ),
                 # same doc num with multiple pages + splitpage
                 When(
                     Q(doc_page_count__gt=1) & Q(split_page_num__gte=1), then=Subquery(
@@ -82,9 +89,13 @@ class HitsDeedPageManager(models.Manager):
                 default=Subquery(
                     # same doc num with multiple pages
                     DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') + 1).order_by('-pk').values('page_image_web')[:1]
-                )
+                ),
+                output_field=ImageField()
             ),
             next_next_page_image_web=Case(
+                When(
+                    bool_match=False, then=Value('')
+                ),
                 # same doc num with multiple pages + splitpage
                 When(
                     Q(doc_page_count__gt=1) & Q(split_page_num__gte=1), then=Subquery(
@@ -106,7 +117,8 @@ class HitsDeedPageManager(models.Manager):
                 default=Subquery(
                     # same doc num with multiple pages
                     DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') + 2).order_by('-pk').values('page_image_web')[:1]
-                )
+                ),
+                output_field=ImageField()
             )
         )
 
@@ -138,12 +150,12 @@ class DeedPage(models.Model):
 
     # These fields aid in setting up Zooniverse images
     doc_page_count = models.IntegerField(null=True)
-    # prev_page_image_web = models.ImageField(
-    #     storage=PublicDeedStorage(), max_length=200, null=True)
-    # next_page_image_web = models.ImageField(
-    #     storage=PublicDeedStorage(), max_length=200, null=True)
-    # next_next_page_image_web = models.ImageField(
-    #     storage=PublicDeedStorage(), max_length=200, null=True)
+    prev_page_image_web = models.ImageField(
+        storage=PublicDeedStorage(), max_length=200, null=True)
+    next_page_image_web = models.ImageField(
+        storage=PublicDeedStorage(), max_length=200, null=True)
+    next_next_page_image_web = models.ImageField(
+        storage=PublicDeedStorage(), max_length=200, null=True)
 
     zooniverse_subject = models.ForeignKey(
         ZooniverseSubject, on_delete=models.SET_NULL, null=True)

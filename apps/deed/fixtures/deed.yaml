@@ -19,7 +19,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 -   model: deed.deedpage
     pk: 2
     fields:
@@ -41,7 +41,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 -   model: deed.deedpage
     pk: 3
     fields:
@@ -63,7 +63,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 -   model: deed.deedpage
     pk: 4
     fields:
@@ -85,7 +85,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 -   model: deed.deedpage
     pk: 5
     fields:
@@ -107,7 +107,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 -   model: deed.deedpage
     pk: 6
     fields:
@@ -129,7 +129,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 -   model: deed.deedpage
     pk: 7
     fields:
@@ -151,7 +151,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 -   model: deed.deedpage
     pk: 8
     fields:
@@ -173,7 +173,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 -   model: deed.deedpage
     pk: 9
     fields:
@@ -195,7 +195,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 -   model: deed.deedpage
     pk: 10
     fields:
@@ -217,7 +217,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 -   model: deed.deedpage
     pk: 11
     fields:
@@ -239,7 +239,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 -   model: deed.deedpage
     pk: 12
     fields:
@@ -261,7 +261,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 -   model: deed.deedpage
     pk: 13
     fields:
@@ -283,7 +283,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 -   model: deed.deedpage
     pk: 14
     fields:
@@ -305,7 +305,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 -   model: deed.deedpage
     pk: 15
     fields:
@@ -327,7 +327,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 -   model: deed.deedpage
     pk: 16
     fields:
@@ -349,7 +349,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 -   model: deed.deedpage
     pk: 17
     fields:
@@ -371,7 +371,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 -   model: deed.deedpage
     pk: 18
     fields:
@@ -393,7 +393,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 # Used by "doc num with no pages" tests, based on Ramsey County
 -   model: deed.deedpage
     pk: 19
@@ -416,7 +416,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 1
 # doc num with splitpages (see Dakota Torrens)
 -   model: deed.deedpage
     pk: 20
@@ -439,7 +439,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 -   model: deed.deedpage
     pk: 21
     fields:
@@ -461,7 +461,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 -   model: deed.deedpage
     pk: 22
     fields:
@@ -483,7 +483,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 -   model: deed.deedpage
     pk: 23
     fields:
@@ -505,7 +505,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 4
 # Milwaukee examples
 -   model: deed.deedpage
     pk: 24
@@ -528,7 +528,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 2
 -   model: deed.deedpage
     pk: 25
     fields:
@@ -550,7 +550,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 2
 -   model: deed.deedpage
     pk: 26
     fields:
@@ -572,7 +572,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 3
 -   model: deed.deedpage
     pk: 27
     fields:
@@ -594,7 +594,7 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 3
 -   model: deed.deedpage
     pk: 28
     fields:
@@ -616,4 +616,4 @@
         bool_match: true
         bool_exception: false
         matched_terms: []
-        doc_page_count: null
+        doc_page_count: 3
