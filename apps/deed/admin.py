@@ -10,12 +10,6 @@ class SearchHitReportAdmin(admin.ModelAdmin):
 
     readonly_fields = ['workflow', 'report_csv', 'num_hits', 'created_at']
 
-    # workflow = models.ForeignKey(
-    #     ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
-    # report_csv = models.FileField(
-    #     storage=PublicMediaStorage(), upload_to="analysis/", null=True)
-    # num_hits = models.IntegerField(null=True)
-    # created_at = models.DateTimeField()
 
 @admin.register(DeedPage)
 class DeedPageAdmin(admin.ModelAdmin):
@@ -30,6 +24,8 @@ class DeedPageAdmin(admin.ModelAdmin):
         'doc_alt_id',
         'batch_id',
         'thumbnail_preview',
+        'prev_thumbnail_preview',
+        'next_thumbnail_preview',
         'zooniverse_subject',
         'doc_num',
         'book_id',
@@ -45,7 +41,7 @@ class DeedPageAdmin(admin.ModelAdmin):
         'public_uuid',
         'matched_terms'
     )
-    exclude = ['page_image_web']
+    exclude = ['page_image_web', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web']
 
     def get_queryset(self, request):
         qs = super().get_queryset(request).defer('page_stats', 'page_ocr_json', 'page_ocr_text', 'zooniverse_subject', 'doc_alt_id', 'public_uuid', 'page_image_web')
@@ -56,6 +52,18 @@ class DeedPageAdmin(admin.ModelAdmin):
 
     thumbnail_preview.short_description = 'Thumbnail Preview'
     thumbnail_preview.allow_tags = True
+
+    def prev_thumbnail_preview(self, obj):
+        return obj.prev_thumbnail_preview
+
+    prev_thumbnail_preview.short_description = 'Previous page'
+    prev_thumbnail_preview.allow_tags = True
+
+    def next_thumbnail_preview(self, obj):
+        return obj.next_thumbnail_preview
+
+    next_thumbnail_preview.short_description = 'Next page(s)'
+    next_thumbnail_preview.allow_tags = True
 
     def get_matched_terms(self, obj):
         if obj.bool_match or obj.bool_exception:

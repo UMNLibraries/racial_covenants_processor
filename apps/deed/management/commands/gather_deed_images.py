@@ -182,6 +182,8 @@ class Command(BaseCommand):
         print('Tagging doc num page counts...')
         deed_pages_df = tag_doc_num_page_counts(deed_pages_df)
 
+        # TODO: Tag docs with prev/next page images
+
         print(deed_pages_df.to_dict('records'))
 
         print("Creating Django DeedPage objects...")
