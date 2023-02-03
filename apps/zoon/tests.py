@@ -1,11 +1,18 @@
 from django.test import TestCase
 
 from apps.zoon.models import ZooniverseWorkflow
+from apps.deed.utils.deed_pagination import tag_prev_next_image_sql
 from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest
 
 
 class ZooniverseUploadTests(TestCase):
     fixtures = ['deed', 'zoon']
+
+    def setUp(self):
+        # Set up database first time
+        workflow = ZooniverseWorkflow.objects.get(pk=1)
+        # In the initial state of the deed fixtures, the prev/next images aren't set, so you need to do that before testing exports
+        tag_prev_next_image_sql(workflow)
 
     def test_pagination_page_2(self):
         """Does build_zooniverse_manifest generate correct image sequence?

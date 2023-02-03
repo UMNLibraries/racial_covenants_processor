@@ -3,7 +3,7 @@ import urllib
 import random
 import pandas as pd
 
-from django.db.models import Count, Sum, OuterRef, Subquery, F, Q, Case, When, Exists, Value, ImageField
+from django.db.models import F, Case, When, Value
 from django.contrib.postgres.aggregates import StringAgg
 
 from racial_covenants_processor.storage_backends import PrivateMediaStorage
@@ -36,214 +36,44 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
         s3_lookup__in=exclude_ids
     ).values_list('id', flat=True)
 
-
     if num_rows:
         final_set = random.sample(list(matching_ids), num_rows)
     else:
         final_set = matching_ids
 
-    # Subquery for counting all pages
-    # doc_page_count = DeedPage.objects.filter(
-    #     workflow=workflow,
-    #     doc_num=OuterRef('doc_num')
-    # ).values(
-    #     'doc_num'
-    # ).annotate(
-    #     c=Count('*')
-    # ).values(
-    #     'c'
-    # )
-
     # Get all doc nums with at least one hit
     pages_with_hits = DeedPage.objects.filter(
         id__in=final_set
-    # pages_with_hits = DeedPage.objects.filter(
-    #     workflow=workflow,
-    #     bool_match=True
-    # ).exclude(
-    #     s3_lookup__in=exclude_ids
-    # ).annotate(
-    #     matched_terms_list=StringAgg('matched_terms__term', delimiter=', ')
-    # ).annotate(
-    #     page_count=Subquery(doc_page_count)
     ).annotate(
         matched_terms_list=StringAgg('matched_terms__term', delimiter=', ')
     ).annotate(
-        prev_page_image_web=Case(
-            When(
-                bool_match=False, then=Value('')
-            ),
-            # same doc num with multiple pages + splitpage
-            When(
-                Q(doc_page_count__gt=1) & Q(split_page_num__gte=1), then=Subquery(
-                    DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), split_page_num=OuterRef('split_page_num') - 1).order_by('-pk').values('page_image_web')[:1]
-                )
-            ),
-            # no doc_num, book and page only, splitpage
-            When(
-                Q(doc_page_count=1) & Q(split_page_num__gte=1), then=Subquery(
-                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), split_page_num=OuterRef('split_page_num') - 1).order_by('-pk').values('page_image_web')[:1]
-                )
-            ),
-            # no doc_num, book and page only, no splitpage
-            When(
-                Q(doc_page_count=1), then=Subquery(
-                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), page_num=OuterRef('page_num') - 1).order_by('-pk').values('page_image_web')[:1]
-                )
-            ),
-            default=Subquery(
-                # same doc num with multiple pages
-                DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') - 1).order_by('-pk').values('page_image_web')[:1]
-            ),
-            output_field=ImageField()
-        ),
-        next_page_image_web=Case(
-            When(
-                bool_match=False, then=Value('')
-            ),
-            # same doc num with multiple pages + splitpage
-            When(
-                Q(doc_page_count__gt=1) & Q(split_page_num__gte=1), then=Subquery(
-                    DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), split_page_num=OuterRef('split_page_num') + 1).order_by('-pk').values('page_image_web')[:1]
-                )
-            ),
-            # no doc_num, book and page only, splitpage
-            When(
-                Q(doc_page_count=1) & Q(split_page_num__gte=1), then=Subquery(
-                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), split_page_num=OuterRef('split_page_num') + 1).order_by('-pk').values('page_image_web')[:1]
-                )
-            ),
-            # no doc_num, book and page only, no splitpage
-            When(
-                Q(doc_page_count=1), then=Subquery(
-                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), page_num=OuterRef('page_num') + 1).order_by('-pk').values('page_image_web')[:1]
-                )
-            ),
-            default=Subquery(
-                # same doc num with multiple pages
-                DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') + 1).order_by('-pk').values('page_image_web')[:1]
-            ),
-            output_field=ImageField()
-        ),
-        next_next_page_image_web=Case(
-            When(
-                bool_match=False, then=Value('')
-            ),
-            # same doc num with multiple pages + splitpage
-            When(
-                Q(doc_page_count__gt=1) & Q(split_page_num__gte=1), then=Subquery(
-                    DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), split_page_num=OuterRef('split_page_num') + 2).order_by('-pk').values('page_image_web')[:1]
-                )
-            ),
-            # no doc_num, book and page only, splitpage
-            When(
-                Q(doc_page_count=1) & Q(split_page_num__gte=1), then=Subquery(
-                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), split_page_num=OuterRef('split_page_num') + 2).order_by('-pk').values('page_image_web')[:1]
-                )
-            ),
-            # no doc_num, book and page only, no splitpage
-            When(
-                Q(doc_page_count=1), then=Subquery(
-                    DeedPage.objects.filter(workflow=OuterRef('workflow'), book_id=OuterRef('book_id'), page_num=OuterRef('page_num') + 2).order_by('-pk').values('page_image_web')[:1]
-                )
-            ),
-            default=Subquery(
-                # same doc num with multiple pages
-                DeedPage.objects.filter(workflow=OuterRef('workflow'), doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') + 2).order_by('-pk').values('page_image_web')[:1]
-            ),
-            output_field=ImageField()
-        )
-    ).annotate(
         default_frame=Case(
             When(
-                prev_page_image_web=None, then=Value(1)
+                prev_page_image_web__in=[None, ''], then=Value(1)
             ),
             default=Value(2)
         ),
         image1=Case(
             When(
-                prev_page_image_web=None, then=F('page_image_web')
+                prev_page_image_web__in=[None, ''], then=F('page_image_web')
             ),
             default=F('prev_page_image_web')
         ),
         image2=Case(
             When(
-                prev_page_image_web=None, then=F('next_page_image_web')
+                prev_page_image_web__in=[None, ''], then=F('next_page_image_web')
             ),
             default=F('page_image_web')
         ),
         image3=Case(
             When(
-                next_page_image_web=None, then=Value(None)
+                next_page_image_web__in=[None, ''], then=Value(None)
             ),
             When(
                 default_frame=1, then=F('next_next_page_image_web')
             ),
             default=F('next_page_image_web')
         )
-    # ).annotate(
-        # default_frame=Case(
-        #     When(
-        #         Q(page_num=1) & Q(split_page_num=None), then=Value(1)
-        #     ),
-        #     When(
-        #         split_page_num=1, then=Value(1)
-        #     ),
-        #     When(
-        #         split_page_num__gt=1, then=Value(2)
-        #     ),
-        #     default=Value(2)
-        # ),
-        # TODO: Change logic to use prev/next image from model manager
-        # image1=Case(
-        #     When(
-        #         Q(page_num=1) & Q(split_page_num=None), then=F('page_image_web')
-        #     ),
-        #     When(
-        #         split_page_num=1, then=F('page_image_web')
-        #     ),
-        #     When(
-        #         split_page_num__gt=1, then=Subquery(
-        #             DeedPage.objects.filter(workflow=workflow, doc_num=OuterRef('doc_num'), split_page_num=OuterRef('split_page_num') - 1).order_by('-pk').values('page_image_web')[:1]
-        #         )
-        #     ),
-        #     default=Subquery(
-        #         DeedPage.objects.filter(workflow=workflow, doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') - 1).order_by('-pk').values('page_image_web')[:1]
-        #     )
-        # ),
-        # image2=Case(
-        #     When(
-        #         page_num=1, then=Subquery(
-        #             DeedPage.objects.filter(workflow=workflow, doc_num=OuterRef('doc_num'), page_num=2).order_by('-pk').values('page_image_web')[:1]
-        #         )
-        #     ),
-        #     When(
-        #         split_page_num=1, then=Subquery(
-        #             DeedPage.objects.filter(workflow=workflow, doc_num=OuterRef('doc_num'), split_page_num=2).order_by('-pk').values('page_image_web')[:1]
-        #         )
-        #     ),
-        #     default=F('page_image_web')
-        # ),
-        # image3=Case(
-        #     When(
-        #         page_num=1, then=Subquery(
-        #             DeedPage.objects.filter(workflow=workflow, doc_num=OuterRef('doc_num'), page_num=3).order_by('-pk').values('page_image_web')[:1]
-        #         )
-        #     ),
-        #     When(
-        #         split_page_num=1, then=Subquery(
-        #             DeedPage.objects.filter(workflow=workflow, doc_num=OuterRef('doc_num'), split_page_num=3).order_by('-pk').values('page_image_web')[:1]
-        #         )
-        #     ),
-        #     When(
-        #         split_page_num__gt=1, then=Subquery(
-        #             DeedPage.objects.filter(workflow=workflow, doc_num=OuterRef('doc_num'), split_page_num=OuterRef('split_page_num') + 1).order_by('-pk').values('page_image_web')[:1]
-        #         )
-        #     ),
-        #     default=Subquery(
-        #         DeedPage.objects.filter(workflow=workflow, doc_num=OuterRef('doc_num'), page_num=OuterRef('page_num') + 1).order_by('-pk').values('page_image_web')[:1]
-        #     )
-        # ),
     ).values('pk', 'doc_num', 'page_num', 'split_page_num', 'doc_page_count', 'default_frame', 'page_image_web', 'image1', 'image2', 'image3', 's3_lookup', 'matched_terms_list')[0:num_rows]
 
     url_prefix = get_image_url_prefix(pages_with_hits[0]['page_image_web'])

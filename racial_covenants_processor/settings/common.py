@@ -51,13 +51,13 @@ INSTALLED_APPS = ['apps.deed',
                   'rest_framework',
                   'rest_framework_gis',
 
-                  'debug_toolbar'
+                  # 'debug_toolbar'
                   ]
 
 MIDDLEWARE = [
     'racial_covenants_processor.middleware.HealthCheckMiddleware',
 
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    # "debug_toolbar.middleware.DebugToolbarMiddleware",
 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
