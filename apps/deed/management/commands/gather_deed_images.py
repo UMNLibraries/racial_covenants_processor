@@ -12,8 +12,7 @@ from django.db.models import Count
 
 from apps.deed.models import DeedPage
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
-from apps.deed.utils.deed_pagination import tag_doc_num_page_counts
-# from apps.deed.utils.deed_pagination import sort_doc_nums_by_page_count, update_docs_with_page_counts
+from apps.deed.utils.deed_pagination import tag_doc_num_page_counts, paginate_deedpage_df
 
 
 class Command(BaseCommand):
@@ -183,8 +182,18 @@ class Command(BaseCommand):
         deed_pages_df = tag_doc_num_page_counts(deed_pages_df)
 
         # TODO: Tag docs with prev/next page images
+        print('Tagging prev/next photos...')
+        deed_pages_df = paginate_deedpage_df(deed_pages_df)
+        deed_pages_df = deed_pages_df.drop(columns=[
+            'page_num_-1',
+            'page_num_1',
+            'page_num_2',
+            'split_page_num_-1',
+            'split_page_num_1',
+            'split_page_num_2'
+        ])
 
-        print(deed_pages_df.to_dict('records'))
+        # print(deed_pages_df.to_dict('records'))
 
         print("Creating Django DeedPage objects...")
         deed_pages = [DeedPage(**page_data) for page_data in deed_pages_df.to_dict('records')]
@@ -192,15 +201,6 @@ class Command(BaseCommand):
         DeedPage.objects.bulk_create(deed_pages, batch_size=10000)
 
         return deed_pages
-
-    # def tag_deed_page_counts_sql(self, workflow):
-    #     '''DEPRECATED: We tag each doc with the page count for each doc number to help with figuring out previous/next images.
-    #     NOTE: This is not really the last word on the true "page number" for each deed, but rather
-    #     a way to help create that pagination based on what we know about the data we received.
-    #     See apps.deed.models.HitsDeedPageManager for more pagination/image steps. '''
-    #     page_counts = get_doc_num_page_counts(workflow)
-    #     page_count_records = sort_doc_nums_by_page_count(page_counts)
-    #     update_docs_with_page_counts(workflow, page_count_records)
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -216,5 +216,3 @@ class Command(BaseCommand):
 
             image_objs = self.build_django_objects(
                 matching_keys, workflow)
-
-            # self.tag_deed_page_counts_sql(workflow)

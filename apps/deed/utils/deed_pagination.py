@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from django.db.models import Count, OuterRef, Subquery, F, Q, Case, When, Value, ImageField
 
@@ -55,8 +56,15 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
 
     return match_df
 
-def paginate_deedpage_df(df):
-    match_df = df[df['bool_match'] == True].copy()
+def paginate_deedpage_df(df, matches_only=False):
+    # TODO: Change page_num and split_page_num to ints
+    df["page_num"] = pd.to_numeric(df["page_num"])
+    df["split_page_num"] = pd.to_numeric(df["split_page_num"])
+
+    if matches_only:
+        match_df = df[df['bool_match'] == True].copy()
+    else:
+        match_df = df
 
     doc_list_df = df[[
         's3_lookup',
@@ -162,6 +170,9 @@ def paginate_deedpage_df(df):
         'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web'
     ]].fillna(value='', inplace=True)
 
+    # out_df.fillna(value='', inplace=True)
+    out_df = out_df.replace([np.nan], [None])
+
     return out_df
 
 def tag_prev_next_image_sql(workflow):
@@ -197,7 +208,7 @@ def tag_prev_next_image_sql(workflow):
         match.prev_page_image_web = df_rows['prev_page_image_web'].iloc[0]
         match.next_page_image_web = df_rows['next_page_image_web'].iloc[0]
         match.next_next_page_image_web = df_rows['next_next_page_image_web'].iloc[0]
-        
+
         update_objs.append(match)
 
     print("Updating db objects...")
