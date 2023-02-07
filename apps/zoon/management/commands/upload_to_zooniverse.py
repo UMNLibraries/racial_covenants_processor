@@ -95,7 +95,6 @@ class Command(BaseCommand):
                             subject.add_location({'image/jpeg': row[image_col]})
 
                     subject.metadata.update(row)
-
                     subject.save()
                     subject_set.add(subject.id)
 

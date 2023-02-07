@@ -1,6 +1,7 @@
 import os
 import urllib
 import random
+import numpy as np
 import pandas as pd
 
 from django.db.models import F, Case, When, Value
@@ -25,6 +26,11 @@ def get_full_url(url_prefix, file_name):
     except:
         return ''
 
+def int_str_or_blank(value):
+    try:
+        return str(int(value))
+    except:
+        return ''
 
 def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
 
@@ -90,6 +96,14 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
     manifest_df['#image1'] = manifest_df['#image1'].apply(lambda x: get_full_url(url_prefix, x))
     manifest_df['#image2'] = manifest_df['#image2'].apply(lambda x: get_full_url(url_prefix, x))
     manifest_df['#image3'] = manifest_df['#image3'].apply(lambda x: get_full_url(url_prefix, x))
+
+    manifest_df['page_num_str'] = manifest_df['page_num'].apply(lambda x: int_str_or_blank(x))
+    manifest_df.drop(columns=['page_num'], inplace=True)
+    manifest_df.rename(columns={'page_num_str': 'page_num'}, inplace=True)
+
+    manifest_df['split_page_num_str'] = manifest_df['split_page_num'].apply(lambda x: int_str_or_blank(x))
+    manifest_df.drop(columns=['split_page_num'], inplace=True)
+    manifest_df.rename(columns={'split_page_num_str': 'split_page_num'}, inplace=True)
 
     manifest_df.rename(columns={
         's3_lookup': '#s3_lookup',
