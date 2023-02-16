@@ -65,7 +65,7 @@ class Command(BaseCommand):
         raw_df['subject_data'] = raw_df['subject_data'].apply(lambda x: json.loads(x))
 
         # TODO: # Overwrite Zooniverse "workflow_name" to match your config
-        raw_df['worfkflow_name'] = workflow.workflow_name
+        raw_df['workflow_name'] = workflow.workflow_name
 
         objs = [
             ZooniverseResponseRaw(
@@ -191,6 +191,8 @@ class Command(BaseCommand):
             'subject_data_flat__image_4',
         ).distinct())
 
+        print(subject_df)
+
         # Make a list of image ids associated with this subject
         # This may or may not be a _match png, which is something we will want to standardize with an actual ID from the earlier stages of the process that will carry through Zooniverse for joining back
         image_cols = [
@@ -223,7 +225,7 @@ class Command(BaseCommand):
             sa_engine, 'bool_covenant', question_lookup, workflow=workflow)
         bool_handwritten_df = self.sql_df_writer(
             sa_engine, 'bool_handwritten', question_lookup, workflow=workflow)
-        match_type_df = self.sql_df_writer_text(
+        match_type_df = self.sql_df_writer(
             sa_engine, 'match_type', question_lookup, workflow=workflow)
         covenant_text_df = self.sql_df_writer_text(
             sa_engine, 'covenant_text', question_lookup, workflow=workflow)
@@ -330,6 +332,24 @@ class Command(BaseCommand):
         final_df.loc[final_df['bool_handwritten']
                     == "Mostly Typed", 'bool_handwritten'] = False
 
+        # Parse match_type
+        final_df.loc[final_df['match_type']
+                    == "1 or more lots in a single block (or no block)", 'match_type'] = 'SL'
+        final_df.loc[final_df['match_type']
+                    == "Only a Lengthy Property Description", 'match_type'] = 'PD'
+        final_df.loc[final_df['match_type']
+                    == "Lots located in more than one block", 'match_type'] = 'MB'
+        # typo handling
+        final_df.loc[final_df['match_type']
+                    == "Lots located in more than one block ", 'match_type'] = 'MB'
+        final_df.loc[final_df['match_type']
+                    == "Addition-Wide Covenant", 'match_type'] = 'AW'
+        final_df.loc[final_df['match_type']
+                    == "Cemetery Plot / Graves", 'match_type'] = 'C'
+        final_df.loc[final_df['match_type']
+                    == "Petition Covenant", 'match_type'] = 'PC'
+        final_df.loc[final_df['match_type']
+                    == "Something Else or No Geographic Information", 'match_type'] = 'SE'
 
         # Fill NAs in text fields with empty strings
         string_fields = ['covenant_text', 'addition',
@@ -416,6 +436,8 @@ class Command(BaseCommand):
 
         df['bool_covenant'] = df['annotations'].apply(
             lambda x: self.anno_accessor(x, question_lookup['bool_covenant']))
+        df['bool_handwritten'] = df['annotations'].apply(
+            lambda x: self.anno_accessor(x, question_lookup['bool_handwritten']))
         df['covenant_text'] = df['annotations'].apply(
             lambda x: self.anno_accessor(x, question_lookup['covenant_text']))
         df['addition'] = df['annotations'].apply(
@@ -428,6 +450,8 @@ class Command(BaseCommand):
             lambda x: self.anno_accessor(x, question_lookup['seller']))
         df['buyer'] = df['annotations'].apply(
             lambda x: self.anno_accessor(x, question_lookup['buyer']))
+        df['match_type'] = df['annotations'].apply(
+            lambda x: self.anno_accessor(x, question_lookup['match_type']))
 
         df['deed_date_year'] = df['annotations'].apply(
             lambda x: self.anno_accessor(x, question_lookup['deed_date']['year']))
@@ -480,6 +504,7 @@ class Command(BaseCommand):
             # After you have loaded the zooniverse reducer output, bring everything together
             self.consolidate_responses(
                 workflow, self.batch_config['zooniverse_config'])
+
             self.extract_individual_responses(
                 workflow, self.batch_config['zooniverse_config'])
 

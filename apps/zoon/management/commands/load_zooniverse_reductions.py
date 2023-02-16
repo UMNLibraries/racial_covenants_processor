@@ -219,6 +219,8 @@ class Command(BaseCommand):
         # Drop all rows from df with no text input.
         df = df.dropna(subset=['aligned_text', 'consensus_text'], how='all')
 
+        df[['aligned_text', 'consensus_text']] = df[['aligned_text','consensus_text']].fillna(value='')
+
         # Parse user_ids as int to drop weirdo .zero
         df['user_ids'] = df['user_ids'].apply(lambda x: self.round_user_ids(x))
         df['aligned_text'] = df['aligned_text'].apply(

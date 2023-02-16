@@ -14,7 +14,7 @@ class DeedImageInline(admin.TabularInline):
     model = DeedPage
     extra = 0
     exclude = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id', 'batch_id', 'doc_type', 'page_stats', 'public_uuid', 'bool_exception', 'doc_page_count', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web']
-    
+
     readonly_fields = ['doc_num', 'book_id', 'page_num', 'split_page_num',
                        'doc_date', 'bool_match', 'matched_terms', 'page_ocr_text',
                        'thumbnail_preview']
@@ -166,7 +166,7 @@ class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['zoon_subject_id',
                      'addition_final', 'covenant_text', 'covenant_text_final']
 
-    list_display = ('__str__', 'bool_covenant_final', 'bool_parcel_match', 'bool_manual_correction', 'median_score',
+    list_display = ('__str__', 'bool_covenant_final', 'bool_parcel_match', 'bool_manual_correction', 'bool_handwritten_final', 'median_score',
                     'addition_final', 'block_final', 'lot_final', 'deed_date_final', 'match_type_final', )
 
     list_filter = (
@@ -175,6 +175,7 @@ class SubjectAdmin(admin.ModelAdmin):
         'bool_parcel_match',
         'bool_manual_correction',
         'match_type_final',
+        'bool_handwritten_final',
         ('deed_date_final', DateRangeFilter),
         ScoreRangeListFilter,
         AdditionScoreRangeListFilter,
@@ -193,7 +194,9 @@ class SubjectAdmin(admin.ModelAdmin):
             'fields': (
                 'bool_covenant_final',
                 'bool_parcel_match',
+                'bool_handwritten_final',
                 'covenant_text_final',
+                'match_type_final',
                 'addition_final',
                 'lot_final',
                 'block_final',
@@ -245,7 +248,9 @@ class SubjectAdmin(admin.ModelAdmin):
         'join_strings',
         'bool_manual_correction',
         'bool_covenant_final',
+        'bool_handwritten_final',
         'covenant_text_final',
+        'match_type_final',
         'addition_final',
         'lot_final',
         'block_final',

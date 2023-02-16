@@ -28,8 +28,10 @@ class ZooniverseWorkflow(models.Model):
 MATCH_TYPE_OPTIONS = (
     ('SL', 'Simple lot'),
     ('ML', 'Multiple single lots'),
+    ('MB', 'Lots spanning multiple blocks'),
     ('PL', 'Partial lot'),
     ('PD', 'Long phys description'),
+    ('AW', 'Addition-wide covenant'),
     ('C', 'Cemetery plot'),
     ('PC', 'Petition covenant'),
     ('SE', 'Something else'),
@@ -53,8 +55,8 @@ class ZooniverseSubject(models.Model):
     addition = models.CharField(max_length=500, blank=True)
     lot = models.TextField(blank=True)
     block = models.CharField(max_length=500, blank=True)
-    seller = models.CharField(max_length=100, blank=True)
-    buyer = models.CharField(max_length=100, blank=True)
+    seller = models.CharField(max_length=500, blank=True)
+    buyer = models.CharField(max_length=500, blank=True)
     deed_date = models.DateField(null=True)
 
     # Match type not a part of Ramsey County workflow but will be used in future.
@@ -64,7 +66,7 @@ class ZooniverseSubject(models.Model):
     # Data used to join back to deedpage
     deedpage_pk = models.IntegerField(null=True, blank=True)
     deedpage_doc_num = models.CharField(max_length=25, blank=True)
-    deedpage_s3_lookup = models.CharField(max_length=100, blank=True)
+    deedpage_s3_lookup = models.CharField(max_length=255, blank=True)
 
     # Scores, also from the reducers
     bool_covenant_score = models.FloatField(null=True)
@@ -98,16 +100,16 @@ class ZooniverseSubject(models.Model):
     block_final = models.CharField(
         max_length=500, null=True, blank=True, verbose_name="Block")
     seller_final = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="Seller name")
+        max_length=255, null=True, blank=True, verbose_name="Seller name")
     buyer_final = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="Buyer name")
+        max_length=255, null=True, blank=True, verbose_name="Buyer name")
     deed_date_final = models.DateField(
         null=True, blank=True, verbose_name="Deed date")
 
     street_address_final = models.TextField(null=True, blank=True, verbose_name="Street address")
     city_final = models.CharField(
         max_length=500, null=True, blank=True, verbose_name="City")
-    match_type_final = models.CharField(choices=MATCH_TYPE_OPTIONS, max_length=4, null=True, blank=True)
+    match_type_final = models.CharField(choices=MATCH_TYPE_OPTIONS, max_length=4, null=True, blank=True, verbose_name="Match type")
     bool_handwritten_final = models.BooleanField(null=True, verbose_name="Handwritten?")
 
     parcel_matches = models.ManyToManyField('parcel.Parcel')
@@ -348,8 +350,8 @@ class ManualCorrection(models.Model):
     addition = models.CharField(max_length=500, null=True, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
-    seller = models.CharField(max_length=100, null=True, blank=True)
-    buyer = models.CharField(max_length=100, null=True, blank=True)
+    seller = models.CharField(max_length=500, null=True, blank=True)
+    buyer = models.CharField(max_length=500, null=True, blank=True)
     deed_date = models.DateField(null=True, blank=True)
 
     street_address = models.CharField(max_length=255, null=True, blank=True)
@@ -438,8 +440,8 @@ class ManualCovenant(models.Model):
     addition = models.CharField(max_length=500, blank=True)
     lot = models.TextField(blank=True)
     block = models.CharField(max_length=500, blank=True)
-    seller = models.CharField(max_length=100, blank=True)
-    buyer = models.CharField(max_length=100, blank=True)
+    seller = models.CharField(max_length=500, blank=True)
+    buyer = models.CharField(max_length=500, blank=True)
     deed_date = models.DateField(null=True, blank=True)
     doc_num = models.CharField(blank=True, max_length=100, db_index=True)
 
