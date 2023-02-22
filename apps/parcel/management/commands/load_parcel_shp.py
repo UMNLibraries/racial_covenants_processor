@@ -37,11 +37,12 @@ class Command(BaseCommand):
         '''
 
         os.makedirs(self.shp_dir, exist_ok=True)
-        print(shp_config['download_url'])
-        remote_file = requests.get(shp_config['download_url'], stream=True)
+        print(f"Downloading {shp_config['download_url']}...")
 
         base_filename = os.path.basename(shp_config['download_url'])
         local_download_path = os.path.join(self.shp_dir, base_filename)
+
+        remote_file = requests.get(shp_config['download_url'], stream=True)
         with open(local_download_path, "wb") as outfile:
             for chunk in remote_file.iter_content(chunk_size=1024 * 10):
                 if chunk:
@@ -234,7 +235,17 @@ class Command(BaseCommand):
                 settings.BASE_DIR, 'data', 'shp', workflow.slug)
 
             for shp in self.batch_config['parcel_shps']:
-                local_shp = self.download_shp(workflow, shp)
+                if 'download_url' in shp:
+                    local_shp = self.download_shp(workflow, shp)
+                elif 'local_shp' in shp:
+                    # Check if unzip needed
+                    if os.path.splitext(shp['local_shp'])[1] == '.zip':
+                        local_shp = self.unzip_files(local_download_path, shp_config)
+                    else:
+                        local_shp = shp['local_shp']
+                else:
+                    print("No path to shapefile found. Exiting.")
+                    raise
 
                 print(
                     'Beginning homegrown layermapping: {} ...'.format(local_shp))

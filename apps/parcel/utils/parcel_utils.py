@@ -94,17 +94,25 @@ def standardize_addition(input_str):
     if input_str:
         input_str = re.sub(r'ADDIT\. ', 'ADDITION ',
                            input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r'SUBD(?:\.)? ', 'SUBDIVISION ',
+                           input_str, flags=re.IGNORECASE)
         input_str = re.sub(r'\'s', 's',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r's\'', 's',
+                           input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r'\`s', 's',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r',(?: )?', ' ',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r' & ', ' and ',
                            input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r' no\.\s*(?=\d+)', ' ',
+                           input_str, flags=re.IGNORECASE)
         input_str = re.sub(r' (?:an )?addition to (?:the city of )?.+', ' ',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r' addition', ' ',
+                           input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r' subdivision$', '',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r'\s\s+', ' ', input_str)
         return input_str.lower().strip()

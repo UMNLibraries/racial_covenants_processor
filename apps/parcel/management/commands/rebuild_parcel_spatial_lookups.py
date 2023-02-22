@@ -22,8 +22,9 @@ class Command(BaseCommand):
         print('Building parcel spatial lookup options...')
         join_cands = []
         parcels = Parcel.objects.filter(
-            workflow=workflow
+            workflow=workflow,
         ).exclude(lot__isnull=True).prefetch_related(
+            'plat',
             'plat__platalternatename_set'
         ).only(
             'id',
@@ -32,7 +33,8 @@ class Command(BaseCommand):
             'plat_standardized',
             'block',
             'lot',
-            'join_description'
+            'join_description',
+            'orig_filename',
         )
         print('Parcel records gathered from DB, starting candidate generation...')
         for parcel in parcels:

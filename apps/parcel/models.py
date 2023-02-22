@@ -270,16 +270,16 @@ class Parcel(models.Model):
     pin_primary = models.CharField(max_length=50, null=True, blank=True)
     pin_secondary = models.CharField(max_length=50, null=True, blank=True)
     street_address = models.CharField(max_length=255, null=True, blank=True)
-    city = models.CharField(max_length=100, null=True, blank=True)
-    state = models.CharField(max_length=2, null=True,
+    city = models.CharField(db_index=True, max_length=100, null=True, blank=True)
+    state = models.CharField(db_index=True, max_length=2, null=True,
                              blank=True, choices=US_STATES)
     zip_code = models.CharField(max_length=20, null=True, blank=True)
     county_name = models.CharField(max_length=50, null=True, blank=True)
     county_fips = models.CharField(max_length=5, null=True, blank=True)
-    plat_name = models.CharField(max_length=255, null=True, blank=True)
-    plat_standardized = models.CharField(max_length=255, null=True, blank=True)
-    block = models.CharField(max_length=100, null=True, blank=True)
-    lot = models.CharField(max_length=100, null=True, blank=True)
+    plat_name = models.CharField(db_index=True, max_length=255, null=True, blank=True)
+    plat_standardized = models.CharField(db_index=True, max_length=255, null=True, blank=True)
+    block = models.CharField(max_length=255, null=True, blank=True)
+    lot = models.CharField(max_length=500, null=True, blank=True)
     join_description = models.TextField(null=True, blank=True)
     phys_description = models.TextField(null=True, blank=True)
     township = models.IntegerField(null=True, blank=True)
@@ -313,7 +313,7 @@ class ParcelJoinCandidate(models.Model):
     plat_name_standardized = models.CharField(
         max_length=255, db_index=True, null=True)
     join_string = models.CharField(
-        max_length=255, db_index=True, null=True)
+        max_length=500, db_index=True, null=True)
     metadata = models.JSONField(null=True, blank=True)
 
 
