@@ -81,6 +81,10 @@ def get_lots(input_str):
             end = int(num_range.group(2))
             return list(range(start, end+1)), 'num_range'
 
+        simple_multi_lot = [x.group() for x in re.finditer(r'(?:((?:(?<=^)|(?<=^LOTS )|(?<=& ))\d+(?= |$)))', input_str)]
+        if len(simple_multi_lot) > 0:
+            return simple_multi_lot, 'simple_multi_lot'
+
         list_of_nums_preprocess = input_str.replace(', & ', ',').replace(' & ', ',').replace(', and', ',').replace(
             ' and ', ',').replace(', ', ',')
         list_of_nums = re.match(r'^[\d,]+$', list_of_nums_preprocess)

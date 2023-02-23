@@ -55,6 +55,8 @@ class Command(BaseCommand):
         for covenant in ZooniverseSubject.objects.filter(
             workflow=workflow,
             bool_covenant_final=True
+        ).exclude(
+            addition_final=''
         ).order_by('addition_final'):
             self.match_parcel(parcel_lookup, covenant, covenant)
 
