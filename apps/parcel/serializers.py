@@ -141,6 +141,7 @@ class CovenantNoGeoViewSet(viewsets.ModelViewSet):
 class CovenantGeoViewSet(viewsets.ModelViewSet):
     queryset = Parcel.covenant_objects.all()
     serializer_class = ParcelGeoSerializer
+    filterset_fields = ['workflow']
 
 
 class ShpExportViewSet(viewsets.ModelViewSet):
