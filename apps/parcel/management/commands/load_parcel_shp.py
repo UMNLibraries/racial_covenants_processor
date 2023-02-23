@@ -240,7 +240,7 @@ class Command(BaseCommand):
                 elif 'local_shp' in shp:
                     # Check if unzip needed
                     if os.path.splitext(shp['local_shp'])[1] == '.zip':
-                        local_shp = self.unzip_files(local_download_path, shp_config)
+                        local_shp = self.unzip_files(local_download_path, shp)
                     else:
                         local_shp = shp['local_shp']
                 else:
