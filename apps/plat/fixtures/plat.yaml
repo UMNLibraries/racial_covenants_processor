@@ -24,7 +24,7 @@
         plat_year: null
         book_name: '3'
         gov_id: null
-        plat_name_standardized: f. ambs
+        plat_name_standardized: f ambs
 -   model: plat.plat
     pk: 4
     fields:
