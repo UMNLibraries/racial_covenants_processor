@@ -17,8 +17,10 @@ class ParcelAdmin(admin.ModelAdmin):
         'zip_code',
         'county_name',
         'county_fips',
+        'plat',
         'plat_name',
         'plat_standardized',
+        'subdivision_spatial',
         'block',
         'lot',
         'join_description',
@@ -29,7 +31,7 @@ class ParcelAdmin(admin.ModelAdmin):
         'orig_filename',
     ]
     list_filter = ['workflow', 'city']
-    list_display = ['pin_primary', 'street_address', 'plat', 'city', 'plat_name', 'block', 'lot']
+    list_display = ['pin_primary', 'street_address', 'plat', 'subdivision_spatial', 'city', 'plat_name', 'block', 'lot']
     search_fields = ['plat_name', 'pin_primary', 'street_address', 'city']
     # readonly_fields = ['geom_4326', 'plat']
 

@@ -291,7 +291,7 @@ class Parcel(models.Model):
 
     # Plat refers to a plat map, which is often old, and Subdivision refers to a modern GIS layer
     plat = models.ForeignKey(Plat, on_delete=models.SET_NULL, null=True)
-    subdivision = models.ForeignKey(Subdivision, on_delete=models.SET_NULL, null=True)
+    subdivision_spatial = models.ForeignKey(Subdivision, on_delete=models.SET_NULL, null=True)
     # zoon_subjects = models.ManyToManyField("zoon.ZooniverseSubject")
 
     objects = models.Manager()

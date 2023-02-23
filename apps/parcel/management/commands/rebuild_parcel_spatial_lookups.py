@@ -26,12 +26,14 @@ class Command(BaseCommand):
         ).exclude(lot__isnull=True).prefetch_related(
             'plat',
             'plat__platalternatename_set',
-            'subdivision__subdivisionalternatename_set'
+            'subdivision_spatial',
+            'subdivision_spatial__subdivisionalternatename_set'
         ).only(
             'id',
             'plat',
             'plat_name',
             'plat_standardized',
+            'subdivision_spatial',
             'block',
             'lot',
             'join_description',

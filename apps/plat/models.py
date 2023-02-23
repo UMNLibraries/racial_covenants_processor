@@ -166,11 +166,11 @@ class SubdivisionAlternateName(models.Model):
             plat_standardized=self.alternate_name_standardized
         )
 
-        parcel_matches.update(subdivision=self.subdivision)
+        parcel_matches.update(subdivision_spatial=self.subdivision)
 
         subdivision_parcels = Parcel.objects.filter(
             workflow=self.workflow,
-            subdivision=self.subdivision
+            subdivision_spatial=self.subdivision
         )
 
         # avoid duplication
