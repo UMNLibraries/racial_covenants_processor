@@ -1,19 +1,11 @@
-# import re
 import os
 import glob
-# import datetime
 import requests
 from zipfile import ZipFile
 #
 from django.core.management.base import BaseCommand
-# from django.core import management
-# from django.contrib.gis.gdal import DataSource, OGRGeometry, OGRGeomType
-# from django.contrib.gis.gdal.error import GDALException
+from django.core import management
 from django.conf import settings
-#
-# from apps.parcel.models import Parcel, ParcelJoinCandidate
-# from apps.plat.models import Plat, PlatAlternateName
-# from apps.parcel.utils.parcel_utils import standardize_addition, get_all_parcel_options
 
 from apps.plat.models import Subdivision
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
@@ -89,98 +81,6 @@ class Command(BaseCommand):
                    zip_obj.extractall(self.shp_dir)
                    return os.path.join(self.shp_dir, glob.glob('*.shp', recursive=True)[0])
 
-    # def remove_z(self, wkt):
-    #     ''' Remove Z dimension from WKT. '''
-    #     z_search = r'([-\d\.]+) ([-\d\.]+) ([-\d\.]+)'
-    #     return re.sub(z_search, r'\1 \2', wkt)
-    #
-    # def gather_all_attributes(self, field_list, feat):
-    #     ''' Go through each of the attributes in the shapefile, create a JSON object of them all, then put in a single kitchen-sink attribute on the matching Django instance. '''
-    #
-    #     data = {}
-    #     for field in field_list:
-    #         data[field] = feat.get(field)
-    #         if type(data[field]) in [datetime.date, datetime.datetime]:
-    #             try:
-    #                 data[field] = data[field].strftime('%Y-%m-%d')
-    #             except:
-    #                 data[field] = data[field].isoformat()
-    #
-    #     return data
-    #
-    # def build_mapping(self, config):
-    #     ''' Construct a layermapping-ready mapping from the CSV'''
-    #     mapping = {}
-    #     for attr in ["pin_primary", "pin_secondary", "street_address", "city",
-    #                  "state", "zip_code", "county_name", "county_fips", "plat_name",
-    #                  "block", "lot", "join_description", "phys_description",
-    #                  "township", "range", "section"]:
-    #         if config[attr] != '':
-    #             mapping.update({attr: config[attr]})
-    #     return mapping
-
-    # def save_subdivisions(self, workflow, shp_path, shp_mapping):
-    #     parcels = []
-    #     parcel_count = 0
-    #
-    #     orig_filename = os.path.basename(shp_path)
-    #     ds = DataSource(shp_path)
-    #     layer = ds[0]
-    #     mapping = self.build_mapping(shp_mapping)
-    #
-    #     for feat in layer:
-    #         try:
-    #
-    #             # Freaky 3D geometries -- this seems harder than it should be.
-    #             if layer.geom_type == 'POLYGON25D':
-    #                 safe_geom = OGRGeometry(
-    #                     self.remove_z(feat.geom.wkt), layer.srs)
-    #             else:
-    #                 safe_geom = feat.geom
-    #
-    #             # force to multi
-    #             # print(layer.srs)
-    #             multipoly = OGRGeometry(OGRGeomType('MultiPolygon'), layer.srs)
-    #             multipoly.add(safe_geom)
-    #
-    #             # Translate to 4326, even if it probably already is.
-    #             multipoly_4326 = multipoly.transform(4326, clone=True)
-    #             # multipoly_utm = multipoly.transform(26915, clone=True)
-    #
-    #             all_attributes = self.gather_all_attributes(layer.fields, feat)
-    #
-    #             kwargs = {}
-    #             for k, v in mapping.items():
-    #                 # Check for static values
-    #                 if type(v) is tuple:
-    #                     kwargs[k] = v[1]
-    #                 else:
-    #                     kwargs[k] = all_attributes[v]
-    #             # kwargs = {k: all_attributes[v] for k, v in mapping.items()}
-    #
-    #             kwargs.update({
-    #                 'workflow_id': workflow.id,
-    #                 'feature_id': feat.fid,
-    #                 'orig_data': all_attributes,
-    #                 'orig_filename': orig_filename,
-    #                 'geom_4326': multipoly_4326.wkt,
-    #                 # 'geom_utm': multipoly_utm.wkt,
-    #             })
-    #
-    #             parcels.append(Parcel(**kwargs))
-    #             parcel_count += 1
-    #
-    #             if parcel_count % 10000 == 0:
-    #                 Parcel.objects.bulk_create(parcels)
-    #                 print('Saved {} parcel records...'.format(parcel_count))
-    #                 parcels = []
-    #
-    #         except GDALException as e:
-    #             pass
-    #
-    #     Parcel.objects.bulk_create(parcels)
-    #     print('Saved {} records...'.format(parcel_count))
-
     def standardize_subdivisions(self, workflow):
         ''' Standardize each unique addition name, and save back to Subdivision objects with that plat_name'''
         print('Standardizing subdivision names...')
@@ -197,42 +97,6 @@ class Command(BaseCommand):
         Subdivision.objects.bulk_update(
             subs_to_update, ['name_standardized'])
 
-
-    # def join_to_plats(self, workflow):
-    #     '''Find matching plat names based on addition value'''
-    #     print("Joining plats to parcel objs...")
-    #     plat_lookup = {p['plat_name_standardized']: p['id'] for p in Plat.objects.filter(
-    #         workflow=workflow).values('id', 'plat_name_standardized')}
-    #     plat_alternate_lookup = {p['alternate_name_standardized']: p['plat__id'] for p in PlatAlternateName.objects.filter(
-    #         workflow=workflow).values('plat__id', 'alternate_name_standardized')}
-    #
-    #     # Wait do we even need to do the alternate here or are we doing it twice?
-    #     # TODO: Attempt plat match before trying to list all join options on both sides
-    #     # plat match can be optional, but if it's there it can give you alternate candidates (again on both sides)
-    #
-    #     # Merge alternates into main plat lookup
-    #     plat_lookup.update(plat_alternate_lookup)
-    #
-    #     plat_matches = []
-    #     cant_match = {}
-    #     for parcel in Parcel.objects.filter(workflow=workflow).only('plat_standardized', 'id'):
-    #         try:
-    #             plat_id = plat_lookup[parcel.plat_standardized]
-    #             parcel.plat_id = plat_id
-    #             plat_matches.append(parcel)
-    #         except:
-    #             if parcel.plat_standardized not in cant_match:
-    #                 cant_match[parcel.plat_standardized] = 1
-    #             else:
-    #                 cant_match[parcel.plat_standardized] += 1
-    #
-    #     print("Can't match these additions:")
-    #     for plat, num_parcels in cant_match.items():
-    #         print(f"{plat}: {num_parcels} parcels")
-    #
-    #     print(f'\nUpdating {len(plat_matches)} Parcel objs...')
-    #     Parcel.objects.bulk_update(plat_matches, ['plat_id'], batch_size=5000)
-
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -242,36 +106,37 @@ class Command(BaseCommand):
             self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
             workflow = get_workflow_obj(workflow_name)
 
-            # self.shp_dir = os.path.join(
-            #     settings.BASE_DIR, 'data', 'shp', workflow.slug)
-            #
-            # for shp in self.batch_config['subdivision_shps']:
-            #     if 'download_url' in shp:
-            #         local_shp = self.download_shp(workflow, shp)
-            #     elif 'local_shp' in shp:
-            #         # Check if unzip needed
-            #         if os.path.splitext(shp['local_shp'])[1] == '.zip':
-            #             local_shp = self.unzip_files(shp['local_shp'], shp)
-            #         else:
-            #             local_shp = shp['local_shp']
-            #     else:
-            #         print("No path to shapefile found. Exiting.")
-            #         raise
-            #
-            #     print(
-            #         'Beginning homegrown layermapping: {} ...'.format(local_shp))
-            #
-            #     required_attrs = ["feature_id", "name", "doc_num", "recorded_date"]
-            #
-            #     save_multipoly_instances(
-            #         workflow,
-            #         Subdivision,
-            #         local_shp,
-            #         shp['mapping'],
-            #         required_attrs
-            #     )
+            self.shp_dir = os.path.join(
+                settings.BASE_DIR, 'data', 'shp', workflow.slug)
+
+            for shp in self.batch_config['subdivision_shps']:
+                if 'download_url' in shp:
+                    local_shp = self.download_shp(workflow, shp)
+                elif 'local_shp' in shp:
+                    # Check if unzip needed
+                    if os.path.splitext(shp['local_shp'])[1] == '.zip':
+                        local_shp = self.unzip_files(shp['local_shp'], shp)
+                    else:
+                        local_shp = shp['local_shp']
+                else:
+                    print("No path to shapefile found. Exiting.")
+                    raise
+
+                print(
+                    'Beginning homegrown layermapping: {} ...'.format(local_shp))
+
+                required_attrs = ["feature_id", "name", "doc_num", "recorded_date"]
+
+                save_multipoly_instances(
+                    workflow,
+                    Subdivision,
+                    local_shp,
+                    shp['mapping'],
+                    required_attrs
+                )
 
             self.standardize_subdivisions(workflow)
-            # self.join_to_plats(workflow)
-            # management.call_command(
-            #     'rebuild_parcel_spatial_lookups', workflow=workflow_name)
+            management.call_command(
+                'join_subdivisions_to_parcels', workflow=workflow_name)
+            management.call_command(
+                'rebuild_parcel_spatial_lookups', workflow=workflow_name)

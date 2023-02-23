@@ -188,11 +188,11 @@ def get_all_parcel_options(parcel_obj):
             for p in parcel_obj.plat.platalternatename_set.all():
                 extra_additions.append(p.alternate_name_standardized)
 
-    if parcel_obj.subdivision:
-        if addition != parcel_obj.subdivision.name_standardized:
-            extra_additions.append(parcel_obj.subdivision.name_standardized)
-        if parcel_obj.subdivision.subdivisionalternatename_set.count() > 0:
-            for p in parcel_obj.subdivision.subdivisionalternatename_set.all():
+    if parcel_obj.subdivision_spatial:
+        if addition != parcel_obj.subdivision_spatial.name_standardized:
+            extra_additions.append(parcel_obj.subdivision_spatial.name_standardized)
+        if parcel_obj.subdivision_spatial.subdivisionalternatename_set.count() > 0:
+            for p in parcel_obj.subdivision_spatial.subdivisionalternatename_set.all():
                 extra_additions.append(p.alternate_name_standardized)
 
     join_strings = []

@@ -254,4 +254,6 @@ class Command(BaseCommand):
             self.standardize_parcel_plats(workflow)
             self.join_to_plats(workflow)
             management.call_command(
+                'join_subdivisions_to_parcels', workflow=workflow_name)
+            management.call_command(
                 'rebuild_parcel_spatial_lookups', workflow=workflow_name)
