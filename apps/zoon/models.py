@@ -218,7 +218,7 @@ class ZooniverseSubject(models.Model):
         parcel_lookup = None
         join_strings = []
         # Main parcel
-        if self.lot_final != '':
+        if self.addition_final != '' and self.lot_final != '':
             parcel_lookup = build_parcel_spatial_lookups(self.workflow)
             self.join_candidates = gather_all_covenant_candidates(self)
             print(self.join_candidates)

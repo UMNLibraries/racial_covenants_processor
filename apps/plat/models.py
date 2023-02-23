@@ -154,6 +154,7 @@ class SubdivisionAlternateName(models.Model):
 
     def save(self, *args, **kwargs):
         from apps.parcel.models import Parcel, ParcelJoinCandidate
+        from apps.zoon.models import ZooniverseSubject
         self.subdivision_name = self.subdivision.name
         self.zoon_workflow_id = self.subdivision.workflow.zoon_id
         self.alternate_name_standardized = standardize_addition(
@@ -192,3 +193,7 @@ class SubdivisionAlternateName(models.Model):
                     metadata=c['metadata']
                 ))
         ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
+
+        # Re-save all zooniverse subjects with this alternate name
+        for z in ZooniverseSubject.objects.filter(addition_final=self.alternate_name):
+            z.save()

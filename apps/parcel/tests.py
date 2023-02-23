@@ -44,6 +44,26 @@ class JoinStringTests(TestCase):
         lots, lots_meta = get_lots("1x-20")
         self.assertEquals(lots, None)
 
+    def test_lot_simple_multi(self):
+        """Does get_lots render 'LOTS 24 & 25 & 26' as ['24', '25', '26']"""
+        lots, lots_meta = get_lots("LOTS 24 & 25 & 26")
+        self.assertEquals(lots, ['24', '25', '26'])
+
+    def test_lot_simple_multi_2(self):
+        """Does get_lots render '24 & 25 & 26' as ['24', '25', '26']"""
+        lots, lots_meta = get_lots("24 & 25 & 26")
+        self.assertEquals(lots, ['24', '25', '26'])
+
+    def test_lot_simple_multi_3(self):
+        """Does get_lots render '24 & 25 & 26 AND SOME OTHER STUFF' as None"""
+        lots, lots_meta = get_lots("LOT 24 & 25 & 26 AND SOME OTHER STUFF")
+        self.assertEquals(lots, ['24', '25', '26'])
+
+    def test_lot_simple_multi_4(self):
+        """Does get_lots render 'East 20 feet of LOT 24 & 25 & 26' as None"""
+        lots, lots_meta = get_lots("East 20 feet of LOT 24 & E 20 FT OF LOT 10")
+        self.assertEquals(lots, None)
+
     def test_write_join_strings_basic(self):
         addition = "JANE'S ADDITION"
         block = '1'
