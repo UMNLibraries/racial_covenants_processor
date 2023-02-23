@@ -31,28 +31,29 @@ ALLOWED_HOSTS = ['*']
 
 # Application definition
 
-INSTALLED_APPS = ['apps.deed',
-                  'apps.zoon',
-                  'apps.parcel',
-                  'apps.plat',
+INSTALLED_APPS = [
+    'apps.deed',
+    'apps.zoon',
+    'apps.parcel',
+    'apps.plat',
 
-                  'django.contrib.admin',
-                  'django.contrib.auth',
-                  'django.contrib.contenttypes',
-                  'django.contrib.sessions',
-                  'django.contrib.messages',
-                  'django.contrib.staticfiles',
-                  'django.contrib.gis',
-                  'django.contrib.humanize',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.gis',
+    'django.contrib.humanize',
 
-                  'rangefilter',
-                  'storages',
-                  'localflavor',
-                  'rest_framework',
-                  'rest_framework_gis',
-
-                  # 'debug_toolbar'
-                  ]
+    'rangefilter',
+    'storages',
+    'localflavor',
+    'rest_framework',
+    'rest_framework_gis',
+    'django_filters',
+    # 'debug_toolbar'
+]
 
 MIDDLEWARE = [
     'racial_covenants_processor.middleware.HealthCheckMiddleware',
@@ -170,7 +171,11 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ]
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination'
 }
 
 try:
