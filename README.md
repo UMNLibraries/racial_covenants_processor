@@ -98,14 +98,18 @@ python manage.py load_zooniverse_export --slow --workflow "Ramsey County"
 ```
 python manage.py join_deeds_to_subjects --workflow "Ramsey County"
 ```
-1. Load modern parcel shapefiles with unique fields mapped to unified subset
-```
-python manage.py load_parcel_shp --workflow "Ramsey County"
-```
-1. Load images to s3 and/or list of plats/additions to help with autojoin to Parcels and with manual research
+1. Optional: Load images to s3 and/or list of plats/additions to help with autojoin to Parcels and with manual research
 ```
 python manage.py upload_plat_images --workflow "Ramsey County"
 python manage.py load_plat_records --workflow "Ramsey County"
+```
+1. Optional: Load subdivision spatial layer to help with autojoin to Parcels and with manual research
+```
+python manage.py load_subdivision_shp --workflow "Ramsey County"
+```
+1. Load modern parcel shapefiles with unique fields mapped to unified subset
+```
+python manage.py load_parcel_shp --workflow "Ramsey County"
 ```
 1. Automated join of matches to modern parcel map
 ```
@@ -124,22 +128,30 @@ python manage.py dump_covenants_csv --workflow "Ramsey County"
 ```
 
 ## Other workflow elements
-Manual corrections, extra parcel records and alternate names for plats are stored as separate models from the ZooniverseSubject model so edits are non-destructive and can be recreated in case of a need to re-import from Zooniverse, or can be rolled back as new information emerges.
+Manual corrections, extra parcel records and alternate names for plats are stored as separate models from the ZooniverseSubject, Plat or Subdivision models so edits are non-destructive and can be recreated in case of a need to re-import from Zooniverse (or plat maps or Subdivision shapefiles), or can be rolled back as new information emerges.
 ```
 # To archive manual entries in a CSV for later re-import:
 python manage.py dump_manual_corrections --workflow "Ramsey County"
 python manage.py dump_extra_parcels --workflow "Ramsey County"
-python manage.py dump_plat_alternate_names --workflow "Ramsey County"
 
 # To re-import a those manual entries from csv export:
 python manage.py load_manual_corrections --workflow "Ramsey County" --infile relative/path/to/file
 python manage.py load_extra_parcels --workflow "Ramsey County" --infile relative/path/to/file
-python manage.py load_plat_alternate_names --workflow "Ramsey County" --infile relative/path/to/file
 
-# To manually re-join corrections to subjects/plats (mostly you will never run these, which are run as a part of the previous "load" scripts)
+# To manually re-join corrections to subjects (mostly you will never run these, which are run as a part of the previous "load" scripts)
 python manage.py connect_manual_corrections --workflow "Ramsey County"
 python manage.py connect_extra_parcels --workflow "Ramsey County"
+
+# Same as above, but only needed if you re-import your subdivision spatial or plat data)
+python manage.py dump_plat_alternate_names --workflow "Ramsey County"
+python manage.py dump_subdivision_alternate_names --workflow "Ramsey County"
+
+python manage.py load_plat_alternate_names --workflow "Ramsey County" --infile relative/path/to/file
+python manage.py load_subdivision_alternate_names --workflow "Ramsey County" --infile relative/path/to/file
+
+# To manually re-join corrections to subdivisions/plats (mostly you will never run these, which are run as a part of the previous "load" scripts)
 python manage.py connect_plat_alternate_names --workflow "Ramsey County"
+python manage.py connect_subdivision_alternate_names --workflow "Ramsey County"
 ```
 
 ## Standalone deed uploader
