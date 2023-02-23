@@ -92,27 +92,38 @@ def get_lots(input_str):
 
 def standardize_addition(input_str):
     if input_str:
-        input_str = re.sub(r'ADDIT\. ', 'ADDITION ',
+        # apostrophe with 's or 'n (ass'n)
+        input_str = re.sub(r'[\'`]([sn])', r'\1',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r'SUBD(?:\.)? ', 'SUBDIVISION ',
+        input_str = re.sub(r'([sn])[\'`]', r'\1',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r'\'s', 's',
+        input_str = re.sub(r'ADD(?:IT)?\.', 'ADDITION',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r's\'', 's',
+        input_str = re.sub(r'ADDN(\.)?', 'ADDITION',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r'\`s', 's',
+        input_str = re.sub(r'SUBDIVSION', 'SUBDIVISION',
+                           input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r'RESUBDIV(?:\.)?(?!IVISION)', 'RESUBDIVISION',
+                           input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r'(?<!RE)SUBD(?:\.)?(?!IVISION)', 'SUBDIVISION',
+                           input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r' SUB(?:\.)? ', ' SUBDIVISION ',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r',(?: )?', ' ',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r' & ', ' and ',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r' no\.\s*(?=\d+)', ' ',
+        input_str = re.sub(r' no(\.)?\s*(?=\d+)', ' ',
+                           input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r'#\s*(?=\d+)', '',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r' (?:an )?addition to (?:the city of )?.+', ' ',
                            input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r'\.\s*', ' ',
+                           input_str, flags=re.IGNORECASE)
         input_str = re.sub(r' addition', ' ',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r' subdivision$', '',
+        input_str = re.sub(r' subdivision', ' ',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r'\s\s+', ' ', input_str)
         return input_str.lower().strip()
@@ -175,6 +186,13 @@ def get_all_parcel_options(parcel_obj):
             extra_additions.append(parcel_obj.plat.plat_name_standardized)
         if parcel_obj.plat.platalternatename_set.count() > 0:
             for p in parcel_obj.plat.platalternatename_set.all():
+                extra_additions.append(p.alternate_name_standardized)
+
+    if parcel_obj.subdivision:
+        if addition != parcel_obj.subdivision.name_standardized:
+            extra_additions.append(parcel_obj.subdivision.name_standardized)
+        if parcel_obj.subdivision.subdivisionalternatename_set.count() > 0:
+            for p in parcel_obj.subdivision.subdivisionalternatename_set.all():
                 extra_additions.append(p.alternate_name_standardized)
 
     join_strings = []

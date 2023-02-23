@@ -25,7 +25,8 @@ class Command(BaseCommand):
             workflow=workflow,
         ).exclude(lot__isnull=True).prefetch_related(
             'plat',
-            'plat__platalternatename_set'
+            'plat__platalternatename_set',
+            'subdivision__subdivisionalternatename_set'
         ).only(
             'id',
             'plat',

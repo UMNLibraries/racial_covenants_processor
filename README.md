@@ -94,7 +94,7 @@ python manage.py generate_zooniverse_export --workflow "WI Milwaukee County"
 python manage.py load_zooniverse_export --slow --workflow "Ramsey County"
 ```
   - Side effect: Stats on hit rate, false positives, etc.
-1. Join deed images to zooniverse subjects (hmm maybe not? we'll see later if it makes sense to create these before uploading to Zooniverse. But since you won't have a zoon subject ID maybe you don't need to.)
+1. Join deed images to zooniverse subjects
 ```
 python manage.py join_deeds_to_subjects --workflow "Ramsey County"
 ```
@@ -116,9 +116,11 @@ python manage.py match_parcels --workflow "Ramsey County"
 1. Export list of unmatched confirmed covenants
 1. Manual (GUIish?) cleanup of bad joins, split parcels, etc.
 1. Metes and bounds manual tracing
-1. Final shapefile/data layer
+1. Final shapefile/data layers
 ```
 python manage.py dump_covenants_shapefile --workflow "Ramsey County"
+python manage.py dump_covenants_geojson --workflow "Ramsey County"
+python manage.py dump_covenants_csv --workflow "Ramsey County"
 ```
 
 ## Other workflow elements

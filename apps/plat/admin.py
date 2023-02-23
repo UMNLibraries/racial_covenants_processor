@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db.models import Count
 
-from .models import Plat, PlatMapPage, PlatAlternateName
+from .models import Plat, PlatMapPage, PlatAlternateName, Subdivision, SubdivisionAlternateName
 
 
 class PlatMapPageInline(admin.TabularInline):
@@ -51,3 +51,42 @@ class PlatAlternateNameAdmin(admin.ModelAdmin):
     exclude = ['plat_name', 'zoon_workflow_id']
     readonly_fields = ['alternate_name_standardized']
     search_fields = ['alternate_name', 'plat__plat_name']
+
+
+@admin.register(Subdivision)
+class SubdivisionAdmin(admin.ModelAdmin):
+    readonly_fields = [
+        'workflow',
+        'feature_id',
+        'doc_num',
+        'name_standardized',
+        'recorded_date',
+        'name',
+        'orig_data',
+        'orig_filename',
+        'geom_4326'
+    ]
+    list_filter = ['workflow']
+    list_display = ['name', 'linked_parcel_count']
+    search_fields = ['name']
+
+    def linked_parcel_count(self, obj):
+        return obj.linked_parcel_count
+    linked_parcel_count.admin_order_field = 'linked_parcel_count'
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            linked_parcel_count=Count("parcel", distinct=True)
+        )
+        return queryset
+
+
+@admin.register(SubdivisionAlternateName)
+class SubdivisionAlternateNameAdmin(admin.ModelAdmin):
+    list_filter = ['workflow']
+    list_display = ['alternate_name', 'subdivision_name', 'workflow']
+    autocomplete_fields = ['subdivision']
+    exclude = ['subdivision_name', 'zoon_workflow_id']
+    readonly_fields = ['alternate_name_standardized']
+    search_fields = ['alternate_name', 'subdivision__subdivision_name']

@@ -1,4 +1,5 @@
-from django.db import models
+# from django.db import models
+from django.contrib.gis.db import models
 from django.utils.text import slugify
 from django.utils.html import mark_safe
 from django.db.models import F
@@ -95,6 +96,91 @@ class PlatAlternateName(models.Model):
         # update parcel candidates for all parcels in this plat
         join_cands = []
         for parcel in plat_parcels:
+            candidates = get_all_parcel_options(parcel)
+            for c in candidates:
+                # parcel_spatial_lookup[c['join_string']] = c
+                join_cands.append(ParcelJoinCandidate(
+                    workflow=self.workflow,
+                    parcel=parcel,
+                    plat_name_standardized=parcel.plat_standardized,
+                    join_string=c['join_string'],
+                    metadata=c['metadata']
+                ))
+        ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
+
+
+class Subdivision(models.Model):
+    '''This is presumed to be a modern Subdivision GIS layer (as opposed to a plat map), but there may be other uses'''
+    workflow = models.ForeignKey(
+        'zoon.ZooniverseWorkflow', null=True, on_delete=models.SET_NULL)
+    feature_id = models.IntegerField(null=True)
+    name = models.CharField(max_length=255, null=True, blank=True, db_index=True)
+    name_standardized = models.CharField(max_length=255, null=True, blank=True, db_index=True)
+    doc_num = models.CharField(blank=True, max_length=100, db_index=True)
+    recorded_date = models.DateField(null=True, db_index=True)
+    orig_data = models.JSONField(null=True, blank=True)
+    orig_filename = models.CharField(max_length=255, null=True, blank=True)
+    geom_4326 = models.MultiPolygonField(srid=4326)
+
+    class Meta:
+        ordering = ["name"]
+
+    def slug(self):
+        return slugify(f"{self.workflow.slug} {self.name}")
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        self.name_standardized = self.standardize_addition(
+            self.name)
+
+class SubdivisionAlternateName(models.Model):
+    workflow = models.ForeignKey(
+        'zoon.ZooniverseWorkflow', null=True, on_delete=models.SET_NULL)
+    subdivision = models.ForeignKey(Subdivision, null=True, on_delete=models.SET_NULL)
+
+    # These are kept separate of the foreign key relationship in case this needs to be reconnected later
+    zoon_workflow_id = models.IntegerField(
+        db_index=True, null=True, blank=True)
+    subdivision_name = models.CharField(
+        max_length=255, db_index=True, null=True, blank=True)
+
+    alternate_name = models.CharField(max_length=255, db_index=True, null=True)
+    alternate_name_standardized = models.CharField(
+        max_length=255, db_index=True, null=True)
+
+    objects = CopyManager()
+
+    def save(self, *args, **kwargs):
+        from apps.parcel.models import Parcel, ParcelJoinCandidate
+        self.subdivision_name = self.subdivision.name
+        self.zoon_workflow_id = self.subdivision.workflow.zoon_id
+        self.alternate_name_standardized = standardize_addition(
+            self.alternate_name)
+
+        super(SubdivisionAlternateName, self).save(*args, **kwargs)
+
+        parcel_matches = Parcel.objects.filter(
+            workflow=self.workflow,
+            plat_standardized=self.alternate_name_standardized
+        )
+
+        parcel_matches.update(subdivision=self.subdivision)
+
+        subdivision_parcels = Parcel.objects.filter(
+            workflow=self.workflow,
+            subdivision=self.subdivision
+        )
+
+        # avoid duplication
+        ParcelJoinCandidate.objects.filter(
+            parcel__pk__in=subdivision_parcels.values_list('pk', flat=True)
+        ).delete()
+
+        # update parcel candidates for all parcels in this plat
+        join_cands = []
+        for parcel in subdivision_parcels:
             candidates = get_all_parcel_options(parcel)
             for c in candidates:
                 # parcel_spatial_lookup[c['join_string']] = c

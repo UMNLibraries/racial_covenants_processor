@@ -3,7 +3,7 @@ from django.contrib.gis.db import models
 from localflavor.us.us_states import US_STATES
 
 from racial_covenants_processor.storage_backends import PublicMediaStorage
-from apps.plat.models import Plat
+from apps.plat.models import Plat, Subdivision
 
 
 class CovenantsParcelManager(models.Manager):
@@ -289,7 +289,9 @@ class Parcel(models.Model):
     orig_filename = models.CharField(max_length=255, null=True, blank=True)
     geom_4326 = models.MultiPolygonField(srid=4326)
 
+    # Plat refers to a plat map, which is often old, and Subdivision refers to a modern GIS layer
     plat = models.ForeignKey(Plat, on_delete=models.SET_NULL, null=True)
+    subdivision = models.ForeignKey(Subdivision, on_delete=models.SET_NULL, null=True)
     # zoon_subjects = models.ManyToManyField("zoon.ZooniverseSubject")
 
     objects = models.Manager()
