@@ -9,7 +9,7 @@ from postgres_copy import CopyManager
 
 from racial_covenants_processor.storage_backends import PublicMediaStorage
 from apps.plat.models import Plat, PlatAlternateName, Subdivision, SubdivisionAlternateName
-from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_all_covenant_candidates, gather_all_manual_covenant_candidates, standardize_addition
+from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_all_covenant_candidates, gather_all_manual_covenant_candidates, standardize_addition, addition_wide_parcel_match
 
 
 class ZooniverseWorkflow(models.Model):
@@ -218,7 +218,9 @@ class ZooniverseSubject(models.Model):
         parcel_lookup = None
         join_strings = []
         # Main parcel
-        if self.addition_final != '' and self.lot_final != '':
+        if self.match_type_final == 'AW':
+            addition_wide_parcel_match(self)
+        elif self.addition_final != '' and self.lot_final != '':
             parcel_lookup = build_parcel_spatial_lookups(self.workflow)
             self.join_candidates = gather_all_covenant_candidates(self)
             print(self.join_candidates)
@@ -478,40 +480,42 @@ class ManualCovenant(models.Model):
 
         # For plat covenant, separate routine to find all with matching addition
         if self.bool_confirmed:
-            if self.cov_type == 'PT':
-                plat_name_standardized = standardize_addition(self.addition)
-
-                # Lookup by plat
-                matching_plats = Plat.objects.filter(plat_name_standardized=plat_name_standardized)
-                matching_plat_alternates = PlatAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
-
-                if matching_plats.count() > 0:
-                    self.bool_parcel_match = True
-                    for p in matching_plats:
-                        self.parcel_matches.add(*p.parcel_set.all())
-
-                # Lookup by alternate name
-                elif matching_plat_alternates.count() > 0:
-                    self.bool_parcel_match = True
-                    for p in matching_plat_alternates:
-                        self.parcel_matches.add(*p.plat.parcel_set.all())
-
-                # Lookup by subdivision
-                matching_subdivisions = Subdivision.objects.filter(name_standardized=plat_name_standardized)
-                matching_subdivision_alternates = SubdivisionAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
-
-                if matching_subdivisions.count() > 0:
-                    self.bool_parcel_match = True
-                    for p in matching_subdivisions:
-                        self.parcel_matches.add(*p.parcel_set.all())
-
-                # Lookup by alternate name
-                elif matching_subdivision_alternates.count() > 0:
-                    self.bool_parcel_match = True
-                    for p in matching_subdivision_alternates:
-                        self.parcel_matches.add(*p.subdivision.parcel_set.all())
-
-                # TODO: filter by parcel other? Or just make someone add plat or plat alternate. If so, need way to manually add plat
+            if self.match_type == 'PT':
+                addition_wide_parcel_match(self)
+            # if self.cov_type == 'PT':
+            #     plat_name_standardized = standardize_addition(self.addition)
+            #
+            #     # Lookup by plat
+            #     matching_plats = Plat.objects.filter(plat_name_standardized=plat_name_standardized)
+            #     matching_plat_alternates = PlatAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
+            #
+            #     if matching_plats.count() > 0:
+            #         self.bool_parcel_match = True
+            #         for p in matching_plats:
+            #             self.parcel_matches.add(*p.parcel_set.all())
+            #
+            #     # Lookup by alternate name
+            #     elif matching_plat_alternates.count() > 0:
+            #         self.bool_parcel_match = True
+            #         for p in matching_plat_alternates:
+            #             self.parcel_matches.add(*p.plat.parcel_set.all())
+            #
+            #     # Lookup by subdivision
+            #     matching_subdivisions = Subdivision.objects.filter(name_standardized=plat_name_standardized)
+            #     matching_subdivision_alternates = SubdivisionAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
+            #
+            #     if matching_subdivisions.count() > 0:
+            #         self.bool_parcel_match = True
+            #         for p in matching_subdivisions:
+            #             self.parcel_matches.add(*p.parcel_set.all())
+            #
+            #     # Lookup by alternate name
+            #     elif matching_subdivision_alternates.count() > 0:
+            #         self.bool_parcel_match = True
+            #         for p in matching_subdivision_alternates:
+            #             self.parcel_matches.add(*p.subdivision.parcel_set.all())
+            #
+            #     # TODO: filter by parcel other? Or just make someone add plat or plat alternate. If so, need way to manually add plat
             # Method for one-off covenants that is more similar to previous joinstring setup
             elif self.lot != '':
                 parcel_lookup = build_parcel_spatial_lookups(self.workflow)
