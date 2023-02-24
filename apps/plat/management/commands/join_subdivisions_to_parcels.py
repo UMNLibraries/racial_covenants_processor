@@ -28,7 +28,7 @@ class Command(BaseCommand):
               parcels.id AS id,
               parcels.join_description AS join_description,
               subdivisions.name AS subdivision_name,
-              subdivisions.id AS subdivision_id
+              subdivisions.id AS subdivision_spatial_id
             FROM parcel_parcel AS parcels
             JOIN plat_subdivision AS subdivisions
             ON ST_Contains(subdivisions.geom_4326, ST_Centroid(parcels.geom_4326))
@@ -40,4 +40,4 @@ class Command(BaseCommand):
 
             print(f'Updating {len(parcels_with_subs_list)} parcels ...')
             Parcel.objects.bulk_update(
-                parcels_with_subs_list, ['subdivision_id'], batch_size=5000)
+                parcels_with_subs_list, ['subdivision_spatial_id'], batch_size=5000)

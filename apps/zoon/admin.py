@@ -166,7 +166,8 @@ class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['zoon_subject_id',
                      'addition_final', 'covenant_text', 'covenant_text_final']
 
-    list_display = ('__str__', 'bool_covenant_final', 'bool_parcel_match', 'bool_manual_correction', 'bool_handwritten_final', 'median_score',
+    list_display = ('__str__', 'bool_covenant_final', 'bool_parcel_match',
+                    'bool_manual_correction', 'bool_handwritten_final',
                     'addition_final', 'block_final', 'lot_final', 'deed_date_final', 'match_type_final', )
 
     list_filter = (

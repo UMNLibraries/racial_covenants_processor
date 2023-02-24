@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.core import management
 from django.conf import settings
 
 from apps.plat.models import Subdivision, SubdivisionAlternateName
@@ -37,18 +38,6 @@ class Command(BaseCommand):
         SubdivisionAlternateName.objects.bulk_update(
             update_cxes, ['workflow_id', 'subdivision_id'], batch_size=10000)
 
-    def reconnect_subdivision_alternate_names_to_parcels(self, workflow):
-        print(
-            f'Collecting Parcel records that match SubdivisionAlternateNames...')
-        for san in SubdivisionAlternateName.objects.filter(
-            workflow=workflow
-        ):
-            parcel_matches = Parcel.objects.filter(
-                workflow=workflow,
-                plat_standardized=san.alternate_name_standardized
-            )
-            parcel_matches.update(subdivision_spatial=san.subdivision)
-
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -57,4 +46,5 @@ class Command(BaseCommand):
             workflow = get_workflow_obj(workflow_name)
 
             self.reconnect_subdivision_alternate_names(workflow)
-            self.reconnect_subdivision_alternate_names_to_parcels(workflow)
+            management.call_command(
+                'connect_subdivision_alternate_names_to_parcels', workflow=workflow_name)
