@@ -8,7 +8,7 @@ from django.utils.text import slugify
 from postgres_copy import CopyManager
 
 from racial_covenants_processor.storage_backends import PublicMediaStorage
-from apps.plat.models import Plat, PlatAlternateName
+from apps.plat.models import Plat, PlatAlternateName, Subdivision, SubdivisionAlternateName
 from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_all_covenant_candidates, gather_all_manual_covenant_candidates, standardize_addition
 
 
@@ -495,6 +495,21 @@ class ManualCovenant(models.Model):
                     self.bool_parcel_match = True
                     for p in matching_plat_alternates:
                         self.parcel_matches.add(*p.plat.parcel_set.all())
+
+                # Lookup by subdivision
+                matching_subdivisions = Subdivision.objects.filter(name_standardized=plat_name_standardized)
+                matching_subdivision_alternates = SubdivisionAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
+
+                if matching_subdivisions.count() > 0:
+                    self.bool_parcel_match = True
+                    for p in matching_subdivisions:
+                        self.parcel_matches.add(*p.parcel_set.all())
+
+                # Lookup by alternate name
+                elif matching_subdivision_alternates.count() > 0:
+                    self.bool_parcel_match = True
+                    for p in matching_subdivision_alternates:
+                        self.parcel_matches.add(*p.subdivision.parcel_set.all())
 
                 # TODO: filter by parcel other? Or just make someone add plat or plat alternate. If so, need way to manually add plat
             # Method for one-off covenants that is more similar to previous joinstring setup
