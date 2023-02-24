@@ -37,18 +37,6 @@ class Command(BaseCommand):
         PlatAlternateName.objects.bulk_update(
             update_cxes, ['workflow_id', 'plat_id'], batch_size=10000)
 
-    def reconnect_plat_alternate_names_to_parcels(self, workflow):
-        print(
-            f'Collecting Parcel records that match PlatAlternateNames...')
-        for pan in PlatAlternateName.objects.filter(
-            workflow=workflow
-        ):
-            parcel_matches = Parcel.objects.filter(
-                workflow=workflow,
-                plat_standardized=pan.alternate_name_standardized
-            )
-            parcel_matches.update(plat=pan.plat)
-
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -57,4 +45,3 @@ class Command(BaseCommand):
             workflow = get_workflow_obj(workflow_name)
 
             self.reconnect_plat_alternate_names(workflow)
-            self.reconnect_plat_alternate_names_to_parcels(workflow)
