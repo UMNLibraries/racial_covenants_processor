@@ -243,3 +243,43 @@ def gather_all_manual_covenant_candidates(manualcovenant_obj):
     # Might need to add alternative extra parcel candidate model here in the future
     candidates = get_covenant_parcel_options(manualcovenant_obj)
     return list({v['join_string']: v for v in candidates}.values())
+
+
+def addition_wide_parcel_match(cov_obj):
+    '''Generally runs inside save routines of ZooniverseSubject and ManualCovenant'''
+    from apps.plat.models import Plat, PlatAlternateName, Subdivision, SubdivisionAlternateName
+
+    if hasattr(cov_obj, 'addition_final'):
+        plat_name_standardized = standardize_addition(cov_obj.addition_final)
+    else:
+        plat_name_standardized = standardize_addition(cov_obj.addition)
+
+    # Lookup by plat
+    matching_plats = Plat.objects.filter(plat_name_standardized=plat_name_standardized)
+    matching_plat_alternates = PlatAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
+
+    if matching_plats.count() > 0:
+        cov_obj.bool_parcel_match = True
+        for p in matching_plats:
+            cov_obj.parcel_matches.add(*p.parcel_set.all())
+
+    # Lookup by alternate name
+    elif matching_plat_alternates.count() > 0:
+        cov_obj.bool_parcel_match = True
+        for p in matching_plat_alternates:
+            cov_obj.parcel_matches.add(*p.plat.parcel_set.all())
+
+    # Lookup by subdivision
+    matching_subdivisions = Subdivision.objects.filter(name_standardized=plat_name_standardized)
+    matching_subdivision_alternates = SubdivisionAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
+
+    if matching_subdivisions.count() > 0:
+        cov_obj.bool_parcel_match = True
+        for p in matching_subdivisions:
+            cov_obj.parcel_matches.add(*p.parcel_set.all())
+
+    # Lookup by alternate name
+    elif matching_subdivision_alternates.count() > 0:
+        cov_obj.bool_parcel_match = True
+        for p in matching_subdivision_alternates:
+            cov_obj.parcel_matches.add(*p.subdivision.parcel_set.all())
