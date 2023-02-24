@@ -18,7 +18,7 @@ class ZooniverseWorkflow(models.Model):
     version = models.FloatField(null=True)
 
     def __str__(self):
-        return f"{self.workflow_name} ({self.version})"
+        return self.workflow_name
 
     @property
     def slug(self):

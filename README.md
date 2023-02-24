@@ -78,7 +78,6 @@ python manage.py gather_image_hits --workflow "WI Milwaukee County"
 ```
 1. Upload batch of records to Zooniverse for community confirmation
 ```
-# TODO: How to handle splitpage page nums
 python manage.py upload_to_zooniverse --workflow "WI Milwaukee County" -n 200
 ```
 1. (Or, optionally) Export manifest in order to upload matching files to Zooniverse (or point to S3 images)
@@ -89,11 +88,10 @@ python manage.py build_zooniverse_manifest --workflow "WI Milwaukee County"
 ```
 python manage.py generate_zooniverse_export --workflow "WI Milwaukee County"
 ```
-1. IN PROGRESS: Load raw and aggregated Zooniverse responses into individual property matches
+1. Load raw and aggregated Zooniverse responses into individual property matches
 ```
 python manage.py load_zooniverse_export --slow --workflow "Ramsey County"
 ```
-  - Side effect: Stats on hit rate, false positives, etc.
 1. Join deed images to zooniverse subjects
 ```
 python manage.py join_deeds_to_subjects --workflow "Ramsey County"
