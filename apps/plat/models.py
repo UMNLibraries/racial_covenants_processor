@@ -195,5 +195,7 @@ class SubdivisionAlternateName(models.Model):
         ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
 
         # Re-save all zooniverse subjects with this alternate name
-        for z in ZooniverseSubject.objects.filter(addition_final=self.alternate_name):
+        print(self.alternate_name)
+        for z in ZooniverseSubject.objects.filter(workflow=self.workflow, addition_final=self.alternate_name):
+            # print(z.pk, z.addition_final)
             z.save()

@@ -1,11 +1,39 @@
 from django.test import TestCase
 from apps.zoon.models import ZooniverseSubject
 
-from apps.parcel.utils.parcel_utils import get_blocks, get_lots, write_join_strings
+from apps.parcel.utils.parcel_utils import standardize_addition, get_blocks, get_lots, write_join_strings
 
 
 class JoinStringTests(TestCase):
     fixtures = ['plat', 'zoon']
+
+    def test_standardize_addition_basic(self):
+        for example in [
+            "Jane's Addition",
+            "Jane's Addition to the City of Minneapolis",
+            "Jane's Addn",
+            "Jane's Add'n",
+        ]:
+            self.assertEquals(standardize_addition(example), 'janes')
+
+    def test_standardize_addition_subdivision(self):
+        for example in [
+            'Another Subdivision',
+            'Another SUBD.',
+            'Another SUB'
+        ]:
+            self.assertEquals(standardize_addition(example), 'another')
+
+    def test_standardize_addition_resubdivision(self):
+        for example in [
+            'Resubdivision of blocks 1, 2, 3 in Summit Park',
+            'Re-subdivision of blocks 1, 2, 3 in Summit Park',
+            'Re-subdivision of blocks 1 2 3 in Summit Park',
+            'RESUBD of blocks 1 2 3 in Summit Park',
+            'RESUB of blocks 1 2 3 in Summit Park',
+            'RE-SUB of blocks 1 2 3 in Summit Park',
+        ]:
+            self.assertEquals(standardize_addition(example), 'resubdivision of blocks 1 2 3 in summit park')
 
     def test_get_blocks_none_text(self):
         """Does get_blocks give expected output for 'none' as entry?"""

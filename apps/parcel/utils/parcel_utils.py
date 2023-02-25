@@ -105,14 +105,20 @@ def standardize_addition(input_str):
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r'ADDN(\.)?', 'ADDITION',
                            input_str, flags=re.IGNORECASE)
+        # Sometimes it's misspelled
         input_str = re.sub(r'SUBDIVSION', 'SUBDIVISION',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r'RESUBDIV(?:\.)?(?!IVISION)', 'RESUBDIVISION',
+        input_str = re.sub(r'RE-SUB', 'RESUB',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r'(?<!RE)SUBD(?:\.)?(?!IVISION)', 'SUBDIVISION',
+        # SUBD abbreviation followed by space or end of string
+        input_str = re.sub(r'SUBD*\.*(?=\s|$)', 'SUBDIVISION',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r' SUB(?:\.)? ', ' SUBDIVISION ',
-                           input_str, flags=re.IGNORECASE)
+        # input_str = re.sub(r'RESUBDIV(?:\.)?(?!IVISION)', 'RESUBDIVISION',
+        #                    input_str, flags=re.IGNORECASE)
+        # input_str = re.sub(r'(?<!RE)SUBD(?:\.)?(?!IVISION)', 'SUBDIVISION',
+        #                    input_str, flags=re.IGNORECASE)
+        # input_str = re.sub(r' SUB(?:\.)? ', ' SUBDIVISION ',
+        #                    input_str, flags=re.IGNORECASE)
         input_str = re.sub(r',(?: )?', ' ',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r' & ', ' and ',
