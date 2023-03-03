@@ -43,6 +43,7 @@ EXPORT_FIELDS_ORDERED = [
     'image_ids',
     'med_score',
     'plat_dbid',
+    'subd_dbid',
 ]
 
 
@@ -88,6 +89,7 @@ def build_gdf(workflow):
         'ph_dsc_mod',
 
         'plat__pk',
+        'subdivision_spatial__pk',
 
         'dt_updated',
         'wkt_4326'
@@ -101,7 +103,7 @@ def build_gdf(workflow):
     MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
     covenants_df['match_type'] = covenants_df['match_type'].apply(lambda x: [mt[1] for mt in MATCH_TYPES if mt[0] == x][0] if x is not None else 'Automatic match')
 
-    covenants_df['image_ids'] = covenants_df['image_ids'].apply(lambda x: ','.join([img for img in x]))
+    covenants_df['image_ids'] = covenants_df['image_ids'].apply(lambda x: ','.join([img if img else '' for img in x]))
 
     # Currently blank fields in existing workflows
     covenants_df[[
@@ -116,6 +118,7 @@ def build_gdf(workflow):
     covenants_df.rename(columns={
         'id': 'db_id',
         'plat__pk': 'plat_dbid',
+        'subdivision_spatial__pk': 'subd_dbid',
         'wkt_4326': 'geometry'
     }, inplace=True)
 

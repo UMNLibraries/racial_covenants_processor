@@ -254,13 +254,21 @@ def gather_all_manual_covenant_candidates(manualcovenant_obj):
 def addition_wide_parcel_match(cov_obj):
     '''Generally runs inside save routines of ZooniverseSubject and ManualCovenant'''
     from apps.plat.models import Plat, PlatAlternateName, Subdivision, SubdivisionAlternateName
+    from apps.parcel.models import Parcel
 
     if hasattr(cov_obj, 'addition_final'):
         plat_name_standardized = standardize_addition(cov_obj.addition_final)
     else:
         plat_name_standardized = standardize_addition(cov_obj.addition)
 
-    # Lookup by plat
+    # Lookup by addition name
+    if plat_name_standardized not in [None, '']:
+        matching_parcels = Parcel.objects.filter(workflow=cov_obj.workflow, plat_standardized=plat_name_standardized)
+        if matching_parcels.count() > 0:
+            cov_obj.bool_parcel_match = True
+            cov_obj.parcel_matches.add(*matching_parcels.all())
+
+    # Lookup by plat map obj
     matching_plats = Plat.objects.filter(plat_name_standardized=plat_name_standardized)
     matching_plat_alternates = PlatAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
 
