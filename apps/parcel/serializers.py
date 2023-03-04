@@ -147,13 +147,16 @@ class CovenantGeoViewSet(viewsets.ModelViewSet):
 class ShpExportViewSet(viewsets.ModelViewSet):
     queryset = ShpExport.objects.all()
     serializer_class = ShpExportSerializer
+    filterset_fields = ['workflow__workflow_name']
 
 
 class GeoJSONExportViewSet(viewsets.ModelViewSet):
     queryset = GeoJSONExport.objects.all()
     serializer_class = GeoJSONExportSerializer
+    filterset_fields = ['workflow__workflow_name']
 
 
 class CSVExportViewSet(viewsets.ModelViewSet):
     queryset = CSVExport.objects.all()
     serializer_class = CSVExportSerializer
+    filterset_fields = ['workflow__workflow_name']

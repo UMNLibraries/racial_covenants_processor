@@ -338,6 +338,9 @@ class ShpExport(models.Model):
     covenant_count = models.IntegerField()
     created_at = models.DateTimeField()
 
+    class Meta:
+        ordering = ('-id',)
+
 
 class CSVExport(models.Model):
     workflow = models.ForeignKey(
@@ -347,6 +350,9 @@ class CSVExport(models.Model):
     covenant_count = models.IntegerField()
     created_at = models.DateTimeField()
 
+    class Meta:
+        ordering = ('-id',)
+
 
 class GeoJSONExport(models.Model):
     workflow = models.ForeignKey(
@@ -355,3 +361,6 @@ class GeoJSONExport(models.Model):
         storage=PublicMediaStorage(), upload_to="main_exports/", null=True)
     covenant_count = models.IntegerField()
     created_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ('-id',)
