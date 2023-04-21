@@ -1,0 +1,54 @@
+import os
+
+DEBUG = False
+
+GDAL_LIBRARY_PATH = None
+GEOS_LIBRARY_PATH = None
+
+# aws settings
+AWS_ACCESS_KEY_ID = 'XXXX'
+AWS_SECRET_ACCESS_KEY = 'XXXX'
+AWS_STORAGE_BUCKET_NAME = 'XXXX'
+AWS_S3_REGION_NAME = 'us-east-2'  # change to your region
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+# AWS_DEFAULT_ACL = 'public-read'
+AWS_DEFAULT_ACL = None
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+
+# s3 static settings
+AWS_LOCATION = 'racial-covenants-processor/static'
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# s3 public media settings
+PUBLIC_MEDIA_LOCATION = 'media'
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
+DEFAULT_FILE_STORAGE = 'hello_django.storage_backends.PublicMediaStorage'
+# s3 private media settings
+PRIVATE_MEDIA_LOCATION = 'private'
+PRIVATE_FILE_STORAGE = 'hello_django.storage_backends.PrivateMediaStorage'
+REPROCESSING_STATE_MACHINE = 'arn:aws:states:us-east-2:XXXX:stateMachine:DeedPageProcessorFAKEOCR'
+OCR_CLEANUP_STATE_MACHINE = 'arn:aws:states:us-east-2:XXXX:stateMachine:DeedPageProcessor'
+
+if 'RDS_DB_NAME' in os.environ:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.contrib.gis.db.backends.postgis',
+            'NAME': os.environ['RDS_DB_NAME'],
+            'USER': os.environ['RDS_USERNAME'],
+            'PASSWORD': os.environ['RDS_PASSWORD'],
+            'HOST': os.environ['RDS_HOSTNAME'],
+            'PORT': os.environ['RDS_PORT'],
+        }
+    }
+    SQL_ALCHEMY_DB_CONNECTION_URL = f"postgresql+psycopg2://{os.environ['RDS_USERNAME']}:{os.environ['RDS_PASSWORD']}@{os.environ['RDS_HOSTNAME']}:5432/{os.environ['RDS_DB_NAME']}"
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.contrib.gis.db.backends.postgis',
+            'NAME': 'racial_covenants_processor',
+            'USER': 'racial_covenants_processor',
+            'PASSWORD': 'racial_covenants_processor',
+        }
+    }
+    SQL_ALCHEMY_DB_CONNECTION_URL = 'postgresql+psycopg2://racial_covenants_processor:racial_covenants_processor@localhost:5432/racial_covenants_processor'
