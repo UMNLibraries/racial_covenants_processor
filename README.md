@@ -4,7 +4,18 @@ This is the main repository for The Deed Machine, a generalized set of tools to 
 
 The Deed Machine was created at Mapping Prejudice at the University of Minnesota Libraries. Current collaborators include Michael Corey, Justin Schell and Nicholas Boren.
 
-## How to map a covenant
+The basic steps involved in the Deed Machine process for covenant identification and mapping are:
+
+1. Image pre-processing and OCR
+1. Term search
+1. Hit collection
+1. Zooniverse upload
+1. Zooniverse transcription
+1. Zooniverse post-processing
+1. Covenant mapping
+1. Data distribution
+
+## How to manually map or clean up a covenant
 
 Once all of the below load scripts have been run, many covenants (ZooniverseSubject) objects will not automatically join to modern parcels. Here's how to try to make them match up.
 
@@ -17,6 +28,7 @@ Once all of the below load scripts have been run, many covenants (ZooniverseSubj
 1. Click "save and continue editing"
 1. Check to see if there are now values in the "Matching parcels" section. If yes, then at least part of the lot has matched to a modern Parcel. If not, there is either more to fix or an automatic match isn't possible.
 1. Choose a "match type" value to indicate how this parcel was matched (or how it will need to be matched in the future).
+1. If you need to map lots across more than one block, add ExtraParcelCandidate objects for each additional block or lot range. ONLY ONE ManualCorrection OBJECT should be added per ZooniverseSubject.
 
 ## Software requirements
 - geos and gdal
@@ -84,72 +96,72 @@ python manage.py upload_to_zooniverse --workflow "WI Milwaukee County" -n 200
 ```
 python manage.py build_zooniverse_manifest --workflow "WI Milwaukee County"
 ```
-1. Export batch results from Zooniverse (Using command line tools)
+1. Process exported batch results from Zooniverse (Using command line tools)
 ```
 python manage.py generate_zooniverse_export --workflow "WI Milwaukee County"
 ```
 1. Load raw and aggregated Zooniverse responses into individual property matches
 ```
-python manage.py load_zooniverse_export --slow --workflow "Ramsey County"
+python manage.py load_zooniverse_export --slow --workflow "WI Milwaukee County"
 ```
 1. Join deed images to zooniverse subjects
 ```
-python manage.py join_deeds_to_subjects --workflow "Ramsey County"
+python manage.py join_deeds_to_subjects --workflow "WI Milwaukee County"
 ```
 1. Optional: Load images to s3 and/or list of plats/additions to help with autojoin to Parcels and with manual research
 ```
-python manage.py upload_plat_images --workflow "Ramsey County"
-python manage.py load_plat_records --workflow "Ramsey County"
+python manage.py upload_plat_images --workflow "WI Milwaukee County"
+python manage.py load_plat_records --workflow "WI Milwaukee County"
 ```
 1. Optional: Load subdivision spatial layer to help with autojoin to Parcels and with manual research
 ```
-python manage.py load_subdivision_shp --workflow "Ramsey County"
+python manage.py load_subdivision_shp --workflow "WI Milwaukee County"
 ```
 1. Load modern parcel shapefiles with unique fields mapped to unified subset
 ```
-python manage.py load_parcel_shp --workflow "Ramsey County"
+python manage.py load_parcel_shp --workflow "WI Milwaukee County"
 ```
 1. Automated join of matches to modern parcel map
 ```
-python manage.py rebuild_parcel_spatial_lookups --workflow "Ramsey County"
-python manage.py rebuild_covenant_spatial_lookups --workflow "Ramsey County"
-python manage.py match_parcels --workflow "Ramsey County"
+python manage.py rebuild_parcel_spatial_lookups --workflow "WI Milwaukee County"
+python manage.py rebuild_covenant_spatial_lookups --workflow "WI Milwaukee County"
+python manage.py match_parcels --workflow "WI Milwaukee County"
 ```
 1. Export list of unmatched confirmed covenants
 1. Manual (GUIish?) cleanup of bad joins, split parcels, etc.
 1. Metes and bounds manual tracing
 1. Final shapefile/data layers
 ```
-python manage.py dump_covenants_shapefile --workflow "Ramsey County"
-python manage.py dump_covenants_geojson --workflow "Ramsey County"
-python manage.py dump_covenants_csv --workflow "Ramsey County"
+python manage.py dump_covenants_shapefile --workflow "WI Milwaukee County"
+python manage.py dump_covenants_geojson --workflow "WI Milwaukee County"
+python manage.py dump_covenants_csv --workflow "WI Milwaukee County"
 ```
 
 ## Other workflow elements
 Manual corrections, extra parcel records and alternate names for plats are stored as separate models from the ZooniverseSubject, Plat or Subdivision models so edits are non-destructive and can be recreated in case of a need to re-import from Zooniverse (or plat maps or Subdivision shapefiles), or can be rolled back as new information emerges.
 ```
 # To archive manual entries in a CSV for later re-import:
-python manage.py dump_manual_corrections --workflow "Ramsey County"
-python manage.py dump_extra_parcels --workflow "Ramsey County"
+python manage.py dump_manual_corrections --workflow "WI Milwaukee County"
+python manage.py dump_extra_parcels --workflow "WI Milwaukee County"
 
 # To re-import a those manual entries from csv export:
-python manage.py load_manual_corrections --workflow "Ramsey County" --infile relative/path/to/file
-python manage.py load_extra_parcels --workflow "Ramsey County" --infile relative/path/to/file
+python manage.py load_manual_corrections --workflow "WI Milwaukee County" --infile relative/path/to/file
+python manage.py load_extra_parcels --workflow "WI Milwaukee County" --infile relative/path/to/file
 
-# To manually re-join corrections to subjects (mostly you will never run these, which are run as a part of the previous "load" scripts)
-python manage.py connect_manual_corrections --workflow "Ramsey County"
-python manage.py connect_extra_parcels --workflow "Ramsey County"
+# To manually re-join corrections to subjects
+python manage.py connect_manual_corrections --workflow "WI Milwaukee County"
+python manage.py connect_extra_parcels --workflow "WI Milwaukee County"
 
 # Same as above, but only needed if you re-import your subdivision spatial or plat data)
-python manage.py dump_plat_alternate_names --workflow "Ramsey County"
-python manage.py dump_subdivision_alternate_names --workflow "Ramsey County"
+python manage.py dump_plat_alternate_names --workflow "WI Milwaukee County"
+python manage.py dump_subdivision_alternate_names --workflow "WI Milwaukee County"
 
-python manage.py load_plat_alternate_names --workflow "Ramsey County" --infile relative/path/to/file
-python manage.py load_subdivision_alternate_names --workflow "Ramsey County" --infile relative/path/to/file
+python manage.py load_plat_alternate_names --workflow "WI Milwaukee County" --infile relative/path/to/file
+python manage.py load_subdivision_alternate_names --workflow "WI Milwaukee County" --infile relative/path/to/file
 
 # To manually re-join corrections to subdivisions/plats (mostly you will never run these, which are run as a part of the previous "load" scripts)
-python manage.py connect_plat_alternate_names --workflow "Ramsey County"
-python manage.py connect_subdivision_alternate_names --workflow "Ramsey County"
+python manage.py connect_plat_alternate_names --workflow "WI Milwaukee County"
+python manage.py connect_subdivision_alternate_names --workflow "WI Milwaukee County"
 ```
 
 ## Standalone deed uploader
