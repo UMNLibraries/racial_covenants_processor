@@ -13,9 +13,9 @@ from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_
 
 
 class ZooniverseWorkflow(models.Model):
-    zoon_id = models.IntegerField(null=True, db_index=True)
+    zoon_id = models.IntegerField(null=True, blank=True, db_index=True)
     workflow_name = models.CharField(max_length=100, db_index=True)
-    version = models.FloatField(null=True)
+    version = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return self.workflow_name
@@ -55,6 +55,7 @@ class ZooniverseSubject(models.Model):
     addition = models.CharField(max_length=501, blank=True)
     lot = models.TextField(blank=True)
     block = models.CharField(max_length=502, blank=True)
+    city = models.CharField(max_length=503, blank=True)
     seller = models.CharField(max_length=600, blank=True)
     buyer = models.CharField(max_length=600, blank=True)
     deed_date = models.DateField(null=True)
@@ -76,6 +77,7 @@ class ZooniverseSubject(models.Model):
     addition_score = models.FloatField(null=True)
     lot_score = models.FloatField(null=True)
     block_score = models.FloatField(null=True)
+    city_score = models.FloatField(null=True)
     seller_score = models.FloatField(null=True)
     buyer_score = models.FloatField(null=True)
 
@@ -181,6 +183,14 @@ class ZooniverseSubject(models.Model):
         return getattr(self, attr)
 
     def get_from_parcel_or_cx(self, attr, blank_value=""):
+        # In cases where city is coming from Zooniverse, it's unlikely that
+        # parcel linking will be a factor. So skip parcel matching step.
+        # Currently, this only affects legacy content from Essex County, Mass.
+        if attr == 'city' and self.city != '':
+            if getattr(self.manualcorrection_set.first(), 'city') not in [None, blank_value]:
+                return getattr(self.manualcorrection_set.first(), 'city')
+            return self.city
+
         # ManualCorrection trumps value set automatically by linked parcel
         if self.manualcorrection_set.count() > 0:
             if getattr(self.manualcorrection_set.first(), attr) not in [None, blank_value]:
@@ -283,6 +293,7 @@ class ZooniverseResponseProcessed(models.Model):
     addition = models.CharField(max_length=500, blank=True)
     lot = models.TextField(blank=True)
     block = models.CharField(max_length=500, blank=True)
+    city = models.CharField(max_length=500, blank=True)  # When addition/block/lot not available in workflow
     seller = models.CharField(max_length=600, blank=True)
     buyer = models.CharField(max_length=600, blank=True)
     match_type = models.CharField(max_length=100, null=True, blank=True)
@@ -482,40 +493,8 @@ class ManualCovenant(models.Model):
         if self.bool_confirmed:
             if self.match_type == 'PT':
                 addition_wide_parcel_match(self)
-            # if self.cov_type == 'PT':
-            #     plat_name_standardized = standardize_addition(self.addition)
-            #
-            #     # Lookup by plat
-            #     matching_plats = Plat.objects.filter(plat_name_standardized=plat_name_standardized)
-            #     matching_plat_alternates = PlatAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
-            #
-            #     if matching_plats.count() > 0:
-            #         self.bool_parcel_match = True
-            #         for p in matching_plats:
-            #             self.parcel_matches.add(*p.parcel_set.all())
-            #
-            #     # Lookup by alternate name
-            #     elif matching_plat_alternates.count() > 0:
-            #         self.bool_parcel_match = True
-            #         for p in matching_plat_alternates:
-            #             self.parcel_matches.add(*p.plat.parcel_set.all())
-            #
-            #     # Lookup by subdivision
-            #     matching_subdivisions = Subdivision.objects.filter(name_standardized=plat_name_standardized)
-            #     matching_subdivision_alternates = SubdivisionAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
-            #
-            #     if matching_subdivisions.count() > 0:
-            #         self.bool_parcel_match = True
-            #         for p in matching_subdivisions:
-            #             self.parcel_matches.add(*p.parcel_set.all())
-            #
-            #     # Lookup by alternate name
-            #     elif matching_subdivision_alternates.count() > 0:
-            #         self.bool_parcel_match = True
-            #         for p in matching_subdivision_alternates:
-            #             self.parcel_matches.add(*p.subdivision.parcel_set.all())
-            #
-            #     # TODO: filter by parcel other? Or just make someone add plat or plat alternate. If so, need way to manually add plat
+
+            # TODO: filter by parcel other? Or just make someone add plat or plat alternate. If so, need way to manually add plat
             # Method for one-off covenants that is more similar to previous joinstring setup
             elif self.lot != '':
                 parcel_lookup = build_parcel_spatial_lookups(self.workflow)

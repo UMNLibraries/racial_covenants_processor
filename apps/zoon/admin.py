@@ -7,8 +7,11 @@ from rangefilter.filters import DateRangeFilter
 
 from apps.deed.models import DeedPage
 from apps.parcel.models import Parcel
-from apps.zoon.models import ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection, ExtraParcelCandidate, ManualCovenant, ManualSupportingDocument
+from apps.zoon.models import ZooniverseWorkflow, ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection, ExtraParcelCandidate, ManualCovenant, ManualSupportingDocument
 
+@ admin.register(ZooniverseWorkflow)
+class WorkflowAdmin(admin.ModelAdmin):
+    pass
 
 class DeedImageInline(admin.TabularInline):
     model = DeedPage
