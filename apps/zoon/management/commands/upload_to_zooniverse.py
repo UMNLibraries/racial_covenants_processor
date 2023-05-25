@@ -100,4 +100,5 @@ class Command(BaseCommand):
 
                     print('{} successfully uploaded'.format(row['pk']))
                 except panoptes_client.panoptes.PanoptesAPIException:
+                    raise
                     print('An error occurred during the upload of {}'.format(row['pk']) + '\n')
