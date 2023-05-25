@@ -38,7 +38,11 @@ class Command(BaseCommand):
         joined = []
         for v in values:
             for key, value in v.items():
-                joined.append({'choice': row['options'][key], 'votes': value})
+                try:
+                    choice = row['options'][key]
+                    joined.append({'choice': row['options'][key], 'votes': value})
+                except KeyError:
+                    print(f"WARNING: Non-standard choice '{key}' entered on subject {row['subject_id']}, task {row['task']}. Ignoring this value.")
 
         return sorted(joined, key=lambda i: i['votes'], reverse=True)
 
