@@ -37,8 +37,7 @@ class Command(BaseCommand):
             file_output = os.path.join(
                 self.batch_dir, f"{workflow.slug}-denested.csv")
 
-            # TODO: This shouldn't be hard-coded
-            combo_task_ids = ["T7", "T13"]
+            combo_task_ids = self.batch_config['zooniverse_config']['combo_task_ids']
 
             # file_input = args.classification_export
             # file_output = args.output_file
@@ -56,7 +55,7 @@ class Command(BaseCommand):
                         # print(c['annotations'])
                         annotations = json.loads(c['annotations'])
                         for a in annotations:
-                            # print(a)
+                            print(a)
                             if a['task'] in combo_task_ids:
                                 # This is failing if different workflows have different combo tasks
                                 try:
