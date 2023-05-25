@@ -10,7 +10,7 @@ from django.conf import settings
 
 from apps.zoon.models import ZooniverseSubject
 from apps.parcel.models import JoinReport
-from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups
+from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, addition_wide_parcel_match
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
@@ -57,6 +57,8 @@ class Command(BaseCommand):
             bool_covenant_final=True
         ).exclude(
             addition_final=''
+        ).exclude(
+            match_type_final='AW'  # Addition-wide covenants handled later
         ).order_by('addition_final'):
             self.match_parcel(parcel_lookup, covenant, covenant)
 
@@ -130,6 +132,21 @@ class Command(BaseCommand):
             report_obj.report_csv.save(filename_tail, csv_file)
             report_obj.save()
 
+    def match_addition_wide_covenants(self, workflow, parcel_lookup):
+        print("Attempting to auto-join previously confirmed addition-wide covenants to parcels ...")
+
+        for covenant in ZooniverseSubject.objects.filter(
+            workflow=workflow,
+            bool_covenant_final=True,
+            match_type_final='AW',
+            bool_manual_correction=True
+        ).exclude(
+            addition_final__in=['', None, 'NONE']
+        ).order_by('addition_final'):
+            print(f'{covenant.addition_final}...')
+            # Save method should pick up addition-wide covenants
+            covenant.save()
+
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -140,6 +157,9 @@ class Command(BaseCommand):
             # Get all possible parcel lots to join
             parcel_lookup = build_parcel_spatial_lookups(workflow)
             self.match_parcels_bulk(workflow, parcel_lookup)
+
+            # Join addition-wide covenants
+            self.match_addition_wide_covenants(workflow, parcel_lookup)
 
             bool_local = kwargs['local']
             self.write_match_report(workflow, bool_local)
