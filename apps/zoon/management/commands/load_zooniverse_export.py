@@ -152,16 +152,24 @@ class Command(BaseCommand):
         if var_name in question_lookup:
             return pd.read_sql(f"SELECT zoon_subject_id, best_answer AS {var_name}, cast(best_answer_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_question WHERE zoon_workflow_id = '{workflow.zoon_id}' AND task_id = '{question_lookup[var_name]}'",
                            conn)
-        # , id AS {var_name}_reducer_db_id
-        return pd.DataFrame()
+        # If empty, return empty dataframe that won't break join
+        return pd.DataFrame({
+            'zoon_subject_id': pd.Series(dtype='int'),
+            f'{var_name}': pd.Series(dtype='str'),
+            f'{var_name}_score': pd.Series(dtype='float'),
+        })
 
     def sql_df_writer_text(self, conn, var_name, question_lookup, workflow):
         '''Help pandas return a sensible response for each question that can be joined back to a unique subject id. Scores are put into percentages to handle possible changes to what's required to retire.'''
         if var_name in question_lookup:
             return pd.read_sql(f"SELECT zoon_subject_id, consensus_text AS {var_name}, cast(consensus_score as float)/cast(total_votes as float) AS {var_name}_score FROM zoon_reducedresponse_text WHERE zoon_workflow_id = '{workflow.zoon_id}' AND task_id = '{question_lookup[var_name]}'",
                            conn)
-        # , id AS {var_name}_reducer_db_id
-        return pd.DataFrame()
+        # If empty, return empty dataframe that won't break join
+        return pd.DataFrame({
+            'zoon_subject_id': pd.Series(dtype='int'),
+            f'{var_name}': pd.Series(dtype='str'),
+            f'{var_name}_score': pd.Series(dtype='float'),
+        })
 
     def parse_deed_date(self, row, month_lookup):
         try:
@@ -231,8 +239,12 @@ class Command(BaseCommand):
             sa_engine, 'covenant_text', question_lookup, workflow=workflow)
         addition_df = self.sql_df_writer_text(
             sa_engine, 'addition', question_lookup, workflow=workflow)
-        lot_df = self.sql_df_writer_text(sa_engine, 'lot', question_lookup, workflow=workflow)
-        block_df = self.sql_df_writer_text(sa_engine, 'block', question_lookup, workflow=workflow)
+        lot_df = self.sql_df_writer_text(
+            sa_engine, 'lot', question_lookup, workflow=workflow)
+        block_df = self.sql_df_writer_text(
+            sa_engine, 'block', question_lookup, workflow=workflow)
+        city_df = self.sql_df_writer_text(
+            sa_engine, 'city', question_lookup, workflow=workflow)
         seller_df = self.sql_df_writer_text(
             sa_engine, 'seller', question_lookup, workflow=workflow)
         buyer_df = self.sql_df_writer_text(sa_engine, 'buyer', question_lookup, workflow=workflow)
@@ -260,6 +272,8 @@ class Command(BaseCommand):
             lot_df, how="left", on="zoon_subject_id"
         ).merge(
             block_df, how="left", on="zoon_subject_id"
+        ).merge(
+            city_df, how="left", on="zoon_subject_id"
         ).merge(
             seller_df, how="left", on="zoon_subject_id"
         ).merge(
@@ -290,6 +304,7 @@ class Command(BaseCommand):
             'addition_score',
             'lot_score',
             'block_score',
+            'city_score',
             'seller_score',
             'buyer_score',
             'deed_date_year_score',
@@ -353,7 +368,7 @@ class Command(BaseCommand):
 
         # Fill NAs in text fields with empty strings
         string_fields = ['covenant_text', 'addition',
-                         'lot', 'block', 'seller', 'buyer']
+                         'lot', 'block', 'city', 'seller', 'buyer']
         final_df[string_fields] = final_df[string_fields].fillna('')
 
         final_df.drop(columns=['year', 'month', 'day'], inplace=True)
@@ -367,7 +382,7 @@ class Command(BaseCommand):
         final_df['bool_parcel_match'] = False
 
         # Set initial "final" values
-        for field in ['bool_covenant', 'covenant_text', 'addition', 'lot', 'block', 'seller', 'buyer', 'match_type', 'bool_handwritten', 'deed_date']:
+        for field in ['bool_covenant', 'covenant_text', 'addition', 'lot', 'block', 'city', 'seller', 'buyer', 'match_type', 'bool_handwritten', 'deed_date']:
             final_df[f'{field}_final'] = final_df[field]
 
         print(final_df)
@@ -434,24 +449,45 @@ class Command(BaseCommand):
             'id': 'response_raw_id'
         })
 
-        df['bool_covenant'] = df['annotations'].apply(
-            lambda x: self.anno_accessor(x, question_lookup['bool_covenant']))
-        df['bool_handwritten'] = df['annotations'].apply(
-            lambda x: self.anno_accessor(x, question_lookup['bool_handwritten']))
-        df['covenant_text'] = df['annotations'].apply(
-            lambda x: self.anno_accessor(x, question_lookup['covenant_text']))
-        df['addition'] = df['annotations'].apply(
-            lambda x: self.anno_accessor(x, question_lookup['addition']))
-        df['block'] = df['annotations'].apply(
-            lambda x: self.anno_accessor(x, question_lookup['block']))
-        df['lot'] = df['annotations'].apply(
-            lambda x: self.anno_accessor(x, question_lookup['lot']))
-        df['seller'] = df['annotations'].apply(
-            lambda x: self.anno_accessor(x, question_lookup['seller']))
-        df['buyer'] = df['annotations'].apply(
-            lambda x: self.anno_accessor(x, question_lookup['buyer']))
-        df['match_type'] = df['annotations'].apply(
-            lambda x: self.anno_accessor(x, question_lookup['match_type']))
+        # TEMP TEMP TEMP
+        print(question_lookup)
+
+        for attr in [
+            'bool_covenant',
+            'bool_handwritten',
+            'covenant_text',
+            'addition',
+            'block',
+            'city',
+            'lot',
+            'seller',
+            'buyer',
+            'match_type'
+        ]:
+            if attr in question_lookup:
+                df[attr] = df['annotations'].apply(
+                    lambda x: self.anno_accessor(x, question_lookup[attr]))
+
+        # df['bool_covenant'] = df['annotations'].apply(
+        #     lambda x: self.anno_accessor(x, question_lookup['bool_covenant']))
+        # df['bool_handwritten'] = df['annotations'].apply(
+        #     lambda x: self.anno_accessor(x, question_lookup['bool_handwritten']))
+        # df['covenant_text'] = df['annotations'].apply(
+        #     lambda x: self.anno_accessor(x, question_lookup['covenant_text']))
+        # df['addition'] = df['annotations'].apply(
+        #     lambda x: self.anno_accessor(x, question_lookup['addition']))
+        # df['block'] = df['annotations'].apply(
+        #     lambda x: self.anno_accessor(x, question_lookup['block']))
+        # df['city'] = df['annotations'].apply(
+        #     lambda x: self.anno_accessor(x, question_lookup['city']))
+        # df['lot'] = df['annotations'].apply(
+        #     lambda x: self.anno_accessor(x, question_lookup['lot']))
+        # df['seller'] = df['annotations'].apply(
+        #     lambda x: self.anno_accessor(x, question_lookup['seller']))
+        # df['buyer'] = df['annotations'].apply(
+        #     lambda x: self.anno_accessor(x, question_lookup['buyer']))
+        # df['match_type'] = df['annotations'].apply(
+        #     lambda x: self.anno_accessor(x, question_lookup['match_type']))
 
         df['deed_date_year'] = df['annotations'].apply(
             lambda x: self.anno_accessor(x, question_lookup['deed_date']['year']))

@@ -4,6 +4,7 @@ import geopandas as gpd
 from django.contrib.gis.db.models.functions import AsWKT
 
 from apps.parcel.models import Parcel
+from apps.zoon.models import ZooniverseSubject
 from apps.zoon.models import MATCH_TYPE_OPTIONS, MANUAL_COV_OPTIONS
 
 
@@ -131,3 +132,64 @@ def build_gdf(workflow):
         covenants_df, geometry='geometry')
 
     return covenants_geo_df
+
+def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
+    unmapped_covenants = ZooniverseSubject.unmapped_objects.filter(
+        workflow=workflow
+    ).values(
+        'id',
+        'workflow',
+        # 'cnty_name',
+        # 'cnty_fips',
+        'doc_num',
+        'deed_date_final',
+        'seller_final',
+        'buyer_final',
+        'cov_type',
+        'cov_text',
+        'zn_subj_id',
+        'zn_dt_ret',
+        'image_ids',
+        'med_score',
+        'manual_cx',
+        'match_type',
+        'join_candidates',
+        # 'street_add',
+        # 'state',
+        # 'zip_code',
+        'add_cov',
+        'block_cov',
+        'lot_cov',
+        'city_cov',
+        'dt_updated',
+
+        # 'cov_type',
+        # 'deed_date_final',
+        # 'cov_text',
+        # 'zn_subj_id',
+        # 'zn_dt_ret',
+        # 'med_score',
+        # 'manual_cx',
+        # 'add_cov',
+        # 'block_cov',
+        # 'lot_cov',
+        # 'city_cov'
+        # 'seller_final',
+        # 'buyer_final',
+        # 'match_type',
+        # 'dt_updated',
+        # 'doc_num',
+    )
+
+    unmapped_df = pd.DataFrame(unmapped_covenants)
+    unmapped_df.rename(columns={
+        'deed_date_final': 'deed_date',
+        'seller_final': 'seller',
+        'buyer_final': 'buyer',
+    }, inplace=True)
+
+    unmapped_df['cnty_name'] = cnty_name
+    unmapped_df['cnty_fips'] = cnty_fips
+    # unmapped_df['match_type'] = 'unmapped'
+
+    return unmapped_df
