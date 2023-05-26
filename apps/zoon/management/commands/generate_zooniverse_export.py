@@ -78,7 +78,8 @@ class Command(BaseCommand):
                 settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
             self.zoon_workflow_id = str(self.batch_config['zoon_workflow_id'])
-            self.zoon_workflow_version = str(self.batch_config['zoon_workflow_version'])
+            # self.zoon_workflow_version = str(self.batch_config['zoon_workflow_version'])
+            self.zoon_workflow_version = "{:.2f}".format(self.batch_config['zoon_workflow_version'])
 
             self.workflow_csv_path = os.path.join(
                 self.batch_dir, f"{self.workflow.slug}-workflows.csv")

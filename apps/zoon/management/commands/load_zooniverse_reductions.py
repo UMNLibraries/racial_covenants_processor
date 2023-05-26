@@ -158,7 +158,7 @@ class Command(BaseCommand):
             left_on="task",
             right_on="task_num"
         )
-        
+
         # Drop all rows from df with no answers.
         df = df.dropna(subset=['data.value'], how='all')
 
@@ -264,8 +264,10 @@ class Command(BaseCommand):
             # self.config_yaml = os.path.join(
             #     self.batch_dir, self.batch_config['config_yaml'])
 
+            workflow_version = "{:.2f}".format(self.batch_config['zoon_workflow_version'])
+
             self.config_yaml = os.path.join(
-                self.batch_dir, f"Extractor_config_workflow_{self.batch_config['zoon_workflow_id']}_V{self.batch_config['zoon_workflow_version']}.yaml")
+                self.batch_dir, f"Extractor_config_workflow_{self.batch_config['zoon_workflow_id']}_V{workflow_version}.yaml")
 
             master_config = parse_config_yaml(self.config_yaml)
 
