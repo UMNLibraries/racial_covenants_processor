@@ -48,7 +48,6 @@ class UnmappedZooniverseManager(models.Manager):
             bool_covenant=True,
             bool_parcel_match=False
         ).annotate(
-
             # deed_date=F('deed_date_final'),  # Need to rename with pd
             cov_text=F('covenant_text_final'),
             zn_subj_id=F('zoon_subject_id'),

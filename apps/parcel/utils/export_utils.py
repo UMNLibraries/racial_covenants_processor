@@ -139,8 +139,6 @@ def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
     ).values(
         'id',
         'workflow',
-        # 'cnty_name',
-        # 'cnty_fips',
         'doc_num',
         'deed_date_final',
         'seller_final',
@@ -154,31 +152,12 @@ def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
         'manual_cx',
         'match_type',
         'join_candidates',
-        # 'street_add',
-        # 'state',
-        # 'zip_code',
         'add_cov',
         'block_cov',
         'lot_cov',
         'city_cov',
         'dt_updated',
 
-        # 'cov_type',
-        # 'deed_date_final',
-        # 'cov_text',
-        # 'zn_subj_id',
-        # 'zn_dt_ret',
-        # 'med_score',
-        # 'manual_cx',
-        # 'add_cov',
-        # 'block_cov',
-        # 'lot_cov',
-        # 'city_cov'
-        # 'seller_final',
-        # 'buyer_final',
-        # 'match_type',
-        # 'dt_updated',
-        # 'doc_num',
     )
 
     unmapped_df = pd.DataFrame(unmapped_covenants)
