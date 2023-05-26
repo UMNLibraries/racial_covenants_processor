@@ -181,6 +181,3 @@ class Command(BaseCommand):
                 'join_subdivisions_to_parcels', workflow=workflow_name)
             management.call_command(
                 'connect_subdivision_alternate_names_to_parcels', workflow=workflow_name)
-            # LEAVE COMMENTED OUT, or delete. This should be run separately after you have reconnected any Subdivision alternate names
-            # management.call_command(
-            #     'rebuild_parcel_spatial_lookups', workflow=workflow_name)
