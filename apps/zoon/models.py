@@ -2,6 +2,7 @@ import json
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Union
 from django.contrib.gis import geos
+from django.db.models import F, Value
 from django.dispatch import receiver
 from django.utils.text import slugify
 
@@ -38,6 +39,34 @@ MATCH_TYPE_OPTIONS = (
     ('NG', 'No geographic information'),
 )
 
+class UnmappedZooniverseManager(models.Manager):
+    '''This model manager is mainly used for exports OF NON-MAPPED COVENANTS ONLY. The main model manager used for covenant exports is in apps/parcel/models.py. Unlike the main exporter, de-duping is not done here to eliminate multiple occurences of the same document, and is not currently possible for unmapped covenants.'''
+
+    def get_queryset(self):
+
+        return super().get_queryset().filter(
+            bool_covenant=True,
+            bool_parcel_match=False
+        ).annotate(
+
+            # deed_date=F('deed_date_final'),  # Need to rename with pd
+            cov_text=F('covenant_text_final'),
+            zn_subj_id=F('zoon_subject_id'),
+            zn_dt_ret=F('dt_retired'),
+            med_score=F('median_score'),
+            manual_cx=F('bool_manual_correction'),
+            add_cov=F('addition_final'),
+            block_cov=F('block_final'),
+            lot_cov=F('lot_final'),
+            city_cov=F('city_final'),
+            # seller=F('seller_final'),  # Need to rename with pd
+            # buyer=F('buyer_final'),  # Need to rename with pd
+            dt_updated=F('date_updated'),
+            doc_num=F('deedpage_doc_num'),
+            cov_type=Value('zooniverse'),
+            # match_type=Value('unmapped')  # Need to rename with pd
+        )
+
 
 class ZooniverseSubject(models.Model):
     '''Future: Assign an id to correspond to a deed image pre-Zooniverse'''
@@ -66,8 +95,8 @@ class ZooniverseSubject(models.Model):
 
     # Data used to join back to deedpage
     deedpage_pk = models.IntegerField(null=True, blank=True)
-    deedpage_doc_num = models.CharField(max_length=25, blank=True)
-    deedpage_s3_lookup = models.CharField(max_length=255, blank=True)
+    deedpage_doc_num = models.CharField(max_length=25, null=True, blank=True)
+    deedpage_s3_lookup = models.CharField(max_length=255, null=True, blank=True)
 
     # Scores, also from the reducers
     bool_covenant_score = models.FloatField(null=True)
@@ -130,6 +159,9 @@ class ZooniverseSubject(models.Model):
         srid=4326, null=True, blank=True)
 
     date_updated = models.DateTimeField(auto_now=True, null=True)
+
+    objects = models.Manager()
+    unmapped_objects = UnmappedZooniverseManager()
 
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"
@@ -290,12 +322,12 @@ class ZooniverseResponseProcessed(models.Model):
         ZooniverseSubject, null=True, on_delete=models.SET_NULL)
     bool_covenant = models.CharField(max_length=100, null=True, blank=True)
     covenant_text = models.TextField(blank=True)
-    addition = models.CharField(max_length=500, blank=True)
-    lot = models.TextField(blank=True)
-    block = models.CharField(max_length=500, blank=True)
-    city = models.CharField(max_length=500, blank=True)  # When addition/block/lot not available in workflow
-    seller = models.CharField(max_length=600, blank=True)
-    buyer = models.CharField(max_length=600, blank=True)
+    addition = models.CharField(max_length=500, null=True, blank=True)
+    lot = models.TextField(null=True, blank=True)
+    block = models.CharField(max_length=500, null=True, blank=True)
+    city = models.CharField(max_length=500, null=True, blank=True)  # When addition/block/lot not available in workflow
+    seller = models.CharField(max_length=600, null=True, blank=True)
+    buyer = models.CharField(max_length=600, null=True, blank=True)
     match_type = models.CharField(max_length=100, null=True, blank=True)
     bool_handwritten = models.CharField(max_length=50, null=True, blank=True)
     deed_date_year = models.CharField(max_length=10, blank=True)

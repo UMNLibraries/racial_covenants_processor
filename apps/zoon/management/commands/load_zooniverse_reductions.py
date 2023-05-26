@@ -158,7 +158,7 @@ class Command(BaseCommand):
             left_on="task",
             right_on="task_num"
         )
-
+        
         # Drop all rows from df with no answers.
         df = df.dropna(subset=['data.value'], how='all')
 
