@@ -58,7 +58,7 @@ class ResponseInline(admin.TabularInline):
 
     readonly_fields = [
         'bool_covenant', 'covenant_text', 'addition',
-        'lot', 'block', 'seller',
+        'lot', 'block', 'city', 'seller',
         'buyer', 'deed_date_year', 'deed_date_month', 'deed_date_day', 'user_name', 'created_at', 'match_type', 'bool_handwritten'
     ]
 
@@ -204,6 +204,7 @@ class SubjectAdmin(admin.ModelAdmin):
                 'addition_final',
                 'lot_final',
                 'block_final',
+                'city_final',
                 'seller_final',
                 'buyer_final',
                 'deed_date_final',
@@ -232,6 +233,7 @@ class SubjectAdmin(admin.ModelAdmin):
                 ('addition', 'addition_score'),
                 ('block', 'block_score'),
                 ('lot', 'lot_score'),
+                ('city', 'city_score'),
             ),
         }),
         ('Zooniverse deed date', {
@@ -273,6 +275,9 @@ class SubjectAdmin(admin.ModelAdmin):
         'block_score',
         'lot',
         'lot_score',
+        'city',
+        'city_final',
+        'city_score',
         'deed_date',
         'deed_date_overall_score',
         'deed_date_year_score',
