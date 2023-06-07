@@ -116,7 +116,7 @@ class Subdivision(models.Model):
     feature_id = models.IntegerField(null=True)
     name = models.CharField(max_length=255, null=True, blank=True, db_index=True)
     name_standardized = models.CharField(max_length=255, null=True, blank=True, db_index=True)
-    doc_num = models.CharField(blank=True, max_length=100, db_index=True)
+    doc_num = models.CharField(blank=True, null=True, max_length=100, db_index=True)
     recorded_date = models.DateField(null=True, db_index=True)
     orig_data = models.JSONField(null=True, blank=True)
     orig_filename = models.CharField(max_length=255, null=True, blank=True)
