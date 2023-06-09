@@ -21,7 +21,7 @@ class PlatMapPageInline(admin.TabularInline):
 class PlatAdmin(admin.ModelAdmin):
     readonly_fields = ('workflow', 'plat_name')
     list_filter = ['workflow']
-    list_display = ['plat_name', 'map_pages', 'linked_parcel_count']
+    list_display = ['plat_name', 'map_pages', 'linked_parcel_count', 'covenanted_parcel_count']
     search_fields = ['plat_name']
     inlines = [PlatMapPageInline]
 
@@ -33,12 +33,18 @@ class PlatAdmin(admin.ModelAdmin):
         return obj.map_pages
     map_pages.admin_order_field = 'map_pages'
 
+    def covenanted_parcel_count(self, obj):
+        return obj.covenanted_parcel_count
+    covenanted_parcel_count.admin_order_field = 'covenanted_parcel_count'
+
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         queryset = queryset.annotate(
             map_pages=Count("platmappage", distinct=True)
         ).annotate(
             linked_parcel_count=Count("parcel", distinct=True)
+        ).annotate(
+            covenanted_parcel_count=Count('parcel', filter=Q(parcel__bool_covenant=True))
         )
         return queryset
 
@@ -83,7 +89,7 @@ class SubdivisionAdmin(admin.ModelAdmin):
         queryset = queryset.annotate(
             linked_parcel_count=Count("parcel", distinct=True)
         ).annotate(
-            covenanted_parcel_count=Count('parcel', filter=Q(parcel__zooniversesubject=True))
+            covenanted_parcel_count=Count('parcel', filter=Q(parcel__bool_covenant=True))
         )
         return queryset
 
@@ -91,8 +97,19 @@ class SubdivisionAdmin(admin.ModelAdmin):
 @admin.register(SubdivisionAlternateName)
 class SubdivisionAlternateNameAdmin(admin.ModelAdmin):
     list_filter = ['workflow']
-    list_display = ['alternate_name', 'subdivision_name', 'workflow']
+    list_display = ['alternate_name', 'subdivision_name', 'workflow', 'covenanted_parcel_count']
     autocomplete_fields = ['subdivision']
     exclude = ['subdivision_name', 'zoon_workflow_id']
     readonly_fields = ['alternate_name_standardized']
     search_fields = ['alternate_name', 'subdivision__subdivision_name']
+
+    def covenanted_parcel_count(self, obj):
+        return obj.covenanted_parcel_count
+    covenanted_parcel_count.admin_order_field = 'covenanted_parcel_count'
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            covenanted_parcel_count=Count('subdivision', filter=Q(subdivision__parcel__bool_covenant=True))
+        )
+        return queryset
