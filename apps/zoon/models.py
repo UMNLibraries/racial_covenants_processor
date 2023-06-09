@@ -10,6 +10,7 @@ from postgres_copy import CopyManager
 
 from racial_covenants_processor.storage_backends import PublicMediaStorage
 from apps.plat.models import Plat, PlatAlternateName, Subdivision, SubdivisionAlternateName
+from apps.parcel.models import Parcel
 from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_all_covenant_candidates, gather_all_manual_covenant_candidates, standardize_addition, addition_wide_parcel_match
 
 
@@ -277,6 +278,9 @@ class ZooniverseSubject(models.Model):
                         self.parcel_matches.add(parcel_id)
                     # self.parcel_matches.add(lot_match['parcel_id'])
                     self.bool_parcel_match = True
+
+                    # Tag matched parcels with bool_covenant=True
+                    self.parcel_matches.all().update(bool_covenant=True)
                 except:
                     print(f"NO MATCH: {c['join_string']}")
 
@@ -543,6 +547,9 @@ class ManualCovenant(models.Model):
                             self.parcel_matches.add(parcel_id)
                         # self.parcel_matches.add(lot_match['parcel_id'])
                         self.bool_parcel_match = True
+
+                        # Tag matched parcels with bool_covenant=True
+                        self.parcel_matches.all().update(bool_covenant=True)
                     except:
                         print(f"NO MATCH: {c['join_string']}")
 
