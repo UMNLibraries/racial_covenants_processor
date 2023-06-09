@@ -24,7 +24,9 @@ class CovenantsParcelManager(models.Manager):
             workflow=OuterRef('workflow')
         ).order_by('deed_date')[:1]
 
-        return super().get_queryset().annotate(
+        return super().get_queryset().filter(
+            bool_covenant=True
+        ).annotate(
             cov_type=Case(
                 When(
                     Exists(oldest_deed),
@@ -37,8 +39,6 @@ class CovenantsParcelManager(models.Manager):
                 default=Value(""),
                 output_field=CharField()
             )
-        ).filter(
-            bool_covenant=True
         ).annotate(
             add_mod=F('plat_name')
         ).annotate(
