@@ -8,8 +8,8 @@ from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from apps.zoon.models import ZooniverseSubject
-from apps.parcel.models import JoinReport
+from apps.zoon.models import ZooniverseSubject, ManualCovenant
+from apps.parcel.models import JoinReport, Parcel
 from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, addition_wide_parcel_match
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
@@ -36,6 +36,7 @@ class Command(BaseCommand):
 
                 c['match'] = True
                 c['parcel_metadata'] = lot_match['parcel_metadata']
+                c['parcel_metadata']['parcel_ids'] = lot_match['parcel_ids']
                 c['num_parcels'] = len(lot_match['parcel_ids'])
 
                 print(f"MATCH: {c['join_string']} ({c['num_parcels']} parcels)")
@@ -77,6 +78,17 @@ class Command(BaseCommand):
         ZooniverseSubject.objects.bulk_update(
             update_objs, ['geom_union_4326', 'parcel_addresses', 'parcel_city'], batch_size=1000)
 
+    def tag_matched_parcels(self, workflow):
+        # Clear previous bool_covenant values on workflow
+        print("Clearing old bool_covenant values from Parcels in this workflow...")
+        Parcel.objects.filter(workflow=workflow, bool_covenant=True).update(bool_covenant=False)
+
+        print("Tagging bool_covenant=True for matched Parcels...")
+        Parcel.objects.filter(workflow=workflow, zooniversesubject__isnull=False).update(bool_covenant=True)
+
+        # Now do ManualCovenant records
+        Parcel.objects.filter(workflow=workflow, manualcovenant__isnull=False).update(bool_covenant=True)
+
     def write_match_report(self, workflow, bool_local=False):
         fieldnames = ['join_string', 'match', 'subject_id',
                       'metadata', 'parcel_metadata', 'num_parcels']
@@ -111,9 +123,6 @@ class Command(BaseCommand):
                 writer.writerows(self.match_report)
         else:
             print('Creating JoinReport object...')
-            # writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
-            # writer.writerows(self.match_report)
-
             csv_buffer = StringIO()
             csv_writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
             csv_writer.writeheader()
@@ -156,7 +165,9 @@ class Command(BaseCommand):
 
             # Get all possible parcel lots to join
             parcel_lookup = build_parcel_spatial_lookups(workflow)
+
             self.match_parcels_bulk(workflow, parcel_lookup)
+            self.tag_matched_parcels(workflow)
 
             # Join addition-wide covenants
             self.match_addition_wide_covenants(workflow, parcel_lookup)

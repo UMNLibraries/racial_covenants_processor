@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from .models import Plat, PlatMapPage, PlatAlternateName, Subdivision, SubdivisionAlternateName
 
@@ -67,17 +67,23 @@ class SubdivisionAdmin(admin.ModelAdmin):
         'geom_4326'
     ]
     list_filter = ['workflow']
-    list_display = ['name', 'linked_parcel_count']
+    list_display = ['name', 'linked_parcel_count', 'covenanted_parcel_count']
     search_fields = ['name']
 
     def linked_parcel_count(self, obj):
         return obj.linked_parcel_count
     linked_parcel_count.admin_order_field = 'linked_parcel_count'
 
+    def covenanted_parcel_count(self, obj):
+        return obj.covenanted_parcel_count
+    covenanted_parcel_count.admin_order_field = 'covenanted_parcel_count'
+
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         queryset = queryset.annotate(
             linked_parcel_count=Count("parcel", distinct=True)
+        ).annotate(
+            covenanted_parcel_count=Count('parcel', filter=Q(parcel__zooniversesubject=True))
         )
         return queryset
 

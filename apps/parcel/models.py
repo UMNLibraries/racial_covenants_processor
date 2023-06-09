@@ -25,19 +25,6 @@ class CovenantsParcelManager(models.Manager):
         ).order_by('deed_date')[:1]
 
         return super().get_queryset().annotate(
-            bool_covenant=Case(
-                When(
-                    Exists(oldest_deed),
-                    then=Value(True)
-                ),
-                When(
-                    Exists(oldest_deed_manual),
-                    then=Value(True)
-                ),
-                default=Value(False),
-                output_field=BooleanField()
-            )
-        ).annotate(
             cov_type=Case(
                 When(
                     Exists(oldest_deed),
@@ -293,6 +280,9 @@ class Parcel(models.Model):
     plat = models.ForeignKey(Plat, on_delete=models.SET_NULL, null=True)
     subdivision_spatial = models.ForeignKey(Subdivision, on_delete=models.SET_NULL, null=True)
     # zoon_subjects = models.ManyToManyField("zoon.ZooniverseSubject")
+
+    # Hard-coded for easier filtering, set by match_parcels.py and individual save routines.
+    bool_covenant = models.BooleanField(default=False)
 
     objects = models.Manager()
     covenant_objects = CovenantsParcelManager()
