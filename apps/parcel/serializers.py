@@ -1,6 +1,8 @@
 from rest_framework import serializers, viewsets
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
+from django_filters import filters, FilterSet
+
 from .models import Parcel, ShpExport, GeoJSONExport, CSVExport
 from apps.zoon.models import ZooniverseSubject
 
@@ -132,16 +134,31 @@ class CSVExportSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CovenantFilter(FilterSet):
+    # username = filters.CharFilter()
+    min_deed_date = filters.IsoDateTimeFilter(field_name="deed_date", lookup_expr='gte')
+    min_exec_date = filters.IsoDateTimeFilter(field_name="exec_date", lookup_expr='gte')
+    max_deed_date = filters.IsoDateTimeFilter(field_name="deed_date", lookup_expr='gte')
+    max_exec_date = filters.IsoDateTimeFilter(field_name="exec_date", lookup_expr='gte')
+    county = filters.CharFilter(field_name='cnty_name', lookup_expr='iexact')
+    # state = filters.CharFilter(field_name='state', lookup_expr='iexact')
+
+    class Meta:
+        model = Parcel
+        fields = ['workflow', 'workflow__workflow_name', 'state']
+
+
 # ViewSets define the view behavior.
 class CovenantNoGeoViewSet(viewsets.ModelViewSet):
     queryset = Parcel.covenant_objects.all()
     serializer_class = ParcelNoGeoSerializer
+    filterset_class = CovenantFilter
 
 
 class CovenantGeoViewSet(viewsets.ModelViewSet):
     queryset = Parcel.covenant_objects.all()
     serializer_class = ParcelGeoSerializer
-    filterset_fields = ['workflow']
+    filterset_class = CovenantFilter
 
 
 class ShpExportViewSet(viewsets.ModelViewSet):

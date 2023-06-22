@@ -102,6 +102,12 @@ def build_gdf(workflow):
     covenants_df['join_strgs'] = covenants_df['join_candidates'].apply(lambda x: ';'.join([jc['join_string'] for jc in x]))
 
     MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
+
+    # TEMP TEMP TEMP until bug #90 closed
+    covenants_df = covenants_df[covenants_df['match_type'] != '']
+
+    # print(MATCH_TYPES)
+    # print(covenants_df[covenants_df['match_type'] == ''][['add_cov', 'block_cov', 'join_strgs', 'add_mod', 'ph_dsc_mod']])
     covenants_df['match_type'] = covenants_df['match_type'].apply(lambda x: [mt[1] for mt in MATCH_TYPES if mt[0] == x][0] if x is not None else 'Automatic match')
 
     covenants_df['image_ids'] = covenants_df['image_ids'].apply(lambda x: ','.join([img if img else '' for img in x]))
