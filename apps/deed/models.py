@@ -65,6 +65,12 @@ class DeedPage(models.Model):
         return ""
 
     @property
+    def record_link(self):
+        page_num = f"Page {self.page_num}" if self.page_num else ''
+        split_page_num = f"Splitpage {self.split_page_num}" if self.split_page_num else ''
+        return mark_safe(f'<a href="/admin/deed/deedpage/{self.pk}/change/" target="_blank">{self.doc_num} {page_num} {split_page_num}</a>')
+
+    @property
     def prev_thumbnail_preview(self):
         if self.prev_page_image_web:
             return mark_safe(f'<a href="{self.prev_page_image_web.url}" target="_blank"><img src="{self.prev_page_image_web.url}" width="100" /></a>')
