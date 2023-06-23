@@ -17,10 +17,19 @@ class DeedImageInline(admin.TabularInline):
     model = DeedPage
     extra = 0
     exclude = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id', 'batch_id', 'doc_type', 'page_stats', 'public_uuid', 'bool_exception', 'doc_page_count', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web']
+    # show_change_link = True
 
-    readonly_fields = ['doc_num', 'book_id', 'page_num', 'split_page_num',
+    readonly_fields = ['record_link', 'doc_num', 'book_id', 'page_num', 'split_page_num',
                        'doc_date', 'bool_match', 'matched_terms', 'page_ocr_text',
                        'thumbnail_preview']
+
+    # def record_link(self, obj):
+    #     page_num = f"Page {obj.page_num}" if obj.page_num else ''
+    #     split_page_num = f"Splitpage {obj.split_page_num}" if obj.split_page_num else ''
+    #     return f"<a href='/admin/deed/deedpage/{obj.pk}/change/>{obj.doc_num} {page_num} {split_page_num}</a>"
+
+    # record_link.short_description = 'Doc num/page'
+    # record_link.allow_tags = True
 
 
 class ManualSupportingDocumentInline(admin.StackedInline):

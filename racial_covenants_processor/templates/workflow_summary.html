@@ -41,6 +41,9 @@
     </tr>
   </table>
 
+  <h3>Admin links</h3>
+  <a href="http://127.0.0.1:8000/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}">Deed page objects</a>
+
   <h3>Download in-progress shapefiles</h3>
   {% for shp in shp_exports %}
     <p><a href="{{ shp.shp_zip.url }}">{{ shp.created_at }}</a> {{ shp.covenant_count|intcomma }} mapped covenants</p>
