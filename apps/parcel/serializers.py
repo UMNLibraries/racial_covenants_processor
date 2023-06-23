@@ -138,8 +138,8 @@ class CovenantFilter(FilterSet):
     # username = filters.CharFilter()
     min_deed_date = filters.IsoDateTimeFilter(field_name="deed_date", lookup_expr='gte')
     min_exec_date = filters.IsoDateTimeFilter(field_name="exec_date", lookup_expr='gte')
-    max_deed_date = filters.IsoDateTimeFilter(field_name="deed_date", lookup_expr='gte')
-    max_exec_date = filters.IsoDateTimeFilter(field_name="exec_date", lookup_expr='gte')
+    max_deed_date = filters.IsoDateTimeFilter(field_name="deed_date", lookup_expr='lte')
+    max_exec_date = filters.IsoDateTimeFilter(field_name="exec_date", lookup_expr='lte')
     county = filters.CharFilter(field_name='cnty_name', lookup_expr='iexact')
     # state = filters.CharFilter(field_name='state', lookup_expr='iexact')
 
