@@ -28,15 +28,16 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
 
     match_df[f'{split_str}page_num_{offset}'] = match_df[f'{split_str}page_num'] + offset
 
-    doc_list_copy = doc_list_df.copy().drop_duplicates()
-    doc_list_copy[new_image_field] = doc_list_copy['page_image_web']
-    doc_list_copy[f'{split_str}page_num_right'] = doc_list_copy[f'{split_str}page_num']
-    doc_list_copy.drop(columns=['page_image_web', f'{split_str}page_num'])
+    # doc_list_copy = doc_list_df.copy()
+    # Rather than making a copy here, why not just keep changing/adding values for lookup purposes, and drop unwanted columns when merging
+    doc_list_df[new_image_field] = doc_list_df['page_image_web']
+    doc_list_df[f'{split_str}page_num_right'] = doc_list_df[f'{split_str}page_num']
+    # doc_list_copy.drop(columns=['page_image_web', f'{split_str}page_num'])
 
     '''Problem here is caused by there being a splitpage page in the next and next-next positions. That's somewhat of an outlier, but it's also not even supposed to be hitting join 3 because it has a doc num in addition to book and page. Should just rely on doc num and page count to say no prev or next. Need to sort right side of join by doc_num/page_num/splitpage_num and drop duplicates on result on important fields'''
 
     match_df = match_df.merge(
-        doc_list_copy[[
+        doc_list_df[[
             doc_or_book_selector,
             f'{split_str}page_num_right',
             new_image_field
@@ -59,7 +60,13 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
 def paginate_deedpage_df(df, matches_only=False):
     # TODO: Change page_num and split_page_num to ints
     df["page_num"] = pd.to_numeric(df["page_num"])
+
+    if "split_page_num" not in df.columns:
+        df['split_page_num'] = None
     df["split_page_num"] = pd.to_numeric(df["split_page_num"])
+
+    if "book_id" not in df.columns:
+        df["book_id"] = ''
 
     if matches_only:
         match_df = df[df['bool_match'] == True].copy()
@@ -67,13 +74,14 @@ def paginate_deedpage_df(df, matches_only=False):
         match_df = df
 
     doc_list_df = df[[
+        # 'pk',
         's3_lookup',
         'doc_num',
         'book_id',
         'page_num',
         'split_page_num',
         'page_image_web'
-    ]].copy()
+    ]].drop_duplicates()
 
     # print('Join 1')
     # same doc num with multiple pages + splitpage
@@ -109,6 +117,7 @@ def paginate_deedpage_df(df, matches_only=False):
 
     # print('Join 3')
     # no doc_num, book and page only, no splitpage
+
     book_id_no_split_page_df = match_df[(match_df['book_id'] != '') & (match_df['doc_page_count'] == 1)].copy()
 
     for offset in [-1, 1, 2]:
@@ -158,6 +167,7 @@ def paginate_deedpage_df(df, matches_only=False):
     # print(doc_num_no_split_page_df)
     # doc_num_no_split_page_df.to_csv('test_join_5.csv')
 
+    print("Building out_df...")
     out_df = pd.concat([
         doc_num_split_page_df,
         book_id_split_page_df,
@@ -166,21 +176,24 @@ def paginate_deedpage_df(df, matches_only=False):
         doc_num_no_split_page_df
     ]).copy()
 
-    out_df[[
-        'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web'
-    ]].fillna(value='', inplace=True)
+    cols_to_fill = [
+        'prev_page_image_web',
+        'next_page_image_web',
+        'next_next_page_image_web'
+    ]
+    out_df.loc[:, cols_to_fill] = out_df.loc[:, cols_to_fill].fillna('')
 
-    # out_df.fillna(value='', inplace=True)
     out_df = out_df.replace([np.nan], [None])
 
     return out_df
 
-def tag_prev_next_image_sql(workflow):
+def tag_prev_next_image_sql(workflow, matches_only=False):
 
     print('Gathering doc list...')
     full_doc_list_df = pd.DataFrame(DeedPage.objects.filter(
         workflow=workflow
     ).values(
+        # 'pk',
         'bool_match',
         'doc_num',
         'book_id',
@@ -191,25 +204,31 @@ def tag_prev_next_image_sql(workflow):
         's3_lookup'
     ))
 
-    match_df = paginate_deedpage_df(full_doc_list_df)
-    # print(match_df)
-    # match_df.to_csv('final_concat.csv')
+    match_df = paginate_deedpage_df(full_doc_list_df, matches_only)
 
-    matches_to_update = DeedPage.objects.filter(
-        workflow=workflow,
-        bool_match=True
-    ).only('s3_lookup')
+    if matches_only:
+        objs_to_update = DeedPage.objects.filter(
+            workflow=workflow,
+            bool_match=True
+        ).values('pk', 's3_lookup')
+    else:
+        objs_to_update = DeedPage.objects.filter(
+            workflow=workflow
+        ).values('pk', 's3_lookup')
 
-    update_objs = []
-
-    for match in matches_to_update:
-
-        df_rows = match_df[match_df['s3_lookup'] == match.s3_lookup].fillna(value='')
-        match.prev_page_image_web = df_rows['prev_page_image_web'].iloc[0]
-        match.next_page_image_web = df_rows['next_page_image_web'].iloc[0]
-        match.next_next_page_image_web = df_rows['next_next_page_image_web'].iloc[0]
-
-        update_objs.append(match)
+    update_df = pd.DataFrame(objs_to_update).merge(
+        match_df[[
+            's3_lookup', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web'
+        ]].drop_duplicates().fillna(value=''),
+        how="left",
+        on="s3_lookup"
+    )
 
     print("Updating db objects...")
-    DeedPage.objects.bulk_update(update_objs, ['prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web'], batch_size=100)
+    # Convert df to DeedPage objs so can be updated...
+    dp_objs = [DeedPage(**kv) for kv in update_df.to_dict('records')]
+    DeedPage.objects.bulk_update(
+        dp_objs,
+        ['prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web'],
+        batch_size=5000
+    )

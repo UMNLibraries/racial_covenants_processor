@@ -32,11 +32,20 @@ class Command(BaseCommand):
 
         my_bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
-        key_filter = re.compile(f"ocr/stats/{workflow.slug}/.+\.json")
+        # TODO: Eliminate this conditional once new Ramsey records are OCRed under new system
+        if workflow.workflow_name == 'Ramsey County':
+            key_filter = re.compile(f"web/{workflow.slug}/.+\.jpg")
 
-        matching_keys = [obj.key for obj in my_bucket.objects.filter(
-            Prefix=f'ocr/stats/{workflow.slug}/'
-        ) if re.match(key_filter, obj.key)]
+            matching_keys = [obj.key for obj in my_bucket.objects.filter(
+                Prefix=f'web/{workflow.slug}/'
+            ) if re.match(key_filter, obj.key)]
+
+        else:
+            key_filter = re.compile(f"ocr/stats/{workflow.slug}/.+\.json")
+
+            matching_keys = [obj.key for obj in my_bucket.objects.filter(
+                Prefix=f'ocr/stats/{workflow.slug}/'
+            ) if re.match(key_filter, obj.key)]
 
         return matching_keys
 
@@ -120,7 +129,12 @@ class Command(BaseCommand):
                     workflow.workflow_name]['deed_image_regex']
                 page_data = re.search(
                     deed_image_regex, mk).groupdict()
-                public_uuid = re.search(r'__([a-z0-9]+)\.json', mk).group(1)
+
+                # TODO: Eliminate this conditional once new Ramsey records are OCRed under new system
+                if workflow.workflow_name == 'Ramsey County':
+                    public_uuid = ''
+                else:
+                    public_uuid = re.search(r'__([a-z0-9]+)\.json', mk).group(1)
                 # print(page_data)
             except:
                 print(f'Could not parse image path data: {mk}. You might need to adjust your deed_image_regex setting.')
@@ -135,9 +149,16 @@ class Command(BaseCommand):
                 page_data['s3_lookup'] = mk.replace(f"ocr/stats/{workflow.slug}/", "").replace(f"__{public_uuid}.json", "")
 
                 page_data['page_stats'] = mk
-                page_data['page_image_web'] = str(PurePath(mk).with_name(public_uuid + '.jpg')).replace("ocr/stats/", "web/")
-                page_data['page_ocr_text'] = mk.replace("ocr/stats/", "ocr/txt/").replace(f"__{public_uuid}.json", ".txt")
-                page_data['page_ocr_json'] = mk.replace("ocr/stats/", "ocr/json/").replace(f"__{public_uuid}.json", ".json")
+
+                # TODO: Eliminate this conditional once new Ramsey records are OCRed under new system
+                if workflow.workflow_name == 'Ramsey County':
+                    page_data['page_image_web'] = mk
+                    page_data['page_ocr_text'] = ''
+                    page_data['page_ocr_json'] = ''
+                else:
+                    page_data['page_image_web'] = str(PurePath(mk).with_name(public_uuid + '.jpg')).replace("ocr/stats/", "web/")
+                    page_data['page_ocr_text'] = mk.replace("ocr/stats/", "ocr/txt/").replace(f"__{public_uuid}.json", ".txt")
+                    page_data['page_ocr_json'] = mk.replace("ocr/stats/", "ocr/json/").replace(f"__{public_uuid}.json", ".json")
 
                 page_data['workflow_id'] = workflow.id
 
@@ -167,6 +188,8 @@ class Command(BaseCommand):
         # dedupe
         deed_pages_df = pd.DataFrame(deed_pages)
         deed_pages_df = deed_pages_df.drop_duplicates(subset=['s3_lookup'])
+
+        print(deed_pages_df)
 
         # Remove fake Nones
         # deed_pages_df[['page_num']].loc[df['shield'] > 35] = 0
@@ -201,6 +224,21 @@ class Command(BaseCommand):
         DeedPage.objects.bulk_create(deed_pages, batch_size=10000)
 
         return deed_pages
+
+    # def tag_prev_next_records(self, workflow):
+    #     '''Now that records have been saved to DeedPage Django model, we can tie the prev/next pages to each Django record by doing a join to the prev/next image field values, which were set before import.'''
+    #
+    #     # full_doc_list_df = pd.DataFrame(DeedPage.objects.filter(
+    #     #     workflow=workflow
+    #     # ).values(
+    #     #     'pk',
+    #     #     'page_image_web',
+    #     #     'prev_page_image_web',
+    #     #     'next_page_image_web',
+    #     #     'next_next_page_image_web'
+    #     # ))
+
+
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']

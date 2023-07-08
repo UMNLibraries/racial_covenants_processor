@@ -38,7 +38,7 @@ class DeedPagePrevNextTests(TestCase):
     def setUp(self):
         # Set up database first time
         workflow = ZooniverseWorkflow.objects.get(pk=1)
-        tag_prev_next_image_sql(workflow)
+        tag_prev_next_image_sql(workflow, True)
 
     def test_prev_next_doc_num_page_2(self):
 

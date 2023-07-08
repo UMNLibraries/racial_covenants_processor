@@ -41,11 +41,16 @@ class DeedPage(models.Model):
     # These fields aid in setting up Zooniverse images
     doc_page_count = models.IntegerField(null=True)
     prev_page_image_web = models.ImageField(
-        storage=PublicDeedStorage(), max_length=200, null=True)
+        storage=PublicDeedStorage(), max_length=200, null=True, db_index=True)
     next_page_image_web = models.ImageField(
-        storage=PublicDeedStorage(), max_length=200, null=True)
+        storage=PublicDeedStorage(), max_length=200, null=True, db_index=True)
     next_next_page_image_web = models.ImageField(
-        storage=PublicDeedStorage(), max_length=200, null=True)
+        storage=PublicDeedStorage(), max_length=200, null=True, db_index=True)
+
+    # Used to allow traversing all pages in longer records, generally in the admin
+    # prev_deedpage = models.ForeignKey('self', related_name='prev_deedpage_set', on_delete=models.DO_NOTHING, null=True)
+    # next_deedpage = models.ForeignKey('self', related_name='next_deedpage_set', on_delete=models.DO_NOTHING, null=True)
+    # next_next_deedpage = models.ForeignKey('self', related_name='next_next_deedpage_set', on_delete=models.DO_NOTHING, null=True)
 
     zooniverse_subject = models.ForeignKey(
         ZooniverseSubject, on_delete=models.SET_NULL, null=True)
@@ -73,17 +78,41 @@ class DeedPage(models.Model):
     @property
     def prev_thumbnail_preview(self):
         if self.prev_page_image_web:
-            return mark_safe(f'<a href="{self.prev_page_image_web.url}" target="_blank"><img src="{self.prev_page_image_web.url}" width="100" /></a>')
+            # prev_page_record = DeedPage.objects.get(page_image_web=self.prev_page_image_web)
+            # print(self.prev_page_record.record_link)
+
+            return mark_safe(f'<div style="display: inline-block;"><a href="{self.prev_page_image_web.url}" target="_blank"><img src="{self.prev_page_image_web.url}" width="100" /></a><br/><a href="/admin/deed/deedpage/{self.prev_deedpage.pk}/change/" target="_blank">DeedPage record</a></div>')
         return ""
 
     @property
     def next_thumbnail_preview(self):
         pages = []
         if self.next_page_image_web:
-            pages.append(f'<a href="{self.next_page_image_web.url}" target="_blank" style="margin: 10px"><img src="{self.next_page_image_web.url}" width="100" /></a>')
+            pages.append(f'<div style="display: inline-block;"><a href="{self.next_page_image_web.url}" target="_blank" style="margin: 10px"><img src="{self.next_page_image_web.url}" width="100" /></a><br/><a href="/admin/deed/deedpage/{self.next_deedpage.pk}/change/" target="_blank">DeedPage record</a></div>')
         if self.next_next_page_image_web:
-            pages.append(f'<a href="{self.next_next_page_image_web.url}" target="_blank" style="margin: 10px"><img src="{self.next_next_page_image_web.url}" width="100" /></a>')
+            pages.append(f'<div style="display: inline-block;"><a href="{self.next_next_page_image_web.url}" target="_blank" style="margin: 10px"><img src="{self.next_next_page_image_web.url}" width="100" /></a><br/><a href="/admin/deed/deedpage/{self.next_next_deedpage.pk}/change/" target="_blank">DeedPage record</a></div>')
         return mark_safe(''.join(pages))
+
+    @property
+    def prev_deedpage(self):
+        try:
+            return DeedPage.objects.get(page_image_web=self.prev_page_image_web)
+        except:
+            return None
+
+    @property
+    def next_deedpage(self):
+        try:
+            return DeedPage.objects.get(page_image_web=self.next_page_image_web)
+        except:
+            return None
+
+    @property
+    def next_next_deedpage(self):
+        try:
+            return DeedPage.objects.get(page_image_web=self.next_next_page_image_web)
+        except:
+            return None
 
 
 class SearchHitReport(models.Model):
