@@ -1,6 +1,10 @@
+import re
 from django.db import models
 from django.utils.html import mark_safe
 from postgres_copy import CopyManager
+# from django.db.models import OuterRef, Subquery
+# from django.db.models.loading import get_model
+from django.apps import apps
 
 from racial_covenants_processor.storage_backends import PrivateMediaStorage, PublicMediaStorage, PublicDeedStorage
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
@@ -13,6 +17,18 @@ class MatchTerm(models.Model):
         return self.term
 
 
+# class DeedPageManager(models.Manager):
+#     '''This is the main heavy-lifter for exports -- as much work as possible being done here to tag the parcel with the earliest mention of the covenant and its related attributes'''
+#
+#     def get_queryset(self):
+#         # prev_deedpage = 'self'apps.get_model('shop', 'Product')
+#         # print(dir(self))
+#         prev_deedpage = self.model.objects.get(page_image_web=OuterRef('prev_page_image_web')).pk
+#         return super().get_queryset().annotate(
+#             prev_deedpage=Subquery(prev_deedpage)
+#         )
+
+
 class DeedPage(models.Model):
     workflow = models.ForeignKey(
         ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
@@ -21,8 +37,8 @@ class DeedPage(models.Model):
     doc_alt_id = models.CharField(blank=True, max_length=100, db_index=True)
     batch_id = models.CharField(blank=True, max_length=255)
     book_id = models.CharField(blank=True, max_length=100, db_index=True)
-    page_num = models.IntegerField(null=True)
-    split_page_num = models.IntegerField(null=True)  # Alternate page numbering that happens when a multipage image file has been split by the ingestion process
+    page_num = models.IntegerField(null=True, db_index=True)
+    split_page_num = models.IntegerField(null=True, db_index=True)  # Alternate page numbering that happens when a multipage image file has been split by the ingestion process
     doc_date = models.DateField(null=True, db_index=True)
     doc_type = models.CharField(blank=True, max_length=100)
     public_uuid = models.CharField(blank=True, max_length=50, db_index=True)
@@ -54,6 +70,9 @@ class DeedPage(models.Model):
 
     zooniverse_subject = models.ForeignKey(
         ZooniverseSubject, on_delete=models.SET_NULL, null=True)
+
+    # objects = models.Manager()
+    # objects = DeedPageManager()
 
     class Meta:
         indexes = [
@@ -93,26 +112,57 @@ class DeedPage(models.Model):
             pages.append(f'<div style="display: inline-block;"><a href="{self.next_next_page_image_web.url}" target="_blank" style="margin: 10px"><img src="{self.next_next_page_image_web.url}" width="100" /></a><br/><a href="/admin/deed/deedpage/{self.next_next_deedpage.pk}/change/" target="_blank">DeedPage record</a></div>')
         return mark_safe(''.join(pages))
 
+    def deedpage_offset_finder(self, offset):
+        kwargs = {
+            'workflow': self.workflow,
+            'batch_id': self.batch_id,
+            'book_id': self.book_id,
+
+        }
+        if self.split_page_num and self.split_page_num > 1:
+                kwargs['split_page_num'] = self.split_page_num + offset
+                kwargs['page_num'] = self.page_num
+                kwargs['doc_num'] = self.doc_num
+        else:
+            if self.page_num > 0:
+                kwargs['page_num'] = self.page_num + offset
+
+                # If the doc number includes the page number, then add offset to doc_num before attempting match
+                doc_num_regex = re.compile(f'(.+)((?<!\d){self.page_num}(?!\d))')
+                doc_num_match = re.search(doc_num_regex, self.doc_num)
+                if doc_num_match:
+                    kwargs['doc_num'] = re.sub(doc_num_regex, fr'\g<1>{self.page_num + offset}', self.doc_num)
+                else:
+                    kwargs['doc_num'] = self.doc_num
+
+        print(kwargs)
+        try:
+            # Avoid circular import on DeedPage
+            return apps.get_model('deed', 'DeedPage').objects.get(**kwargs)
+        except:
+            # raise
+            return None
+        return None
+
     @property
     def prev_deedpage(self):
-        try:
-            return DeedPage.objects.get(page_image_web=self.prev_page_image_web)
-        except:
-            return None
+        return self.deedpage_offset_finder(-1)
 
     @property
     def next_deedpage(self):
-        try:
-            return DeedPage.objects.get(page_image_web=self.next_page_image_web)
-        except:
-            return None
+        return self.deedpage_offset_finder(1)
+        # try:
+        #     return DeedPage.objects.get(page_image_web=self.next_page_image_web)
+        # except:
+        #     return None
 
     @property
     def next_next_deedpage(self):
-        try:
-            return DeedPage.objects.get(page_image_web=self.next_next_page_image_web)
-        except:
-            return None
+        return self.deedpage_offset_finder(2)
+        # try:
+        #     return DeedPage.objects.get(page_image_web=self.next_next_page_image_web)
+        # except:
+        #     return None
 
 
 class SearchHitReport(models.Model):
