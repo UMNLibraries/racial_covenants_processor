@@ -16,6 +16,26 @@ class CovenantsParcelManager(models.Manager):
             parcel_matches=OuterRef('pk'),
             bool_covenant_final=True,
             workflow=OuterRef('workflow')
+        ).only(
+            'workflow',
+            'zoon_subject_id',
+            'image_ids',
+            'dt_retired',
+            'bool_covenant_final',
+            'covenant_text_final',
+            'addition_final',
+            'lot_final',
+            'block_final',
+            'seller_final',
+            'buyer_final',
+            'deed_date_final',
+            'match_type_final',
+            'bool_handwritten_final',
+            'median_score',
+            'bool_manual_correction',
+            'bool_parcel_match',
+            'join_candidates',
+            'date_updated',
         ).order_by('deed_date_final')[:1]
 
         oldest_deed_manual = ManualCovenant.objects.filter(
@@ -24,7 +44,9 @@ class CovenantsParcelManager(models.Manager):
             workflow=OuterRef('workflow')
         ).order_by('deed_date')[:1]
 
-        return super().get_queryset().filter(
+        return super().get_queryset().defer(
+            'orig_data',
+        ).filter(
             bool_covenant=True
         ).annotate(
             cov_type=Case(
