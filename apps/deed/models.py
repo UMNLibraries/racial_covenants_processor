@@ -2,8 +2,6 @@ import re
 from django.db import models
 from django.utils.html import mark_safe
 from postgres_copy import CopyManager
-# from django.db.models import OuterRef, Subquery
-# from django.db.models.loading import get_model
 from django.apps import apps
 
 from racial_covenants_processor.storage_backends import PrivateMediaStorage, PublicMediaStorage, PublicDeedStorage
@@ -15,18 +13,6 @@ class MatchTerm(models.Model):
 
     def __str__(self):
         return self.term
-
-
-# class DeedPageManager(models.Manager):
-#     '''This is the main heavy-lifter for exports -- as much work as possible being done here to tag the parcel with the earliest mention of the covenant and its related attributes'''
-#
-#     def get_queryset(self):
-#         # prev_deedpage = 'self'apps.get_model('shop', 'Product')
-#         # print(dir(self))
-#         prev_deedpage = self.model.objects.get(page_image_web=OuterRef('prev_page_image_web')).pk
-#         return super().get_queryset().annotate(
-#             prev_deedpage=Subquery(prev_deedpage)
-#         )
 
 
 class DeedPage(models.Model):
@@ -63,16 +49,8 @@ class DeedPage(models.Model):
     next_next_page_image_web = models.ImageField(
         storage=PublicDeedStorage(), max_length=200, null=True, db_index=True)
 
-    # Used to allow traversing all pages in longer records, generally in the admin
-    # prev_deedpage = models.ForeignKey('self', related_name='prev_deedpage_set', on_delete=models.DO_NOTHING, null=True)
-    # next_deedpage = models.ForeignKey('self', related_name='next_deedpage_set', on_delete=models.DO_NOTHING, null=True)
-    # next_next_deedpage = models.ForeignKey('self', related_name='next_next_deedpage_set', on_delete=models.DO_NOTHING, null=True)
-
     zooniverse_subject = models.ForeignKey(
         ZooniverseSubject, on_delete=models.SET_NULL, null=True)
-
-    # objects = models.Manager()
-    # objects = DeedPageManager()
 
     class Meta:
         indexes = [
@@ -97,9 +75,6 @@ class DeedPage(models.Model):
     @property
     def prev_thumbnail_preview(self):
         if self.prev_page_image_web:
-            # prev_page_record = DeedPage.objects.get(page_image_web=self.prev_page_image_web)
-            # print(self.prev_page_record.record_link)
-
             return mark_safe(f'<div style="display: inline-block;"><a href="{self.prev_page_image_web.url}" target="_blank"><img src="{self.prev_page_image_web.url}" width="100" /></a><br/><a href="/admin/deed/deedpage/{self.prev_deedpage.pk}/change/" target="_blank">DeedPage record</a></div>')
         return ""
 
@@ -135,7 +110,6 @@ class DeedPage(models.Model):
                 else:
                     kwargs['doc_num'] = self.doc_num
 
-        print(kwargs)
         try:
             # Avoid circular import on DeedPage
             return apps.get_model('deed', 'DeedPage').objects.get(**kwargs)
@@ -151,18 +125,10 @@ class DeedPage(models.Model):
     @property
     def next_deedpage(self):
         return self.deedpage_offset_finder(1)
-        # try:
-        #     return DeedPage.objects.get(page_image_web=self.next_page_image_web)
-        # except:
-        #     return None
 
     @property
     def next_next_deedpage(self):
         return self.deedpage_offset_finder(2)
-        # try:
-        #     return DeedPage.objects.get(page_image_web=self.next_next_page_image_web)
-        # except:
-        #     return None
 
 
 class SearchHitReport(models.Model):

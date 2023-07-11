@@ -12,7 +12,7 @@ from django.db.models import Count
 
 from apps.deed.models import DeedPage
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
-from apps.deed.utils.deed_pagination import tag_doc_num_page_counts, paginate_deedpage_df, tag_prev_next_records
+from apps.deed.utils.deed_pagination import tag_doc_num_page_counts, paginate_deedpage_df
 
 
 class Command(BaseCommand):
@@ -225,21 +225,6 @@ class Command(BaseCommand):
 
         return deed_pages
 
-    # def tag_prev_next_records(self, workflow):
-    #     '''Now that records have been saved to DeedPage Django model, we can tie the prev/next pages to each Django record by doing a join to the prev/next image field values, which were set before import.'''
-    #
-    #     # full_doc_list_df = pd.DataFrame(DeedPage.objects.filter(
-    #     #     workflow=workflow
-    #     # ).values(
-    #     #     'pk',
-    #     #     'page_image_web',
-    #     #     'prev_page_image_web',
-    #     #     'next_page_image_web',
-    #     #     'next_next_page_image_web'
-    #     # ))
-
-
-
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -254,6 +239,3 @@ class Command(BaseCommand):
 
             image_objs = self.build_django_objects(
                 matching_keys, workflow)
-
-            # Note: this is currently quite slow on large workflows due to update queries
-            tag_prev_next_records(workflow)
