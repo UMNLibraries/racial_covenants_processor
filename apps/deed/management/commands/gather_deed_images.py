@@ -12,7 +12,7 @@ from django.db.models import Count
 
 from apps.deed.models import DeedPage
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
-from apps.deed.utils.deed_pagination import tag_doc_num_page_counts, paginate_deedpage_df
+from apps.deed.utils.deed_pagination import tag_doc_num_page_counts, paginate_deedpage_df, tag_prev_next_records
 
 
 class Command(BaseCommand):
@@ -254,3 +254,6 @@ class Command(BaseCommand):
 
             image_objs = self.build_django_objects(
                 matching_keys, workflow)
+
+            # Note: this is currently quite slow on large workflows due to update queries
+            tag_prev_next_records(workflow)

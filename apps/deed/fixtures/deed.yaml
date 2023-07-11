@@ -701,3 +701,105 @@
         bool_exception: false
         matched_terms: []
         doc_page_count: 3
+# Dakota examples for prev/next deedpage records and prev/next images
+# TODO: add test for prev/next images, which will probably fail
+-   model: deed.deedpage
+    pk: 29
+    fields:
+        workflow: 1
+        s3_lookup: 'Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_NONE_book_107_page_547'
+        doc_num: 'DEEDS_book_107_page_547'
+        doc_alt_id: ''
+        batch_id: 'Abstract_Images_Books_Deeds 104-277 by Book and Page'
+        book_id: '107'
+        page_num: 547
+        split_page_num: null
+        doc_date: null
+        doc_type: 'DEEDS'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/DEEDS/doc_NONE_book_107_page_547.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: 560
+-   model: deed.deedpage
+    pk: 30
+    fields:
+        workflow: 1
+        s3_lookup: 'Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_NONE_book_107_page_548'
+        doc_num: 'DEEDS_book_107_page_548'
+        doc_alt_id: ''
+        batch_id: 'Abstract_Images_Books_Deeds 104-277 by Book and Page'
+        book_id: '107'
+        page_num: 548
+        split_page_num: null
+        doc_date: null
+        doc_type: 'DEEDS'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/DEEDS/doc_NONE_book_107_page_548.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: 560
+-   model: deed.deedpage
+    pk: 31
+    fields:
+        workflow: 1
+        s3_lookup: 'Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_NONE_book_107_page_549'
+        doc_num: 'DEEDS_book_107_page_549'
+        doc_alt_id: ''
+        batch_id: 'Abstract_Images_Books_Deeds 104-277 by Book and Page'
+        book_id: '107'
+        page_num: 549
+        split_page_num: null
+        doc_date: null
+        doc_type: 'DEEDS'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/DEEDS/doc_NONE_book_107_page_549.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: 560
+-   model: deed.deedpage
+    pk: 32
+    fields:
+        workflow: 1
+        s3_lookup: 'Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_NONE_book_107_page_550'
+        doc_num: 'DEEDS_book_107_page_550'
+        doc_alt_id: ''
+        batch_id: 'Abstract_Images_Books_Deeds 104-277 by Book and Page'
+        book_id: '107'
+        page_num: 550
+        split_page_num: null
+        doc_date: null
+        doc_type: 'DEEDS'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/DEEDS/doc_NONE_book_107_page_550.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: 560

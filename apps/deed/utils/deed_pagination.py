@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from django.db.models import Count, OuterRef, Subquery, F, Q, Case, When, Value, ImageField
+from django.db import connection
 
 from apps.deed.models import DeedPage
 
@@ -232,3 +233,145 @@ def tag_prev_next_image_sql(workflow, matches_only=False):
         ['prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web'],
         batch_size=5000
     )
+
+def pagination_merge_deedpage(workflow, image_lookup_df, offset=1):
+    if offset == -1:
+        label = 'prev'
+    elif offset == 1:
+        label = 'next'
+    elif offset == 2:
+        label = 'next_next'
+    else:
+        return False
+
+    exclude_kwargs = {f'{label}_page_image_web__in': ['', None]}
+
+    print(f'Building {label}_dps df...')
+    populated_objs = DeedPage.objects.filter(
+        workflow=workflow
+    ).exclude(
+        **exclude_kwargs
+    ).values('pk', f'{label}_page_image_web')
+    populated_objs = pd.DataFrame(list(populated_objs))
+
+    print(f'{label}_dps merge...')
+    populated_objs = populated_objs.merge(
+        image_lookup_df.rename(columns={'join_pk': f'{label}_deedpage_id'}),
+        how="left",
+        left_on=f"{label}_page_image_web",
+        right_on="page_image_web"
+    ).drop(columns=['page_image_web'])
+    return populated_objs
+
+def disable_deedpage_indexes():
+    '''Disable DeedPage indexes to hopefully speed up update queries'''
+    print("Disabling indexes on DeedPage...")
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            UPDATE pg_index
+            SET indisready=false
+            WHERE indrelid = (
+                SELECT oid
+                FROM pg_class
+                WHERE relname='deed_deedpage'
+            );
+        """)
+
+def reenable_deedpage_indexes():
+    '''Re-enable and re-index DeedPage table'''
+    print("Re-enabling indexes on DeedPage...")
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            UPDATE pg_index
+            SET indisready=true
+            WHERE indrelid = (
+                SELECT oid
+                FROM pg_class
+                WHERE relname='deed_deedpage'
+            );
+        """)
+        print("Re-indexing DeedPage table...")
+        cursor.execute("REINDEX deed_deedpage;")
+
+def tag_prev_next_records(workflow, matches_only=False):
+    '''Now that records have been saved to DeedPage Django model and each one has prev/next images, we can tie the prev/next DeedPage records to each Django record by doing a join to the prev/next image field values'''
+
+    print('Building image lookup df...')
+    image_lookup = DeedPage.objects.filter(
+        workflow=workflow
+    ).values('pk', 'page_image_web')
+    image_lookup_df = pd.DataFrame(list(image_lookup)).rename(columns={'pk': 'join_pk'})
+
+    prev_dps_df = pagination_merge_deedpage(workflow, image_lookup_df, -1)
+    next_dps_df = pagination_merge_deedpage(workflow, image_lookup_df, 1)
+    next_next_dps_df = pagination_merge_deedpage(workflow, image_lookup_df, 2)
+
+    print("Merging results into single df...")
+    prev_dps_df = prev_dps_df.merge(
+        next_dps_df,
+        how="outer",
+        on="pk"
+    ).merge(
+        next_next_dps_df,
+        how="outer",
+        on="pk"
+    )
+
+    print(prev_dps_df.columns)
+    print(prev_dps_df.shape)
+
+    # disable_deedpage_indexes()
+
+    print("Updating db objects...")
+    # Convert df to DeedPage objs so can be updated...
+    dp_objs = [DeedPage(**kv) for kv in prev_dps_df[['pk', 'prev_deedpage_id', 'next_deedpage_id', 'next_next_deedpage_id']].to_dict('records')]
+    # dp_objs = []
+    # for kv in prev_images_df[['pk', 'prev_deedpage_id']].to_dict('records'):
+    #     dp = DeedPage()
+    #     dp.pk = kv['pk']
+    #     dp.prev_deedpage_id = kv['prev_deedpage_id']
+    #     dp_objs.append(dp)
+
+    DeedPage.objects.bulk_update(
+        dp_objs,
+        ['prev_deedpage_id', 'next_deedpage_id', 'next_next_deedpage_id'],
+        batch_size=1000
+    )
+
+    # reenable_deedpage_indexes()
+
+    # OLD STARTS HEREY
+    # print('Building prev_images df...')
+    # prev_images = DeedPage.objects.filter(
+    #     workflow=workflow
+    # ).exclude(
+    #     prev_page_image_web__in=['', None]
+    # ).values('pk', 'prev_page_image_web')
+    # prev_images_df = pd.DataFrame(list(prev_images))
+    #
+    # print('prev_images merge...')
+    # prev_images_df = prev_images_df.merge(
+    #     image_lookup_df.rename(columns={'join_pk': 'prev_deedpage_id'}),
+    #     how="left",
+    #     left_on="prev_page_image_web",
+    #     right_on="page_image_web"
+    # )
+    #
+    # print('Building next_images df...')
+    # next_images = DeedPage.objects.filter(
+    #     workflow=workflow
+    # ).exclude(
+    #     next_page_image_web__in=['', None]
+    # ).values('pk', 'next_page_image_web')
+    # next_images_df = pd.DataFrame(list(next_images))
+    #
+    # print('Building next_next_images df...')
+    # next_next_images = DeedPage.objects.filter(
+    #     workflow=workflow
+    # ).exclude(
+    #     next_next_page_image_web__in=['', None]
+    # ).values('pk', 'next_next_page_image_web')
+    # next_next_images_df = pd.DataFrame(list(next_next_images))
+
+    # print(prev_images_df.columns)
+    # print(prev_images_df.shape)

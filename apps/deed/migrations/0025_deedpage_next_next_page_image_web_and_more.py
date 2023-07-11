@@ -14,16 +14,16 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='deedpage',
             name='next_next_page_image_web',
-            field=models.ImageField(max_length=200, null=True, storage=racial_covenants_processor.storage_backends.PublicDeedStorage(), upload_to=''),
+            field=models.ImageField(db_index=True, max_length=200, null=True, storage=racial_covenants_processor.storage_backends.PublicDeedStorage(), upload_to=''),
         ),
         migrations.AddField(
             model_name='deedpage',
             name='next_page_image_web',
-            field=models.ImageField(max_length=200, null=True, storage=racial_covenants_processor.storage_backends.PublicDeedStorage(), upload_to=''),
+            field=models.ImageField(db_index=True, max_length=200, null=True, storage=racial_covenants_processor.storage_backends.PublicDeedStorage(), upload_to=''),
         ),
         migrations.AddField(
             model_name='deedpage',
             name='prev_page_image_web',
-            field=models.ImageField(max_length=200, null=True, storage=racial_covenants_processor.storage_backends.PublicDeedStorage(), upload_to=''),
+            field=models.ImageField(db_index=True, max_length=200, null=True, storage=racial_covenants_processor.storage_backends.PublicDeedStorage(), upload_to=''),
         ),
     ]
