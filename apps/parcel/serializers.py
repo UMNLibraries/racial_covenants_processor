@@ -156,7 +156,7 @@ class CovenantNoGeoViewSet(viewsets.ModelViewSet):
     serializer_class = ParcelNoGeoSerializer
     filterset_class = CovenantFilter
 
-    @method_decorator(cache_page(60*30*1))
+    @method_decorator(cache_page(60*60*1))
     def list(self, *args, **kwargs):
         return super().list(*args, **kwargs)
 
@@ -166,7 +166,7 @@ class CovenantGeoViewSet(viewsets.ModelViewSet):
     serializer_class = ParcelGeoSerializer
     filterset_class = CovenantFilter
 
-    @method_decorator(cache_page(60*30*1))
+    @method_decorator(cache_page(60*60*1))
     def list(self, *args, **kwargs):
         return super().list(*args, **kwargs)
 
