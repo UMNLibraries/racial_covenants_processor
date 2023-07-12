@@ -17,7 +17,8 @@ from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_
 class ZooniverseWorkflow(models.Model):
     zoon_id = models.IntegerField(null=True, blank=True, db_index=True)
     workflow_name = models.CharField(max_length=100, db_index=True)
-    version = models.FloatField(null=True, blank=True)
+    # version = models.FloatField(null=True, blank=True)
+    version = models.CharField(max_length=20, null=True, blank=True)
 
     def __str__(self):
         return self.workflow_name

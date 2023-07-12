@@ -304,7 +304,7 @@ class Parcel(models.Model):
     # zoon_subjects = models.ManyToManyField("zoon.ZooniverseSubject")
 
     # Hard-coded for easier filtering, set by match_parcels.py and individual save routines.
-    bool_covenant = models.BooleanField(default=False)
+    bool_covenant = models.BooleanField(default=False, db_index=True)
 
     objects = models.Manager()
     covenant_objects = CovenantsParcelManager()

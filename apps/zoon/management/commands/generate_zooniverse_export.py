@@ -27,8 +27,7 @@ class Command(BaseCommand):
     def run_extractor(self, extractor="text"):
         print(f"Starting {extractor} reducer...")
         extractor_yaml = os.path.join(self.batch_dir,
-            f"Reducer_config_workflow_{self.zoon_workflow_id}_V{self.zoon_workflow_version}_{extractor}_extractor.yaml")
-        extractions_csv = os.path.join(self.batch_dir, f"{extractor}_extractor_extractions.csv")
+            f"Reducer_config_workflow_{self.zoon_workflow_id}_V{str(self.zoon_workflow_version)}_{extractor}_extractor.yaml")
 
         process = subprocess.run(['panoptes_aggregation', 'reduce', '-d', self.batch_dir, '-o', self.workflow.slug, extractions_csv, extractor_yaml])
 
@@ -78,8 +77,8 @@ class Command(BaseCommand):
                 settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
             self.zoon_workflow_id = str(self.batch_config['zoon_workflow_id'])
-            # self.zoon_workflow_version = str(self.batch_config['zoon_workflow_version'])
-            self.zoon_workflow_version = "{:.2f}".format(self.batch_config['zoon_workflow_version'])
+            self.zoon_workflow_version = self.batch_config['zoon_workflow_version']
+
 
             self.workflow_csv_path = os.path.join(
                 self.batch_dir, f"{self.workflow.slug}-workflows.csv")

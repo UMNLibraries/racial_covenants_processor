@@ -167,10 +167,11 @@ class Command(BaseCommand):
             parcel_lookup = build_parcel_spatial_lookups(workflow)
 
             self.match_parcels_bulk(workflow, parcel_lookup)
-            self.tag_matched_parcels(workflow)
 
             # Join addition-wide covenants
             self.match_addition_wide_covenants(workflow, parcel_lookup)
+
+            self.tag_matched_parcels(workflow)
 
             bool_local = kwargs['local']
             self.write_match_report(workflow, bool_local)
