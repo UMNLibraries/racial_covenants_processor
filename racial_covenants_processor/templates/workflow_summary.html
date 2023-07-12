@@ -42,7 +42,11 @@
   </table>
 
   <h3>Admin links</h3>
-  <a href="http://127.0.0.1:8000/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}">Deed page objects</a>
+  <ul>
+    <li><a href="/admin/zoon/zooniversesubject/?workflow__id__exact={{workflow.id}}">Zooniverse subjects</a></li>
+    <li><a href="/admin/zoon/manualcovenant/?workflow__id__exact={{workflow.id}}">Manual covenants</a></li>
+    <li><a href="/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}">Deed pages</a></li>
+  </ul>
 
   <h3>Download in-progress shapefiles</h3>
   {% for shp in shp_exports %}

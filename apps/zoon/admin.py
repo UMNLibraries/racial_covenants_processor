@@ -159,7 +159,7 @@ class ManualCovenantAdmin(admin.ModelAdmin):
         'workflow__workflow_name',
         'bool_parcel_match',
         'cov_type',
-        ('deed_date_final', DateRangeFilter),
+        ('deed_date', DateRangeFilter),
     )
 
     inlines = [
