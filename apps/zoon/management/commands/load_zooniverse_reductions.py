@@ -264,7 +264,7 @@ class Command(BaseCommand):
             # self.config_yaml = os.path.join(
             #     self.batch_dir, self.batch_config['config_yaml'])
 
-            workflow_version = "{:.2f}".format(self.batch_config['zoon_workflow_version'])
+            workflow_version = self.batch_config['zoon_workflow_version']
 
             self.config_yaml = os.path.join(
                 self.batch_dir, f"Extractor_config_workflow_{self.batch_config['zoon_workflow_id']}_V{workflow_version}.yaml")

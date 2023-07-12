@@ -55,7 +55,7 @@ class Command(BaseCommand):
                         # print(c['annotations'])
                         annotations = json.loads(c['annotations'])
                         for a in annotations:
-                            print(a)
+                            # print(a)
                             if a['task'] in combo_task_ids:
                                 # This is failing if different workflows have different combo tasks
                                 try:
