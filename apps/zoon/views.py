@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.auth.decorators import login_required
 
@@ -14,6 +14,17 @@ def index(request):
         'workflows': workflows
     }
     return render(request, 'index.html', context)
+
+
+@login_required(login_url='/admin/login/')
+def zoon_subject_lookup(request, zoon_subject_id):
+    try:
+        subject = ZooniverseSubject.objects.get(zoon_subject_id=zoon_subject_id)
+        response = redirect(f'/admin/zoon/zooniversesubject/{subject.pk}/change/')
+        return response
+    except:
+        raise
+
 
 @login_required(login_url='/admin/login/')
 def workflow_summary(request, workflow_id):

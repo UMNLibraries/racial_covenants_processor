@@ -84,7 +84,7 @@ def paginate_deedpage_df(df, matches_only=False):
         'page_image_web'
     ]].drop_duplicates()
 
-    # print('Join 1')
+    print('Join 1')
     # same doc num with multiple pages + splitpage
     doc_num_split_page_df = match_df[(match_df['doc_page_count'] > 1) & (match_df['split_page_num'] >= 1)].copy()
 
@@ -100,7 +100,7 @@ def paginate_deedpage_df(df, matches_only=False):
     # print(doc_num_split_page_df)
     # doc_num_split_page_df.to_csv('test_join_1.csv')
 
-    # print('Join 2')
+    print('Join 2')
     # no doc_num, book and page only, splitpage
     book_id_split_page_df = match_df[(match_df['doc_page_count'] == 1) & (match_df['split_page_num'] >= 1)].copy()
 
@@ -116,7 +116,7 @@ def paginate_deedpage_df(df, matches_only=False):
     # print(book_id_split_page_df)
     # book_id_split_page_df.to_csv('test_join_2.csv')
 
-    # print('Join 3')
+    print('Join 3')
     # no doc_num, book and page only, no splitpage
 
     book_id_no_split_page_df = match_df[(match_df['book_id'] != '') & (match_df['doc_page_count'] == 1)].copy()
@@ -133,7 +133,7 @@ def paginate_deedpage_df(df, matches_only=False):
     # print(book_id_no_split_page_df)
     # book_id_no_split_page_df.to_csv('test_join_3.csv')
 
-    # print('Join 4')
+    print('Join 4')
     # no doc_num, book and page only, no splitpage
     doc_num_one_page_df = match_df[(match_df['book_id'] == '') & (match_df['doc_page_count'] == 1)].copy()
 
@@ -145,7 +145,7 @@ def paginate_deedpage_df(df, matches_only=False):
     # print(book_id_no_split_page_df)
     # book_id_no_split_page_df.to_csv('test_join_4.csv')
 
-    # print('Join 5')
+    print('Join 5')
     # doc_num, no splitpage (everything left over)
     already_matched_lookups = pd.concat([
         doc_num_split_page_df['s3_lookup'],
@@ -154,8 +154,11 @@ def paginate_deedpage_df(df, matches_only=False):
         doc_num_one_page_df['s3_lookup']
     ])
 
+    print('isolation check')
     doc_num_no_split_page_df = match_df[~match_df['s3_lookup'].isin(already_matched_lookups)].copy()
 
+    print('actual merge')
+    print(doc_num_no_split_page_df)
     for offset in [-1, 1, 2]:
         doc_num_no_split_page_df = pagination_merge(
             doc_num_no_split_page_df,
