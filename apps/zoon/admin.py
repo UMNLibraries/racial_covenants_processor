@@ -1,6 +1,8 @@
 import datetime
 
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from rangefilter.filters import DateRangeFilter
@@ -205,6 +207,7 @@ class SubjectAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Final values', {
             'fields': (
+                'get_permalink',
                 'bool_covenant_final',
                 'bool_parcel_match',
                 'bool_handwritten_final',
@@ -256,6 +259,7 @@ class SubjectAdmin(admin.ModelAdmin):
 
     readonly_fields = [
         'workflow',
+        'get_permalink',
         'parcel_matches',
         'bool_parcel_match',
         'geom_union_4326',
@@ -293,6 +297,11 @@ class SubjectAdmin(admin.ModelAdmin):
         'deed_date_month_score',
         'deed_date_day_score',
     ]
+
+    def get_permalink(self, obj):
+        abs_url = reverse('zoon_subject_lookup', kwargs={"zoon_subject_id": str(obj.zoon_subject_id)})
+        print('hello' + abs_url)
+        return mark_safe(f'<a href="{abs_url}" target="_blank">{abs_url}</a>')
 
     # If you would like to add a default range filter
     # method pattern "get_rangefilter_{field_name}_default"

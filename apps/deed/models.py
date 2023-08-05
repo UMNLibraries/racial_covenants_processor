@@ -99,7 +99,7 @@ class DeedPage(models.Model):
                 kwargs['page_num'] = self.page_num
                 kwargs['doc_num'] = self.doc_num
         else:
-            if self.page_num > 0:
+            if self.page_num and self.page_num > 0:
                 kwargs['page_num'] = self.page_num + offset
 
                 # If the doc number includes the page number, then add offset to doc_num before attempting match

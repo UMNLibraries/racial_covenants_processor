@@ -38,6 +38,9 @@ urlpatterns = [
 
     path('workflow/<int:workflow_id>/', views.workflow_summary, name='workflow'),
     path('workflow/<int:workflow_id>/matches/', views.covenant_matches, name='workflow_matches'),
+
+    path('zooniverse-subject-lookup/<int:zoon_subject_id>/', views.zoon_subject_lookup, name='zoon_subject_lookup'),
+
     path('', views.index, name='index'),
 
     path('api/', include(router.urls)),

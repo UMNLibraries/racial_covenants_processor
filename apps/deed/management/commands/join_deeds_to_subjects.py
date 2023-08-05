@@ -88,14 +88,14 @@ class Command(BaseCommand):
         DeedPage.objects.bulk_update(
             pages_to_update, ['zooniverse_subject_id'])
 
-    def join_to_subjects(self, workflow):
-        '''
-        Joins DeedImage objects to the correct ZooniverseSubject, if found. Uses helper functions to generate lookups for efficient database updating.
-
-        Arguments:
-            workflow: Django ZooniverseWorkflow object
-        '''
-        print('Linking DeedPage records to ZooniverseSubject records ...')
+    # def join_to_subjects(self, workflow):
+    #     '''
+    #     Joins DeedImage objects to the correct ZooniverseSubject, if found. Uses helper functions to generate lookups for efficient database updating.
+    #
+    #     Arguments:
+    #         workflow: Django ZooniverseWorkflow object
+    #     '''
+    #     print('Linking DeedPage records to ZooniverseSubject records ...')
 
 
     def handle(self, *args, **kwargs):

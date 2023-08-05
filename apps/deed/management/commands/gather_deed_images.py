@@ -2,6 +2,7 @@
 import re
 import boto3
 import datetime
+import random
 import numpy as np
 import pandas as pd
 from pathlib import PurePath
@@ -123,6 +124,7 @@ class Command(BaseCommand):
         deed_pages = []
 
         # TODO: It would probably be more efficient to rewrite this loop in pandas
+        # print(random.sample(matching_keys, 100))
         for mk in matching_keys:
             try:
                 deed_image_regex = settings.ZOONIVERSE_QUESTION_LOOKUP[
@@ -147,6 +149,9 @@ class Command(BaseCommand):
                 # Set image path and s3 lookup
                 page_data['public_uuid'] = public_uuid
                 page_data['s3_lookup'] = mk.replace(f"ocr/stats/{workflow.slug}/", "").replace(f"__{public_uuid}.json", "")
+                # In order to associate doc numbers with a file that has been split with splitpages, you need to join with an original file lookup, rather than the final s3_lookup created by the lambda process.
+                page_data['orig_file_lookup'] = re.sub(r'_SPLITPAGE_\d+', '', page_data['s3_lookup'])
+                # print(page_data['orig_file_lookup'])
 
                 page_data['page_stats'] = mk
 
@@ -193,7 +198,10 @@ class Command(BaseCommand):
 
         # Remove fake Nones
         # deed_pages_df[['page_num']].loc[df['shield'] > 35] = 0
-        deed_pages_df['page_num'].replace('NONE', None, inplace=True)
+        if 'page_num' in deed_pages_df.columns:
+            deed_pages_df['page_num'].replace('NONE', None, inplace=True)
+        else:
+            deed_pages_df['page_num'] = None
 
         deed_pages_df = self.add_supplemental_info(deed_pages_df, workflow)
 
@@ -213,7 +221,8 @@ class Command(BaseCommand):
             'page_num_2',
             'split_page_num_-1',
             'split_page_num_1',
-            'split_page_num_2'
+            'split_page_num_2',
+            'orig_file_lookup',
         ])
 
         # print(deed_pages_df.to_dict('records'))

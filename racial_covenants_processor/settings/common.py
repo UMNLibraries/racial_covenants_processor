@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'apps.zoon',
     'apps.parcel',
     'apps.plat',
+    'apps.deedstat',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_gis',
     'django_filters',
+    'django_extensions',
     # 'debug_toolbar'
 ]
 
