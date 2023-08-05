@@ -14,7 +14,7 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: [3.9]
-        
+
     services:
       postgres:
         image: postgis/postgis:14-master
@@ -40,7 +40,7 @@ jobs:
         sudo apt install gdal-bin libgdal-dev
     - name: Install Dependencies with pipenv
       run: |
-        pip install pipenv
+        pip install pipenv==2022.10.12
         pipenv install
     - name: Run Tests
       run: |
