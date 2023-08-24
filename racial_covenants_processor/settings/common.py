@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_gis',
     'django_filters',
-    'django_extensions',
+    # 'django_extensions',
     # 'debug_toolbar'
 ]
 
