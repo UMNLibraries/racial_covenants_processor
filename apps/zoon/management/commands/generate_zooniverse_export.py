@@ -28,6 +28,7 @@ class Command(BaseCommand):
         print(f"Starting {extractor} reducer...")
         extractor_yaml = os.path.join(self.batch_dir,
             f"Reducer_config_workflow_{self.zoon_workflow_id}_V{str(self.zoon_workflow_version)}_{extractor}_extractor.yaml")
+        extractions_csv = os.path.join(self.batch_dir, f"{extractor}_extractor_extractions.csv")
 
         process = subprocess.run(['panoptes_aggregation', 'reduce', '-d', self.batch_dir, '-o', self.workflow.slug, extractions_csv, extractor_yaml])
 

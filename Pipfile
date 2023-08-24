@@ -11,7 +11,7 @@ django = "*"
 psycopg2-binary = "*"
 django-postgres-copy = "*"
 scikit-learn = "*"
-sqlalchemy = "*"
+sqlalchemy = "<2.0"
 pyyaml = "*"
 psycopg2 = "*"
 django-admin-rangefilter = "*"
@@ -31,7 +31,8 @@ ndjson = "*"
 panoptes-client = "*"
 django-debug-toolbar = "*"
 panoptes-aggregation = "*"
-joblib = "==1.1.0"  # TEMP to get around bug, but leaves security vulnerability in place
+joblib = "*"
+# joblib = "==1.1.0"  # TEMP to get around bug, but leaves security vulnerability in place
 fiona = "*"
 django-extensions = "*"
 
