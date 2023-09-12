@@ -39,48 +39,6 @@ Once all of the below load scripts have been run, many covenants (ZooniverseSubj
 - AWS SAM for lambdas (separate repos)
 - libmagic (mostly to silence panoptes/zooniverse warnings)
 
-## Downloading new batches of Zooniverse results
-1. Export updated manual corrections in case something goes wrong, though you generally won't need to reload these (just re-join) unless your database needs to be completely rebuilt
-```
-python manage.py dump_manual_corrections --workflow "WI Milwaukee County"
-python manage.py dump_extra_parcels --workflow "WI Milwaukee County"
-```
-1. Create and download a fresh Zooniverse export from the Zooniverse Lab tab.  
-    A. Click Lab > Data Exports > Request new workflow classification export  
-    B. Click Lab > Data Exports > Request new workflow export  
-    C. Download files once notified by email.  
-    D. Place downloaded files in `racial_covenants_processor/racial_covenants_processor/data/zooniverse_exports/your-workflow-slug/`  
-    E. If necessary, rename downloaded files to `your-workflow-slug-classifications.csv` (e.g. `wi-milwaukee-county-classifications.csv`) and `your-workflow-slug-workflows.csv` (e.g. `wi-milwaukee-county-workflows.csv`)
-1. Process exported batch results from Zooniverse (Using command line tools)
-```
-python manage.py generate_zooniverse_export --workflow "WI Milwaukee County"
-```
-1. Load raw and aggregated Zooniverse responses into individual property matches
-```
-python manage.py load_zooniverse_export --slow --workflow "WI Milwaukee County"
-```
-1. Join deed images to zooniverse subjects
-```
-python manage.py join_deeds_to_subjects --workflow "WI Milwaukee County"
-```
-1. Re-join manual corrections to subjects
-```
-python manage.py connect_manual_corrections --workflow "WI Milwaukee County"
-python manage.py connect_extra_parcels --workflow "WI Milwaukee County"
-```
-1. Automated join of matches to modern parcel map
-```
-python manage.py rebuild_covenant_spatial_lookups --workflow "WI Milwaukee County"
-python manage.py match_parcels --workflow "WI Milwaukee County"
-```
-1. Manual cleanup as needed.
-1. Export shapefile/data layers
-```
-python manage.py dump_covenants_shapefile --workflow "WI Milwaukee County"
-python manage.py dump_covenants_geojson --workflow "WI Milwaukee County"
-python manage.py dump_covenants_csv --workflow "WI Milwaukee County"
-```
-
 
 ## High-level workflow
 1. Start new config entry in local_settings.py
@@ -93,7 +51,7 @@ ZOONIVERSE_QUESTION_LOOKUP = {
     }
   }
 ```
-1. Identify deed image folder structure and add glob and regex parameters to parse deed image metadata that can be gleaned from the filepath.
+2. Identify deed image folder structure and add glob and regex parameters to parse deed image metadata that can be gleaned from the filepath.
 ```
 ZOONIVERSE_QUESTION_LOOKUP = {
     'WI Milwauke County': {
@@ -106,11 +64,11 @@ ZOONIVERSE_QUESTION_LOOKUP = {
     }
   }
 ```
-1. Create workflow object
+3. Create workflow object
 ```
 python manage.py create_workflow --workflow "WI Milwaukee County"
 ```
-1. Upload deed images to private s3 bucket. This will trigger lambdas to OCR the text, generate basic document statistics, check for racial terms and to make web versions of the document images.
+4. Upload deed images to private s3 bucket. This will trigger lambdas to OCR the text, generate basic document statistics, check for racial terms and to make web versions of the document images.
 ```
 python manage.py upload_deed_images --workflow "WI Milwaukee County"
 
@@ -123,57 +81,57 @@ python manage.py trigger_lambda_refresh --workflow "WI Milwaukee County"
  # To delete:
 python manage.py delete_raw_images
 ```
-1. Gather results of document image uploads into the Django app. Optionally, add supplemental info like missing doc nums that have been provided in a separate csv.
+5. Gather results of document image uploads into the Django app. Optionally, add supplemental info like missing doc nums that have been provided in a separate csv.
 ```
 python manage.py gather_deed_images --workflow "WI Milwaukee County"
 ```
-1. Gather list of positive matches for racially restrictive language and join to deed image records in Django app
+6. Gather list of positive matches for racially restrictive language and join to deed image records in Django app
 ```
 python manage.py gather_image_hits --workflow "WI Milwaukee County"
 ```
-1. Upload batch of records to Zooniverse for community confirmation
+7. Upload batch of records to Zooniverse for community confirmation
 ```
 python manage.py upload_to_zooniverse --workflow "WI Milwaukee County" -n 200
 ```
-1. (Or, optionally) Export manifest in order to upload matching files to Zooniverse (or point to S3 images)
+8. (Or, optionally) Export manifest in order to upload matching files to Zooniverse (or point to S3 images)
 ```
 python manage.py build_zooniverse_manifest --workflow "WI Milwaukee County"
 ```
-1. Process exported batch results from Zooniverse (Using command line tools)
+9. Process exported batch results from Zooniverse (Using command line tools)
 ```
 python manage.py generate_zooniverse_export --workflow "WI Milwaukee County"
 ```
-1. Load raw and aggregated Zooniverse responses into individual property matches
+10. Load raw and aggregated Zooniverse responses into individual property matches
 ```
 python manage.py load_zooniverse_export --slow --workflow "WI Milwaukee County"
 ```
-1. Join deed images to zooniverse subjects
+11. Join deed images to zooniverse subjects
 ```
 python manage.py join_deeds_to_subjects --workflow "WI Milwaukee County"
 ```
-1. Optional: Load images to s3 and/or list of plats/additions to help with autojoin to Parcels and with manual research
+12. Optional: Load images to s3 and/or list of plats/additions to help with autojoin to Parcels and with manual research
 ```
 python manage.py upload_plat_images --workflow "WI Milwaukee County"
 python manage.py load_plat_records --workflow "WI Milwaukee County"
 ```
-1. Optional: Load subdivision spatial layer to help with autojoin to Parcels and with manual research
+13. Optional: Load subdivision spatial layer to help with autojoin to Parcels and with manual research
 ```
 python manage.py load_subdivision_shp --workflow "WI Milwaukee County"
 ```
-1. Load modern parcel shapefiles with unique fields mapped to unified subset
+14. Load modern parcel shapefiles with unique fields mapped to unified subset
 ```
 python manage.py load_parcel_shp --workflow "WI Milwaukee County"
 ```
-1. Automated join of matches to modern parcel map
+15. Automated join of matches to modern parcel map
 ```
 python manage.py rebuild_parcel_spatial_lookups --workflow "WI Milwaukee County"
 python manage.py rebuild_covenant_spatial_lookups --workflow "WI Milwaukee County"
 python manage.py match_parcels --workflow "WI Milwaukee County"
 ```
-1. Export list of unmatched confirmed covenants
-1. Manual (GUIish?) cleanup of bad joins, split parcels, etc.
-1. Metes and bounds manual tracing
-1. Final shapefile/data layers
+16. Export list of unmatched confirmed covenants
+17. Manual (GUIish?) cleanup of bad joins, split parcels, etc.
+18. Metes and bounds manual tracing
+19. Final shapefile/data layers
 ```
 python manage.py dump_covenants_shapefile --workflow "WI Milwaukee County"
 python manage.py dump_covenants_geojson --workflow "WI Milwaukee County"
@@ -206,6 +164,50 @@ python manage.py load_subdivision_alternate_names --workflow "WI Milwaukee Count
 python manage.py connect_plat_alternate_names --workflow "WI Milwaukee County"
 python manage.py connect_subdivision_alternate_names --workflow "WI Milwaukee County"
 ```
+
+
+## Downloading new batches of Zooniverse results
+1. Export updated manual corrections in case something goes wrong, though you generally won't need to reload these (just re-join) unless your database needs to be completely rebuilt
+```
+python manage.py dump_manual_corrections --workflow "WI Milwaukee County"
+python manage.py dump_extra_parcels --workflow "WI Milwaukee County"
+```
+2. Create and download a fresh Zooniverse export from the Zooniverse Lab tab.  
+    A. Click Lab > Data Exports > Request new workflow classification export  
+    B. Click Lab > Data Exports > Request new workflow export  
+    C. Download files once notified by email.  
+    D. Place downloaded files in `racial_covenants_processor/racial_covenants_processor/data/zooniverse_exports/your-workflow-slug/`  
+    E. If necessary, rename downloaded files to `your-workflow-slug-classifications.csv` (e.g. `wi-milwaukee-county-classifications.csv`) and `your-workflow-slug-workflows.csv` (e.g. `wi-milwaukee-county-workflows.csv`)
+3. Process exported batch results from Zooniverse (Using command line tools)
+```
+python manage.py generate_zooniverse_export --workflow "WI Milwaukee County"
+```
+4. Load raw and aggregated Zooniverse responses into individual property matches
+```
+python manage.py load_zooniverse_export --slow --workflow "WI Milwaukee County"
+```
+5. Join deed images to zooniverse subjects
+```
+python manage.py join_deeds_to_subjects --workflow "WI Milwaukee County"
+```
+6. Re-join manual corrections to subjects
+```
+python manage.py connect_manual_corrections --workflow "WI Milwaukee County"
+python manage.py connect_extra_parcels --workflow "WI Milwaukee County"
+```
+7. Automated join of matches to modern parcel map
+```
+python manage.py rebuild_covenant_spatial_lookups --workflow "WI Milwaukee County"
+python manage.py match_parcels --workflow "WI Milwaukee County"
+```
+8. Manual cleanup as needed.
+9. Export shapefile/data layers
+```
+python manage.py dump_covenants_shapefile --workflow "WI Milwaukee County"
+python manage.py dump_covenants_geojson --workflow "WI Milwaukee County"
+python manage.py dump_covenants_csv --workflow "WI Milwaukee County"
+```
+
 
 ## Standalone deed uploader
 Often deed images are stored on a local machine or network drive, and it's not feasible or efficient to move them. This standalone uploader is designed to avoid the user having to do a full install on this computer.

@@ -150,7 +150,7 @@ class Command(BaseCommand):
             match_type_final='AW',
             bool_manual_correction=True
         ).exclude(
-            addition_final__in=['', None, 'NONE']
+            addition_final__in=['', None, 'NONE', 'UNKNOWN']
         ).order_by('addition_final'):
             print(f'{covenant.addition_final}...')
             # Save method should pick up addition-wide covenants

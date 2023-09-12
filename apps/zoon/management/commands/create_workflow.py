@@ -15,7 +15,7 @@ from apps.zoon.utils.zooniverse_config import get_workflow_version
 
 
 class Command(BaseCommand):
-    '''This is the main loader for a Zooniverse export and set of reduced output into the Django app.'''
+    '''This is the initial step of adding a new jurisdiction to the Deed Machine.'''
     batch_config = None  # Set in handle
 
     def add_arguments(self, parser):
