@@ -269,8 +269,8 @@ def addition_wide_parcel_match(cov_obj):
             cov_obj.parcel_matches.add(*matching_parcels.all())
 
     # Lookup by plat map obj
-    matching_plats = Plat.objects.filter(plat_name_standardized=plat_name_standardized)
-    matching_plat_alternates = PlatAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
+    matching_plats = Plat.objects.filter(workflow=cov_obj.workflow, plat_name_standardized=plat_name_standardized)
+    matching_plat_alternates = PlatAlternateName.objects.filter(workflow=cov_obj.workflow, alternate_name_standardized=plat_name_standardized)
 
     if matching_plats.count() > 0:
         cov_obj.bool_parcel_match = True
@@ -284,8 +284,8 @@ def addition_wide_parcel_match(cov_obj):
             cov_obj.parcel_matches.add(*p.plat.parcel_set.all())
 
     # Lookup by subdivision
-    matching_subdivisions = Subdivision.objects.filter(name_standardized=plat_name_standardized)
-    matching_subdivision_alternates = SubdivisionAlternateName.objects.filter(alternate_name_standardized=plat_name_standardized)
+    matching_subdivisions = Subdivision.objects.filter(workflow=cov_obj.workflow, name_standardized=plat_name_standardized)
+    matching_subdivision_alternates = SubdivisionAlternateName.objects.filter(workflow=cov_obj.workflow, alternate_name_standardized=plat_name_standardized)
 
     if matching_subdivisions.count() > 0:
         cov_obj.bool_parcel_match = True

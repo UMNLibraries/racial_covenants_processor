@@ -30,11 +30,11 @@ djangorestframework-gis = "*"
 ndjson = "*"
 panoptes-client = "*"
 django-debug-toolbar = "*"
-panoptes-aggregation = "*"
 joblib = "*"
 # joblib = "==1.1.0"  # TEMP to get around bug, but leaves security vulnerability in place
 fiona = "*"
 django-extensions = "*"
+panoptes-aggregation = {editable = true, ref = "master", git = "git+https://github.com/zooniverse/aggregation-for-caesar"}
 
 [dev-packages]
 csvkit = "*"
