@@ -49,8 +49,24 @@ class DeedPage(models.Model):
     next_next_page_image_web = models.ImageField(
         storage=PublicDeedStorage(), max_length=200, null=True, db_index=True)
 
+    prev_page_image_lookup = models.CharField(
+        blank=True, max_length=100, null=True)
+    next_page_image_lookup = models.CharField(
+        blank=True, max_length=100, null=True)
+    next_next_page_image_lookup = models.CharField(
+        blank=True, max_length=100, null=True)
+
+    # Used to join to the matching subject for this if it's a hit
     zooniverse_subject = models.ForeignKey(
-        ZooniverseSubject, on_delete=models.SET_NULL, null=True)
+        ZooniverseSubject, on_delete=models.SET_NULL, related_name='subject_legacy', null=True)
+
+    # This is assuming that each page can only be in a given position for a single Zooniverse Subject, even though the same page could be part of each Zooniverse Subject's prev/next images
+    zooniverse_subject_1st_page = models.ForeignKey(
+        ZooniverseSubject, on_delete=models.SET_NULL, related_name='subject_1st_page', null=True)
+    zooniverse_subject_2nd_page = models.ForeignKey(
+        ZooniverseSubject, on_delete=models.SET_NULL, related_name='subject_2nd_page', null=True)
+    zooniverse_subject_3rd_page = models.ForeignKey(
+        ZooniverseSubject, on_delete=models.SET_NULL, related_name='subject_3rd_page', null=True)
 
     class Meta:
         indexes = [

@@ -74,7 +74,8 @@ class ZooniverseSubject(models.Model):
     workflow = models.ForeignKey(ZooniverseWorkflow, on_delete=models.CASCADE)
     zoon_subject_id = models.IntegerField(db_index=True)
 
-    image_ids = models.JSONField(blank=True)
+    image_ids = models.JSONField(blank=True)  # used to be links, future will be s3_lookup, might be unnecessary?
+    image_links = models.JSONField(blank=True, null=True)
 
     dt_retired = models.DateTimeField(null=True)
 
@@ -166,6 +167,24 @@ class ZooniverseSubject(models.Model):
 
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"
+
+
+    @property
+    def deed_pages(self):
+        dps = []
+        try:
+            dps.append(self.subject_1st_page.all()[0])
+        except:
+            pass
+        try:
+            dps.append(self.subject_2nd_page.all()[0])
+        except:
+            pass
+        try:
+            dps.append(self.subject_3rd_page.all()[0])
+        except:
+            pass
+        return dps
 
     @property
     def join_strings(self):

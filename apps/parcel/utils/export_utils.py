@@ -69,7 +69,12 @@ def build_gdf(workflow):
 
         'zn_subj_id',
         'zn_dt_ret',
-        'image_ids',
+        # 'image_ids',
+
+        'deed_page_1',
+        'deed_page_2',
+        'deed_page_3',
+
         'med_score',
         'manual_cx',
         'match_type',
@@ -110,7 +115,9 @@ def build_gdf(workflow):
     # print(covenants_df[covenants_df['match_type'] == ''][['add_cov', 'block_cov', 'join_strgs', 'add_mod', 'ph_dsc_mod']])
     covenants_df['match_type'] = covenants_df['match_type'].apply(lambda x: [mt[1] for mt in MATCH_TYPES if mt[0] == x][0] if x is not None else 'Automatic match')
 
-    covenants_df['image_ids'] = covenants_df['image_ids'].apply(lambda x: ','.join([img if img else '' for img in x]))
+    covenants_df['image_ids'] = covenants_df[['deed_page_1', 'deed_page_2', 'deed_page_3']].apply(lambda x: ','.join(x.dropna()), axis=1)
+
+    # covenants_df['image_ids'] = covenants_df['image_ids'].apply(lambda x: ','.join([img if img else '' for img in x]))
 
     # Currently blank fields in existing workflows
     covenants_df[[
@@ -120,7 +127,7 @@ def build_gdf(workflow):
         'geocd_dist',
     ]] = ''
 
-    covenants_df.drop(columns=['join_candidates'], inplace=True)
+    covenants_df.drop(columns=['join_candidates', 'deed_page_1', 'deed_page_2', 'deed_page_3'], inplace=True)
 
     covenants_df.rename(columns={
         'id': 'db_id',
@@ -153,7 +160,10 @@ def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
         'cov_text',
         'zn_subj_id',
         'zn_dt_ret',
-        'image_ids',
+        # 'image_ids',
+        'deed_page_1',
+        'deed_page_2',
+        'deed_page_3',
         'med_score',
         'manual_cx',
         'match_type',
@@ -172,6 +182,8 @@ def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
         'seller_final': 'seller',
         'buyer_final': 'buyer',
     }, inplace=True)
+
+    covenants_df['image_ids'] = covenants_df[['deed_page_1', 'deed_page_2', 'deed_page_3']].apply(lambda x: ','.join(x.dropna()), axis=1)
 
     unmapped_df['cnty_name'] = cnty_name
     unmapped_df['cnty_fips'] = cnty_fips

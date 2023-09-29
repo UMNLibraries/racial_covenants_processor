@@ -193,6 +193,7 @@ class Command(BaseCommand):
             'subject_data_flat__doc_num',
             'subject_data_flat__#s3_lookup',
             'subject_data_flat__retired__retired_at',
+            'subject_data_flat__image_ids',
             'subject_data_flat__image_1',
             'subject_data_flat__image_2',
             'subject_data_flat__image_3',
@@ -209,10 +210,14 @@ class Command(BaseCommand):
             'subject_data_flat__image_3',
             'subject_data_flat__image_4'
         ]
-        subject_df['image_ids'] = subject_df[image_cols].values.tolist()
-        subject_df['image_ids'] = subject_df['image_ids'].apply(
+        subject_df['image_links'] = subject_df[image_cols].values.tolist()
+        subject_df['image_links'] = subject_df['image_links'].apply(
             lambda x: json.dumps(x))
 
+        # S3 lookups, not image links
+        subject_df['image_ids'] = subject_df['subject_data_flat__image_ids'].apply(lambda x: json.dumps(split(x)))
+
+        subject_df.drop(columns=['subject_data_flat__image_ids'], inplace=True)
         subject_df.drop(columns=image_cols, inplace=True)
 
         subject_df.rename(columns={

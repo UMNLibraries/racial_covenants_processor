@@ -79,8 +79,30 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
                 default_frame=1, then=F('next_next_page_image_web')
             ),
             default=F('next_page_image_web')
+        ),
+        # Duplicates logic above (sorry) to fill out image lookups
+        imagelookup1=Case(
+            When(
+                prev_page_image_lookup__in=[None, ''], then=F('s3_lookup')
+            ),
+            default=F('prev_page_image_lookup')
+        ),
+        imagelookup2=Case(
+            When(
+                prev_page_image_lookup__in=[None, ''], then=F('next_page_image_lookup')
+            ),
+            default=F('s3_lookup')
+        ),
+        imagelookup3=Case(
+            When(
+                next_page_image_lookup__in=[None, ''], then=Value(None)
+            ),
+            When(
+                default_frame=1, then=F('next_next_page_image_lookup')
+            ),
+            default=F('next_page_image_lookup')
         )
-    ).values('pk', 'doc_num', 'page_num', 'split_page_num', 'doc_page_count', 'default_frame', 'page_image_web', 'image1', 'image2', 'image3', 's3_lookup', 'matched_terms_list')[0:num_rows]
+    ).values('pk', 'doc_num', 'page_num', 'split_page_num', 'doc_page_count', 'default_frame', 'page_image_web', 'image1', 'image2', 'image3', 'imagelookup1', 'imagelookup2', 'imagelookup3', 's3_lookup', 'matched_terms_list')[0:num_rows]
 
     url_prefix = get_image_url_prefix(pages_with_hits[0]['page_image_web'])
     # url_prefix = PrivateMediaStorage().url(
@@ -96,6 +118,12 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
     manifest_df['#image1'] = manifest_df['#image1'].apply(lambda x: get_full_url(url_prefix, x))
     manifest_df['#image2'] = manifest_df['#image2'].apply(lambda x: get_full_url(url_prefix, x))
     manifest_df['#image3'] = manifest_df['#image3'].apply(lambda x: get_full_url(url_prefix, x))
+
+    image_lookup_cols = ['imagelookup1', 'imagelookup2', 'imagelookup3']
+    manifest_df['image_ids'] = manifest_df[image_lookup_cols].fillna(value='').apply(lambda row: ','.join( row.values.astype(str)), axis=1)
+    manifest_df['image_ids'] = manifest_df['image_ids'].apply(lambda x: ','.join([val for val in x.split(',') if val != '']))
+
+    manifest_df = manifest_df.drop(columns=image_lookup_cols)
 
     manifest_df['page_num_str'] = manifest_df['page_num'].apply(lambda x: int_str_or_blank(x))
     manifest_df.drop(columns=['page_num'], inplace=True)

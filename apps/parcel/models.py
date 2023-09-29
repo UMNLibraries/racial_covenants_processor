@@ -12,6 +12,8 @@ class CovenantsParcelManager(models.Manager):
     def get_queryset(self):
         from apps.zoon.models import ZooniverseSubject, ManualCovenant
 
+        # annotate with deed page lookups?
+
         oldest_deed = ZooniverseSubject.objects.filter(
             parcel_matches=OuterRef('pk'),
             bool_covenant_final=True,
@@ -19,7 +21,10 @@ class CovenantsParcelManager(models.Manager):
         ).only(
             'workflow',
             'zoon_subject_id',
-            'image_ids',
+            'image_links',
+            'subject_1st_page__s3_lookup',
+            'subject_2nd_page__s3_lookup',
+            'subject_3rd_page__s3_lookup',
             'dt_retired',
             'bool_covenant_final',
             'covenant_text_final',
@@ -113,13 +118,40 @@ class CovenantsParcelManager(models.Manager):
                 output_field=IntegerField()
             )
         ).annotate(
-            image_ids=Case(
+            image_links=Case(
                 When(
                     Exists(oldest_deed),
-                    then=Subquery(oldest_deed.values('image_ids'))
+                    then=Subquery(oldest_deed.values('image_links'))
                 ),
                 default=Value("[]"),
                 output_field=JSONField()
+            )
+        ).annotate(
+            deed_page_1=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('subject_1st_page__s3_lookup'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
+        ).annotate(
+            deed_page_2=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('subject_2nd_page__s3_lookup'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
+        ).annotate(
+            deed_page_3=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('subject_3rd_page__s3_lookup'))
+                ),
+                default=Value(''),
+                output_field=CharField()
             )
         ).annotate(
             zn_dt_ret=Case(
