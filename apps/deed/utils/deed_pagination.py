@@ -22,16 +22,20 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
 
     if offset == -1:
         new_image_field = 'prev_page_image_web'
+        new_image_lookup_field = 'prev_page_image_lookup'
     elif offset == 1:
         new_image_field = 'next_page_image_web'
+        new_image_lookup_field = 'next_page_image_lookup'
     elif offset == 2:
         new_image_field = 'next_next_page_image_web'
+        new_image_lookup_field = 'next_next_page_image_lookup'
 
     match_df[f'{split_str}page_num_{offset}'] = match_df[f'{split_str}page_num'] + offset
 
     # doc_list_copy = doc_list_df.copy()
     # Rather than making a copy here, why not just keep changing/adding values for lookup purposes, and drop unwanted columns when merging
     doc_list_df[new_image_field] = doc_list_df['page_image_web']
+    doc_list_df[new_image_lookup_field] = doc_list_df['s3_lookup']
     doc_list_df[f'{split_str}page_num_right'] = doc_list_df[f'{split_str}page_num']
     # doc_list_copy.drop(columns=['page_image_web', f'{split_str}page_num'])
 
@@ -41,7 +45,8 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
         doc_list_df[[
             doc_or_book_selector,
             f'{split_str}page_num_right',
-            new_image_field
+            new_image_field,
+            new_image_lookup_field
         ]],
         # doc_list_df.copy()[[
         #     doc_or_book_selector,
@@ -141,6 +146,9 @@ def paginate_deedpage_df(df, matches_only=False):
     doc_num_one_page_df['prev_page_image_web'] = ''
     doc_num_one_page_df['next_page_image_web'] = ''
     doc_num_one_page_df['next_next_page_image_web'] = ''
+    doc_num_one_page_df['prev_page_image_lookup'] = ''
+    doc_num_one_page_df['next_page_image_lookup'] = ''
+    doc_num_one_page_df['next_next_page_image_lookup'] = ''
 
     # print(book_id_no_split_page_df)
     # book_id_no_split_page_df.to_csv('test_join_4.csv')
@@ -183,7 +191,10 @@ def paginate_deedpage_df(df, matches_only=False):
     cols_to_fill = [
         'prev_page_image_web',
         'next_page_image_web',
-        'next_next_page_image_web'
+        'next_next_page_image_web',
+        'prev_page_image_lookup',
+        'next_page_image_lookup',
+        'next_next_page_image_lookup'
     ]
     out_df.loc[:, cols_to_fill] = out_df.loc[:, cols_to_fill].fillna('')
 
@@ -222,7 +233,13 @@ def tag_prev_next_image_sql(workflow, matches_only=False):
 
     update_df = pd.DataFrame(objs_to_update).merge(
         match_df[[
-            's3_lookup', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web'
+            's3_lookup',
+            'prev_page_image_web',
+            'next_page_image_web',
+            'next_next_page_image_web',
+            'prev_page_image_lookup',
+            'next_page_image_lookup',
+            'next_next_page_image_lookup'
         ]].drop_duplicates().fillna(value=''),
         how="left",
         on="s3_lookup"
@@ -233,10 +250,18 @@ def tag_prev_next_image_sql(workflow, matches_only=False):
     dp_objs = [DeedPage(**kv) for kv in update_df.to_dict('records')]
     DeedPage.objects.bulk_update(
         dp_objs,
-        ['prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web'],
+        [
+            'prev_page_image_web',
+            'next_page_image_web',
+            'next_next_page_image_web',
+            'prev_page_image_lookup',
+            'next_page_image_lookup',
+            'next_next_page_image_lookup'
+        ],
         batch_size=5000
     )
 
+# DEPRECATED
 def pagination_merge_deedpage(workflow, image_lookup_df, offset=1):
     if offset == -1:
         label = 'prev'

@@ -15,23 +15,36 @@ from apps.zoon.models import ZooniverseWorkflow, ZooniverseResponseProcessed, Zo
 class WorkflowAdmin(admin.ModelAdmin):
     pass
 
-class DeedImageInline(admin.TabularInline):
+deed_page_exclude_fields = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id', 'batch_id', 'doc_type', 'page_stats', 'public_uuid', 'bool_exception', 'doc_page_count', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web', 'prev_page_image_lookup', 'next_page_image_lookup', 'next_next_page_image_lookup', 'zooniverse_subject']
+
+class DeedImageInline1st(admin.TabularInline):
     model = DeedPage
+    verbose_name_plural = 'Deed page 1'
+    fk_name = 'zooniverse_subject_1st_page'
     extra = 0
-    exclude = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id', 'batch_id', 'doc_type', 'page_stats', 'public_uuid', 'bool_exception', 'doc_page_count', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web']
+    exclude = deed_page_exclude_fields + ['zooniverse_subject_2nd_page', 'zooniverse_subject_3rd_page']
     # show_change_link = True
 
     readonly_fields = ['record_link', 'doc_num', 'book_id', 'page_num', 'split_page_num',
                        'doc_date', 'bool_match', 'matched_terms', 'page_ocr_text',
                        'thumbnail_preview']
 
-    # def record_link(self, obj):
-    #     page_num = f"Page {obj.page_num}" if obj.page_num else ''
-    #     split_page_num = f"Splitpage {obj.split_page_num}" if obj.split_page_num else ''
-    #     return f"<a href='/admin/deed/deedpage/{obj.pk}/change/>{obj.doc_num} {page_num} {split_page_num}</a>"
+    def has_add_permission(self, request, obj=None):
+        return False
 
-    # record_link.short_description = 'Doc num/page'
-    # record_link.allow_tags = True
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+class DeedImageInline2nd(DeedImageInline1st):
+    verbose_name_plural = 'Deed page 2'
+    fk_name = 'zooniverse_subject_2nd_page'
+    exclude = deed_page_exclude_fields + ['zooniverse_subject_1st_page', 'zooniverse_subject_3rd_page']
+
+
+class DeedImageInline3rd(DeedImageInline1st):
+    verbose_name_plural = 'Deed page 3'
+    fk_name = 'zooniverse_subject_3rd_page'
+    exclude = deed_page_exclude_fields + ['zooniverse_subject_1st_page', 'zooniverse_subject_2nd_page']
 
 
 class ManualSupportingDocumentInline(admin.StackedInline):
@@ -200,7 +213,10 @@ class SubjectAdmin(admin.ModelAdmin):
     inlines = [
         ManualCorrectionInline,
         ExtraParcelCandidateInline,
-        DeedImageInline,
+        # DeedImageInline,
+        DeedImageInline1st,
+        DeedImageInline2nd,
+        DeedImageInline3rd,
         ResponseInline
     ]
 
@@ -300,7 +316,7 @@ class SubjectAdmin(admin.ModelAdmin):
 
     def get_permalink(self, obj):
         abs_url = reverse('zoon_subject_lookup', kwargs={"zoon_subject_id": str(obj.zoon_subject_id)})
-        print('hello' + abs_url)
+        # print('hello' + abs_url)
         return mark_safe(f'<a href="{abs_url}" target="_blank">{abs_url}</a>')
 
     # If you would like to add a default range filter

@@ -33,7 +33,10 @@ class DeedPageAdmin(admin.ModelAdmin):
         'thumbnail_preview',
         'prev_thumbnail_preview',
         'next_thumbnail_preview',
-        'zooniverse_subject',
+        # 'zooniverse_subject',
+        'zooniverse_subject_1st_page',
+        'zooniverse_subject_2nd_page',
+        'zooniverse_subject_3rd_page',
         's3_lookup',
         'doc_type',
         'page_stats',
@@ -42,7 +45,7 @@ class DeedPageAdmin(admin.ModelAdmin):
         'public_uuid',
         'matched_terms'
     )
-    exclude = ['page_image_web', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web', 'prev_deedpage', 'next_deedpage', 'next_next_deedpage']
+    exclude = ['page_image_web', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web', 'prev_deedpage', 'next_deedpage', 'next_next_deedpage', 'prev_page_image_lookup', 'next_page_image_lookup', 'next_next_page_image_lookup', 'zooniverse_subject']
 
     def get_queryset(self, request):
         qs = super().get_queryset(request).defer('page_stats', 'page_ocr_json', 'page_ocr_text', 'zooniverse_subject', 'doc_alt_id', 'public_uuid', 'page_image_web')
