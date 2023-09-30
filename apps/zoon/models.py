@@ -546,7 +546,7 @@ class ManualCovenant(models.Model):
 
         # For plat covenant, separate routine to find all with matching addition
         if self.bool_confirmed:
-            if self.match_type == 'PT':
+            if self.cov_type == 'PT':
                 addition_wide_parcel_match(self)
 
             # TODO: filter by parcel other? Or just make someone add plat or plat alternate. If so, need way to manually add plat
