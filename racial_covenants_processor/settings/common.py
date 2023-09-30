@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'apps.zoon',
     'apps.parcel',
     'apps.plat',
-    'apps.deedstat',
+    # 'apps.deedstat',
 
     'django.contrib.admin',
     'django.contrib.auth',
