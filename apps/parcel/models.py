@@ -398,6 +398,30 @@ class CSVExport(models.Model):
         ordering = ('-id',)
 
 
+class UnmappedCSVExport(models.Model):
+    workflow = models.ForeignKey(
+         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
+    csv = models.FileField(
+        storage=PublicMediaStorage(), upload_to="main_exports/", null=True)
+    covenant_count = models.IntegerField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ('-id',)
+
+
+class ValidationCSVExport(models.Model):
+    workflow = models.ForeignKey(
+         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
+    csv = models.FileField(
+        storage=PublicMediaStorage(), upload_to="main_exports/", null=True)
+    covenant_count = models.IntegerField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ('-id',)
+
+
 class GeoJSONExport(models.Model):
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)

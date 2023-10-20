@@ -7,8 +7,8 @@ from django.core.management.base import BaseCommand
 from django.core.files.base import File
 from django.conf import settings
 
-from apps.parcel.models import UnmappedCSVExport
-from apps.parcel.utils.export_utils import build_unmapped_df
+from apps.parcel.models import ValidationCSVExport
+from apps.parcel.utils.export_utils import build_validation_df
 from apps.zoon.models import MATCH_TYPE_OPTIONS
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
@@ -35,7 +35,7 @@ class Command(BaseCommand):
             tmp_file_path = os.path.join(tmp_dir, f'{version_slug}.csv')
             df.to_csv(tmp_file_path, index=False)
 
-            csv_export_obj = UnmappedCSVExport(
+            csv_export_obj = ValidationCSVExport(
                 workflow=workflow,
                 covenant_count=df.shape[0],
                 created_at=created_at
@@ -54,13 +54,13 @@ class Command(BaseCommand):
         else:
             workflow = get_workflow_obj(workflow_name)
 
-            covenants_df = build_unmapped_df(workflow)
+            covenants_df = build_validation_df(workflow)
 
             print(covenants_df)
 
             now = datetime.datetime.now()
             timestamp = now.strftime('%Y%m%d_%H%M')
-            version_slug = f"{workflow.slug}_covenants_unmapped_{timestamp}"
+            version_slug = f"{workflow.slug}_subject_validation_{timestamp}"
 
             if kwargs['local']:
                 csv_local = self.save_csv_local(covenants_df, version_slug)

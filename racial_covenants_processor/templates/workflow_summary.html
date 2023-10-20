@@ -63,6 +63,16 @@
     <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.covenant_count|intcomma }} mapped covenants</p>
   {% endfor %}
 
+  <h3>Download unmapped CSVs</h3>
+  {% for csv in unmapped_exports %}
+    <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.covenant_count|intcomma }} unmapped subjects</p>
+  {% endfor %}
+
+  <h3>Download validation CSVs</h3>
+  {% for csv in validation_exports %}
+    <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.covenant_count|intcomma }} retired Zooniverse subjects</p>
+  {% endfor %}
+
   <h3>Download past join reports</h3>
   {% for report in join_reports %}
     <p><a href="{{ report.report_csv.url }}">{{ report.created_at }}</a> {{ report.covenant_count|intcomma }} covenants</p>

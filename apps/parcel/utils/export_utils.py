@@ -146,6 +146,7 @@ def build_gdf(workflow):
 
     return covenants_geo_df
 
+
 def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
     unmapped_covenants = ZooniverseSubject.unmapped_objects.filter(
         workflow=workflow
@@ -160,10 +161,10 @@ def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
         'cov_text',
         'zn_subj_id',
         'zn_dt_ret',
-        # 'image_ids',
-        'deed_page_1',
-        'deed_page_2',
-        'deed_page_3',
+        'image_ids',
+        # 'deed_page_1',
+        # 'deed_page_2',
+        # 'deed_page_3',
         'med_score',
         'manual_cx',
         'match_type',
@@ -183,10 +184,60 @@ def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
         'buyer_final': 'buyer',
     }, inplace=True)
 
-    covenants_df['image_ids'] = covenants_df[['deed_page_1', 'deed_page_2', 'deed_page_3']].apply(lambda x: ','.join(x.dropna()), axis=1)
+    # covenants_df['image_ids'] = covenants_df[[
+    #     'deed_page_1', 'deed_page_2', 'deed_page_3'
+    # ]].apply(lambda x: ','.join(x.dropna()), axis=1)
 
     unmapped_df['cnty_name'] = cnty_name
     unmapped_df['cnty_fips'] = cnty_fips
     # unmapped_df['match_type'] = 'unmapped'
 
     return unmapped_df
+
+
+def build_validation_df(workflow):
+    '''In contrast to mapped covenants, this is all about Zooniverse stuff, so
+    build a DF off the ZooniverseSubject
+    as opposed to Parcel.covenant_objects'''
+
+    VALIDATION_ATTRS = [
+        'id',
+        'workflow',
+        'doc_num',
+        'deed_date_final',
+        # 'seller_final',
+        # 'buyer_final',
+        'cov_type',
+        'cov_text',
+        'zn_subj_id',
+        'zn_dt_ret',
+        'resp_count',
+        'med_score',
+        'cov_score',
+        'hand_score',
+        'mtype_score',
+        'text_score',
+        'add_score',
+        'lot_score',
+        'block_score',
+        'city_score',
+        'sell_score',
+        'buy_score',
+        'manual_cx',
+        'match_type',
+        'join_candidates',
+        'add_cov',
+        'block_cov',
+        'lot_cov',
+        'city_cov',
+        'dt_updated',
+    ]
+
+    validation_subjects = ZooniverseSubject.validation_objects.filter(
+        workflow=workflow
+    ).values(*VALIDATION_ATTRS)
+
+    # Convert to pandas DF and enforce field order
+    validation_df = pd.DataFrame(validation_subjects)[VALIDATION_ATTRS]
+
+    return validation_df
