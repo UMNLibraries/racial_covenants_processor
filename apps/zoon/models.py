@@ -2,7 +2,7 @@ import json
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Union
 from django.contrib.gis import geos
-from django.db.models import F, Value
+from django.db.models import F, Value, Count
 from django.dispatch import receiver
 from django.utils.text import slugify
 
@@ -41,6 +41,7 @@ MATCH_TYPE_OPTIONS = (
     ('NG', 'No geographic information'),
 )
 
+
 class UnmappedZooniverseManager(models.Manager):
     '''This model manager is mainly used for exports OF NON-MAPPED COVENANTS ONLY. The main model manager used for covenant exports is in apps/parcel/models.py. Unlike the main exporter, de-duping is not done here to eliminate multiple occurences of the same document, and is not currently possible for unmapped covenants.'''
 
@@ -55,6 +56,47 @@ class UnmappedZooniverseManager(models.Manager):
             zn_subj_id=F('zoon_subject_id'),
             zn_dt_ret=F('dt_retired'),
             med_score=F('median_score'),
+            manual_cx=F('bool_manual_correction'),
+            add_cov=F('addition_final'),
+            block_cov=F('block_final'),
+            lot_cov=F('lot_final'),
+            city_cov=F('city_final'),
+            # seller=F('seller_final'),  # Need to rename with pd
+            # buyer=F('buyer_final'),  # Need to rename with pd
+            dt_updated=F('date_updated'),
+            doc_num=F('deedpage_doc_num'),
+            cov_type=Value('zooniverse'),
+            # match_type=Value('unmapped')  # Need to rename with pd
+        )
+
+
+class ValidationZooniverseManager(models.Manager):
+    '''This model manager is used to run statistics on retired subjects and
+    for other analysis purposes'''
+
+    def get_queryset(self):
+
+        # TODO: Add response count
+#         from django.db.models import Count
+# comments = Comments.objects.annotate(num_answers=Count('answers'))
+
+        return super().get_queryset().annotate(
+            # deed_date=F('deed_date_final'),  # Need to rename with pd
+            cov_text=F('covenant_text_final'),
+            zn_subj_id=F('zoon_subject_id'),
+            zn_dt_ret=F('dt_retired'),
+            resp_count=Count('responses'),
+            med_score=F('median_score'),
+            cov_score=F('bool_covenant_score'),
+            hand_score=F('bool_handwritten_score'),
+            mtype_score=F('match_type_score'),
+            text_score=F('covenant_text_score'),
+            add_score=F('addition_score'),
+            # lot_score=F('lot_score'),
+            # block_score=F('block_score'),
+            # city_score=F('city_score'),
+            sell_score=F('seller_score'),
+            buy_score=F('buyer_score'),
             manual_cx=F('bool_manual_correction'),
             add_cov=F('addition_final'),
             block_cov=F('block_final'),
@@ -164,6 +206,7 @@ class ZooniverseSubject(models.Model):
 
     objects = models.Manager()
     unmapped_objects = UnmappedZooniverseManager()
+    validation_objects = ValidationZooniverseManager()
 
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"
@@ -342,7 +385,7 @@ class ZooniverseResponseProcessed(models.Model):
     user_name = models.CharField(max_length=100, blank=True, db_index=True)
     user_id = models.IntegerField(null=True, db_index=True)
     subject = models.ForeignKey(
-        ZooniverseSubject, null=True, on_delete=models.SET_NULL)
+        ZooniverseSubject, null=True, on_delete=models.SET_NULL, related_name='responses')
     bool_covenant = models.CharField(max_length=100, null=True, blank=True)
     covenant_text = models.TextField(blank=True)
     addition = models.CharField(max_length=500, null=True, blank=True)
@@ -443,10 +486,12 @@ class ManualCorrection(models.Model):
         # self.zooniverse_subject.get_final_values()
         self.zooniverse_subject.save()
 
+
 EPC_TYPE_CHOICES = (
     ('el', 'Extra deed lot (old)'),
     ('me', 'Modern equivalent lot'),
 )
+
 
 class ExtraParcelCandidate(models.Model):
     '''For use when property spans more than one block or addition, NOT for multiple lots in same addition/block for the moment'''
@@ -591,10 +636,12 @@ def manual_cov_post_save(sender, instance=None, created=False, **kwargs):
     finally:
         del instance._dirty
 
+
 SUPPORTING_DOC_TYPES = (
     ('Dd', 'Deed'),
     ('Ot', 'Other')
 )
+
 
 class ManualSupportingDocument(models.Model):
     workflow = models.ForeignKey(
