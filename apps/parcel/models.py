@@ -21,6 +21,7 @@ class CovenantsParcelManager(models.Manager):
         ).only(
             'workflow',
             'zoon_subject_id',
+            'image_ids',
             'image_links',
             'subject_1st_page__s3_lookup',
             'subject_2nd_page__s3_lookup',
@@ -116,6 +117,15 @@ class CovenantsParcelManager(models.Manager):
                 ),
                 default=Value(None),
                 output_field=IntegerField()
+            )
+        ).annotate(
+            image_ids=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('image_ids'))
+                ),
+                default=Value("[]"),
+                output_field=JSONField()
             )
         ).annotate(
             image_links=Case(

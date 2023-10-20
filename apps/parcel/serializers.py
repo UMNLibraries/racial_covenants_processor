@@ -47,6 +47,7 @@ covenant_api_fields = [
     'dt_updated',
 ]
 
+
 # Serializers define the API representation.
 class ParcelNoGeoSerializer(serializers.ModelSerializer):
     # mostly defined in annotations on model manager in  models.py
