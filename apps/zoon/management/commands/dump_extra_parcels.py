@@ -32,7 +32,7 @@ class Command(BaseCommand):
             epc_df = pd.DataFrame(epces)
             epc_df.rename(columns={'id': 'db_id'}, inplace=True)
             epc_df.drop(
-                columns=['workflow_id', 'zooniverse_subject_id'], inplace=True)
+                columns=['workflow_id', 'zooniverse_subject_id'], inplace=True, errors='ignore')
 
             print(epc_df)
             backup_dir = os.path.join(settings.BASE_DIR, 'data', 'backup')
