@@ -215,7 +215,9 @@ class Command(BaseCommand):
             lambda x: json.dumps(x))
 
         # S3 lookups, not image links
-        subject_df['image_ids'] = subject_df['subject_data_flat__image_ids'].apply(lambda x: json.dumps(split(x)))
+        # TODO: Not sure what is up with the split here -- in Anoka County, early data comes back as a single string.
+        # Might be error in building of Zooniverse manifest, or might be early data only, as this got changed later.
+        subject_df['image_ids'] = subject_df['subject_data_flat__image_ids'].apply(lambda x: json.dumps(x.split(',') if x is not None else ''))
 
         subject_df.drop(columns=['subject_data_flat__image_ids'], inplace=True)
         subject_df.drop(columns=image_cols, inplace=True)

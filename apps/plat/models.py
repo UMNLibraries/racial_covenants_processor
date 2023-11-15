@@ -108,6 +108,11 @@ class PlatAlternateName(models.Model):
                 ))
         ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
 
+        print(self.alternate_name)
+        for z in ZooniverseSubject.objects.filter(workflow=self.workflow, addition_final__iexact=self.alternate_name):
+            # print(z.pk, z.addition_final)
+            z.save()
+
 
 class Subdivision(models.Model):
     '''This is presumed to be a modern Subdivision GIS layer (as opposed to a plat map), but there may be other uses'''
@@ -134,6 +139,7 @@ class Subdivision(models.Model):
     def save(self, *args, **kwargs):
         self.name_standardized = self.standardize_addition(
             self.name)
+
 
 class SubdivisionAlternateName(models.Model):
     workflow = models.ForeignKey(
@@ -195,7 +201,8 @@ class SubdivisionAlternateName(models.Model):
         ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
 
         # Re-save all zooniverse subjects with this alternate name
+        # TODO: Do this in a more bulky way
         print(self.alternate_name)
-        for z in ZooniverseSubject.objects.filter(workflow=self.workflow, addition_final=self.alternate_name):
+        for z in ZooniverseSubject.objects.filter(workflow=self.workflow, addition_final__iexact=self.alternate_name):
             # print(z.pk, z.addition_final)
             z.save()
