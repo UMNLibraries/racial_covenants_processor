@@ -318,34 +318,46 @@ class ZooniverseSubject(models.Model):
         self.city_final = self.get_from_parcel_or_cx('city')
 
     def check_parcel_match(self):
+        # Look for parcels linked only to this one, and clear bool_covenant for those
+        solo_parcels = self.parcel_matches.annotate(
+            num_linked_subjects=Count('zooniversesubject'),
+            num_man_covs=Count('manualcovenant')
+        ).filter(num_linked_subjects=1, num_man_covs=0)
+        if solo_parcels.count() > 0:
+            solo_parcels.update(bool_covenant=False)
+
+        # Clear existing parcel matches
         self.parcel_matches.clear()
         self.bool_parcel_match = False
+
         parcel_lookup = None
         join_strings = []
         # Main parcel
-        if self.match_type_final == 'AW':
-            addition_wide_parcel_match(self)
-        elif self.addition_final != '' and self.lot_final != '':
-            parcel_lookup = build_parcel_spatial_lookups(self.workflow)
-            self.join_candidates = gather_all_covenant_candidates(self)
-            print(self.join_candidates)
+        # Save hasn't been committed yet, so need to use get_final_value
+        if self.get_final_value('bool_covenant') is True:
+            if self.match_type_final == 'AW':
+                addition_wide_parcel_match(self)
+            elif self.addition_final != '' and self.lot_final != '':
+                parcel_lookup = build_parcel_spatial_lookups(self.workflow)
+                self.join_candidates = gather_all_covenant_candidates(self)
+                print(self.join_candidates)
 
-            for c in self.join_candidates:
-                join_strings.append(c['join_string'])
-                try:
-                    lot_match = parcel_lookup[c['join_string']]
-                    print(f"MATCH: {c['join_string']}")
+                for c in self.join_candidates:
+                    join_strings.append(c['join_string'])
+                    try:
+                        lot_match = parcel_lookup[c['join_string']]
+                        print(f"MATCH: {c['join_string']}")
 
-                    # There can be more than one modern parcel with same lot designation -- weird!
-                    for parcel_id in lot_match['parcel_ids']:
-                        self.parcel_matches.add(parcel_id)
-                    # self.parcel_matches.add(lot_match['parcel_id'])
-                    self.bool_parcel_match = True
+                        # There can be more than one modern parcel with same lot designation -- weird!
+                        for parcel_id in lot_match['parcel_ids']:
+                            self.parcel_matches.add(parcel_id)
+                        # self.parcel_matches.add(lot_match['parcel_id'])
+                        self.bool_parcel_match = True
 
-                    # Tag matched parcels with bool_covenant=True
-                    self.parcel_matches.all().update(bool_covenant=True)
-                except:
-                    print(f"NO MATCH: {c['join_string']}")
+                        # Tag matched parcels with bool_covenant=True
+                        self.parcel_matches.all().update(bool_covenant=True)
+                    except:
+                        print(f"NO MATCH: {c['join_string']}")
 
     def save(self, *args, **kwargs):
         self.get_final_values()
