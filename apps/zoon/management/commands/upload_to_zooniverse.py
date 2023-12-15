@@ -83,22 +83,26 @@ class Command(BaseCommand):
             print(f"Found {len(existing_subject_ids)} existing subjects. Building manifest...")
 
             upload_manifest = build_zooniverse_manifest(workflow, existing_subject_ids, num_subjects)
-            columns = upload_manifest.columns
+            if upload_manifest.shape[0] == 0:
+                print('No subjects left to upload.')
+            else:
+                print(f'Attempting to upload {upload_manifest.shape[0]} subjects...')
+                columns = upload_manifest.columns
 
-            for index, row in upload_manifest.iterrows():
-                try:
-                    subject = Subject()
-                    subject.links.project = zooniverse_project
+                for index, row in upload_manifest.iterrows():
+                    try:
+                        subject = Subject()
+                        subject.links.project = zooniverse_project
 
-                    for image_col in ['#image1', '#image2', '#image3']:
-                        if row[image_col] != '':
-                            subject.add_location({'image/jpeg': row[image_col]})
+                        for image_col in ['#image1', '#image2', '#image3']:
+                            if row[image_col] != '':
+                                subject.add_location({'image/jpeg': row[image_col]})
 
-                    subject.metadata.update(row)
-                    subject.save()
-                    subject_set.add(subject.id)
+                        subject.metadata.update(row)
+                        subject.save()
+                        subject_set.add(subject.id)
 
-                    print('{} successfully uploaded'.format(row['pk']))
-                except panoptes_client.panoptes.PanoptesAPIException:
-                    raise
-                    print('An error occurred during the upload of {}'.format(row['pk']) + '\n')
+                        print('{} successfully uploaded'.format(row['pk']))
+                    except panoptes_client.panoptes.PanoptesAPIException:
+                        raise
+                        print('An error occurred during the upload of {}'.format(row['pk']) + '\n')

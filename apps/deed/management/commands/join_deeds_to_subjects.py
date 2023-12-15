@@ -66,7 +66,7 @@ class Command(BaseCommand):
             dp.zooniverse_subject_id = subject_hit_lookup[dp.s3_lookup]
             pages_to_update.append(dp)
 
-        print(f'Hits: Linking {len(pages_to_update)} images ...')
+        print(f'Linking images for {len(pages_to_update)} hits ...')
         DeedPage.objects.bulk_update(
             pages_to_update, [f'zooniverse_subject'])
 

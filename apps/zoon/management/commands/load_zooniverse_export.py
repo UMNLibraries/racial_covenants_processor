@@ -505,6 +505,11 @@ class Command(BaseCommand):
         df['deed_date_day'] = df['annotations'].apply(
             lambda x: self.anno_accessor(x, question_lookup['deed_date']['day']))
 
+        # Clear invalid values in date fields caused by weird input
+        df.loc[df['deed_date_year'].apply(lambda x: type(x)) == dict, 'deed_date_year'] = 'Bad value'
+        df.loc[df['deed_date_month'].apply(lambda x: type(x)) == dict, 'deed_date_month'] = 'Bad value'
+        df.loc[df['deed_date_day'].apply(lambda x: type(x)) == dict, 'deed_date_day'] = 'Bad value'
+
         df = df.drop(columns=['annotations', 'subject_ids', 'zoon_subject_id'])
 
         print('Sending processed individual responses to Django ...')

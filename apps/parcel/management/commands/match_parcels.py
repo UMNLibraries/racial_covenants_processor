@@ -33,7 +33,6 @@ class Command(BaseCommand):
             try:
                 lot_match = parcel_lookup[c['join_string']]
 
-
                 c['match'] = True
                 c['parcel_metadata'] = lot_match['parcel_metadata']
                 c['parcel_metadata']['parcel_ids'] = lot_match['parcel_ids']
