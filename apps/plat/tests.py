@@ -31,9 +31,16 @@ class PlatTests(TestCase):
         """Does an addition-wide covenant match all parcels in a subdivision"""
 
         # Set up database first time
-        call_command("rebuild_parcel_spatial_lookups", workflow='Ramsey County')
-        call_command("rebuild_covenant_spatial_lookups", workflow='Ramsey County')
-        call_command("match_parcels", workflow='Ramsey County')
+        TEST_ZOON_SETTINGS = {
+            'Ramsey County': {
+                'zoon_workflow_id': 13143,
+                'zoon_workflow_version': '4.1',
+            }
+        }
+        with self.settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS):
+            call_command("rebuild_parcel_spatial_lookups", workflow='Ramsey County')
+            call_command("rebuild_covenant_spatial_lookups", workflow='Ramsey County')
+            call_command("match_parcels", workflow='Ramsey County')
 
         parcels_to_match = Parcel.objects.filter(workflow=1, plat_name='LYNDALE BEACH 2ND ADDN')
         parcels_count = parcels_to_match.count()
