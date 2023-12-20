@@ -35,3 +35,16 @@
         book_name: '3'
         gov_id: null
         plat_name_standardized: joseph arths subdivision of block 85 of lyman daytons
+# Fixtures for testing subdivision-level matching and alternate subdivision names
+-   model: plat.subdivision
+    pk: 1
+    fields:
+        workflow: 1
+        feature_id: 1
+        name: 'LYNDALE BEACH 2ND ADDN'
+        name_standardized: 'lyndale beach 2nd'
+        doc_num: '1234'
+        recorded_date: "1900-02-28"
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.215288 44.971027,-93.205559 44.967114,-93.206406 44.964641,-93.215576 44.964577,-93.217630 44.969115,-93.215288 44.971027)))'

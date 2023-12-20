@@ -4,7 +4,7 @@ from django.utils.text import slugify
 from django.utils.html import mark_safe
 from django.db.models import F
 
-from apps.parcel.utils.parcel_utils import standardize_addition, get_all_parcel_options
+from apps.parcel.utils.parcel_utils import standardize_addition, get_all_parcel_options, build_parcel_spatial_lookups
 from racial_covenants_processor.storage_backends import PrivateMediaStorage
 
 from postgres_copy import CopyManager
@@ -70,6 +70,7 @@ class PlatAlternateName(models.Model):
 
     def save(self, *args, **kwargs):
         from apps.parcel.models import Parcel, ParcelJoinCandidate
+        from apps.zoon.models import ZooniverseSubject, ManualCovenant
         self.plat_name = self.plat.plat_name
         self.zoon_workflow_id = self.plat.workflow.zoon_id
         self.alternate_name_standardized = standardize_addition(
@@ -109,9 +110,12 @@ class PlatAlternateName(models.Model):
         ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
 
         print(self.alternate_name)
+        parcel_lookup = build_parcel_spatial_lookups(self.workflow)
         for z in ZooniverseSubject.objects.filter(workflow=self.workflow, addition_final__iexact=self.alternate_name):
-            # print(z.pk, z.addition_final)
-            z.save()
+            z.save(parcel_lookup=parcel_lookup)
+
+        for m in ManualCovenant.objects.filter(workflow=self.workflow, addition__iexact=self.alternate_name):
+            m.save(parcel_lookup=parcel_lookup)
 
 
 class Subdivision(models.Model):
@@ -160,7 +164,7 @@ class SubdivisionAlternateName(models.Model):
 
     def save(self, *args, **kwargs):
         from apps.parcel.models import Parcel, ParcelJoinCandidate
-        from apps.zoon.models import ZooniverseSubject
+        from apps.zoon.models import ZooniverseSubject, ManualCovenant
         self.subdivision_name = self.subdivision.name
         self.zoon_workflow_id = self.subdivision.workflow.zoon_id
         self.alternate_name_standardized = standardize_addition(
@@ -201,8 +205,10 @@ class SubdivisionAlternateName(models.Model):
         ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=5000)
 
         # Re-save all zooniverse subjects with this alternate name
-        # TODO: Do this in a more bulky way
         print(self.alternate_name)
+        parcel_lookup = build_parcel_spatial_lookups(self.workflow)
         for z in ZooniverseSubject.objects.filter(workflow=self.workflow, addition_final__iexact=self.alternate_name):
-            # print(z.pk, z.addition_final)
-            z.save()
+            z.save(parcel_lookup=parcel_lookup)
+
+        for m in ManualCovenant.objects.filter(workflow=self.workflow, addition__iexact=self.alternate_name):
+            m.save(parcel_lookup=parcel_lookup)

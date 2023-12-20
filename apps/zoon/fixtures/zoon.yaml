@@ -30,3 +30,41 @@
         lot_final: One (1)
         block_final: nonsense
         bool_parcel_match: True
+
+# For testing subdivision-level matching
+-   model: zoon.zooniversesubject
+    pk: 3
+    fields:
+        workflow: 1
+        zoon_subject_id: 3
+        bool_covenant: True
+        bool_covenant_final: True  # Since there is no manual correction associated with this, need both _final and regular values set.
+        bool_manual_correction: True  # Necessary for bulk join in match_parcels.py
+        covenant_text: This is sample covenant text
+        addition: Lyndale Beach 2nd Addition
+        addition_final: Lyndale Beach 2nd Addition
+        match_type: 'AW'
+        match_type_final: 'AW'
+        lot_final: ''
+        block_final: ''
+        image_ids: ''
+        bool_parcel_match: False
+
+# For testing subdivision-level alternate name matching
+-   model: zoon.zooniversesubject
+    pk: 4
+    fields:
+        workflow: 1
+        zoon_subject_id: 3
+        bool_covenant: True
+        bool_covenant_final: True  # Since there is no manual correction associated with this, need both _final and regular values set.
+        bool_manual_correction: True  # Necessary for bulk join in match_parcels.py
+        covenant_text: This is sample covenant text
+        addition: Lyndale Beach 2nd Addition Variation
+        addition_final: Lyndale Beach 2nd Addition Variation
+        match_type: 'AW'
+        match_type_final: 'AW'
+        lot_final: ''
+        block_final: ''
+        image_ids: ''
+        bool_parcel_match: False
