@@ -40,7 +40,7 @@ class PlatTests(TestCase):
         with self.settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS):
             call_command("rebuild_parcel_spatial_lookups", workflow='Ramsey County')
             call_command("rebuild_covenant_spatial_lookups", workflow='Ramsey County')
-            call_command("match_parcels", workflow='Ramsey County')
+            call_command("match_parcels", '--test', workflow='Ramsey County')
 
         parcels_to_match = Parcel.objects.filter(workflow=1, plat_name='LYNDALE BEACH 2ND ADDN')
         parcels_count = parcels_to_match.count()

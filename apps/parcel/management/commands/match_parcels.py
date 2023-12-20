@@ -24,6 +24,8 @@ class Command(BaseCommand):
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
         parser.add_argument('-l', '--local', action='store_true',
                             help='Save to local CSV in "analysis" dir, rather than Django object/S3')
+        parser.add_argument('-t', '--test', action='store_true',
+                            help="Don't save match report, this is only a test")
 
     def match_parcel(self, parcel_lookup, target_obj, subject_obj):
         ''' Separate subject necessary because you also have to run this on the ExtraParcelCandidate objects and then link the result to its subject'''
@@ -88,7 +90,7 @@ class Command(BaseCommand):
         # Now do ManualCovenant records
         Parcel.objects.filter(workflow=workflow, manualcovenant__isnull=False).update(bool_covenant=True)
 
-    def write_match_report(self, workflow, bool_local=False):
+    def write_match_report(self, workflow, bool_local=False, bool_test=False):
         fieldnames = ['join_string', 'match', 'subject_id',
                       'metadata', 'parcel_metadata', 'num_parcels']
 
@@ -112,7 +114,9 @@ class Command(BaseCommand):
 
         filename_tail = f'{workflow.slug}_match_report_{timestamp}.csv'
 
-        if bool_local:
+        if bool_test:
+            pass
+        elif bool_local:
 
             outfile_path = os.path.join(
                 settings.BASE_DIR, 'data', 'analysis', filename_tail)
@@ -173,4 +177,5 @@ class Command(BaseCommand):
             self.tag_matched_parcels(workflow)
 
             bool_local = kwargs['local']
-            self.write_match_report(workflow, bool_local)
+            bool_test = kwargs['test']
+            self.write_match_report(workflow, bool_local, bool_test)
