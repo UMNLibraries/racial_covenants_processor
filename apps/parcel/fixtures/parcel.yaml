@@ -1,0 +1,52 @@
+-   model: parcel.parcel
+    pk: 1
+    fields:
+        workflow: 1
+        feature_id: 1
+        pin_primary: '1234'
+        pin_secondary: '4321'
+        street_address: '123 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: 'LYNDALE BEACH 2ND ADDN'
+        plat_standardized: 'lyndale beach 2nd'
+        block: '1'
+        lot: '1'
+        join_description: 'BLOCK 1 LOT 1 LYNDALE BEACH 2ND ADDN'
+        phys_description: 'BLOCK 1 LOT 1 LYNDALE BEACH 2ND ADDN'
+        township: 3
+        range: 69
+        section: 34
+        subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+-   model: parcel.parcel
+    pk: 2
+    fields:
+        workflow: 1
+        feature_id: 2
+        pin_primary: '2234'
+        pin_secondary: '4322'
+        street_address: '124 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: 'LYNDALE BEACH 2ND ADDN'
+        plat_standardized: 'lyndale beach 2nd'
+        block: '1'
+        lot: '2'
+        join_description: 'BLOCK 1 LOT 2 LYNDALE BEACH 2ND ADDN'
+        phys_description: 'BLOCK 1 LOT 2 LYNDALE BEACH 2ND ADDN'
+        township: 3
+        range: 69
+        section: 34
+        subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'

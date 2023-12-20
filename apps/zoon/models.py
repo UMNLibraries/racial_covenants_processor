@@ -317,7 +317,7 @@ class ZooniverseSubject(models.Model):
             'street_address')
         self.city_final = self.get_from_parcel_or_cx('city')
 
-    def check_parcel_match(self):
+    def check_parcel_match(self, parcel_lookup=None):
         # Look for parcels linked only to this one, and clear bool_covenant for those
         solo_parcels = self.parcel_matches.annotate(
             num_linked_subjects=Count('zooniversesubject'),
@@ -330,7 +330,6 @@ class ZooniverseSubject(models.Model):
         self.parcel_matches.clear()
         self.bool_parcel_match = False
 
-        parcel_lookup = None
         join_strings = []
         # Main parcel
         # Save hasn't been committed yet, so need to use get_final_value
@@ -338,7 +337,8 @@ class ZooniverseSubject(models.Model):
             if self.match_type_final == 'AW':
                 addition_wide_parcel_match(self)
             elif self.addition_final != '' and self.lot_final != '':
-                parcel_lookup = build_parcel_spatial_lookups(self.workflow)
+                if not parcel_lookup:
+                    parcel_lookup = build_parcel_spatial_lookups(self.workflow)
                 self.join_candidates = gather_all_covenant_candidates(self)
                 print(self.join_candidates)
 
@@ -361,9 +361,15 @@ class ZooniverseSubject(models.Model):
 
     def save(self, *args, **kwargs):
         self.get_final_values()
-        self.check_parcel_match()
+        
+        # Can pass parcel lookup for bulk matches
+        self.check_parcel_match(kwargs.get('parcel_lookup', None))
+        if 'parcel_lookup' in kwargs:
+            del kwargs['parcel_lookup']
+
         self.set_geom_union()
         self.set_addresses()
+
         super(ZooniverseSubject, self).save(*args, **kwargs)
 
 
@@ -593,12 +599,20 @@ class ManualCovenant(models.Model):
             return "; ".join([c['join_string'] for c in self.join_candidates])
         return None
 
-    def check_parcel_match(self):
+    def check_parcel_match(self, parcel_lookup=None):
         ''' Triggered by post_save signal'''
+
+        # Look for parcels linked only to this one, and clear bool_covenant for those
+        solo_parcels = self.parcel_matches.annotate(
+            num_linked_subjects=Count('zooniversesubject'),
+            num_man_covs=Count('manualcovenant')
+        ).filter(num_linked_subjects=1, num_man_covs=0)
+        if solo_parcels.count() > 0:
+            solo_parcels.update(bool_covenant=False)
+
         self.parcel_matches.clear()
         self.bool_parcel_match = False
         self.join_candidates = ''
-        parcel_lookup = None
         join_strings = []
 
         # For plat covenant, separate routine to find all with matching addition
@@ -609,7 +623,8 @@ class ManualCovenant(models.Model):
             # TODO: filter by parcel other? Or just make someone add plat or plat alternate. If so, need way to manually add plat
             # Method for one-off covenants that is more similar to previous joinstring setup
             elif self.lot != '':
-                parcel_lookup = build_parcel_spatial_lookups(self.workflow)
+                if not parcel_lookup:
+                    parcel_lookup = build_parcel_spatial_lookups(self.workflow)
                 self.join_candidates = gather_all_manual_covenant_candidates(self)
                 print(self.join_candidates)
 
@@ -630,23 +645,32 @@ class ManualCovenant(models.Model):
                     except:
                         print(f"NO MATCH: {c['join_string']}")
 
+    def save(self, *args, **kwargs):
+        # Can pass parcel lookup for bulk matches
+        self.check_parcel_match(kwargs.get('parcel_lookup', None))
+        if 'parcel_lookup' in kwargs:
+            del kwargs['parcel_lookup']
 
-@receiver(models.signals.post_save, sender=ManualCovenant)
-def manual_cov_post_save(sender, instance=None, created=False, **kwargs):
+        super(ManualCovenant, self).save(*args, **kwargs)
 
-    if not instance:
-        return
 
-    if hasattr(instance, '_dirty'):
-        return
+# @receiver(models.signals.post_save, sender=ManualCovenant)
+# def manual_cov_post_save(sender, instance=None, created=False, **kwargs):
 
-    instance.check_parcel_match()
+#     if not instance:
+#         return
 
-    try:
-        instance._dirty = True
-        instance.save()
-    finally:
-        del instance._dirty
+#     if hasattr(instance, '_dirty'):
+#         return
+    
+#     # Can pass parcel lookup for bulk matches
+#     instance.check_parcel_match(kwargs.get('parcel_lookup', None))
+
+#     try:
+#         instance._dirty = True
+#         instance.save()
+#     finally:
+#         del instance._dirty
 
 
 SUPPORTING_DOC_TYPES = (
