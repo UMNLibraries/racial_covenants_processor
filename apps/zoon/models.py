@@ -639,11 +639,11 @@ class ManualCovenant(models.Model):
                             self.parcel_matches.add(parcel_id)
                         # self.parcel_matches.add(lot_match['parcel_id'])
                         self.bool_parcel_match = True
-
-                        # Tag matched parcels with bool_covenant=True
-                        self.parcel_matches.all().update(bool_covenant=True)
                     except:
                         print(f"NO MATCH: {c['join_string']}")
+
+                # Tag matched parcels with bool_covenant=True
+                self.parcel_matches.all().update(bool_covenant=True)
 
     def save(self, *args, **kwargs):
         # Can pass parcel lookup for bulk matches
