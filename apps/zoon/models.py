@@ -340,7 +340,7 @@ class ZooniverseSubject(models.Model):
                 if not parcel_lookup:
                     parcel_lookup = build_parcel_spatial_lookups(self.workflow)
                 self.join_candidates = gather_all_covenant_candidates(self)
-                print(self.join_candidates)
+                # print(self.join_candidates)
 
                 for c in self.join_candidates:
                     join_strings.append(c['join_string'])
@@ -353,11 +353,11 @@ class ZooniverseSubject(models.Model):
                             self.parcel_matches.add(parcel_id)
                         # self.parcel_matches.add(lot_match['parcel_id'])
                         self.bool_parcel_match = True
-
-                        # Tag matched parcels with bool_covenant=True
-                        self.parcel_matches.all().update(bool_covenant=True)
                     except:
                         print(f"NO MATCH: {c['join_string']}")
+
+                # Tag matched parcels with bool_covenant=True
+                self.parcel_matches.all().update(bool_covenant=True)
 
     def save(self, *args, **kwargs):
         self.get_final_values()
