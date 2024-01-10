@@ -351,6 +351,10 @@ class Parcel(models.Model):
     objects = models.Manager()
     covenant_objects = CovenantsParcelManager()
 
+    def __str__(self):
+        return f"{self.county_name} {self.plat_name} LOT {self.lot} BLOCK {self.block} ({self.pk})"
+
+
     @property
     def join_strings(self):
         strings = []

@@ -17,7 +17,7 @@ class WorkflowAdmin(admin.ModelAdmin):
     pass
 
 
-deed_page_exclude_fields = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id', 'batch_id', 'doc_type', 'page_stats', 'public_uuid', 'bool_exception', 'doc_page_count', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web', 'prev_page_image_lookup', 'next_page_image_lookup', 'next_next_page_image_lookup', 'zooniverse_subject']
+deed_page_exclude_fields = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id', 'batch_id', 'doc_type', 'page_stats', 'public_uuid', 'bool_exception', 'bool_manual', 'doc_page_count', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web', 'prev_page_image_lookup', 'next_page_image_lookup', 'next_next_page_image_lookup', 'zooniverse_subject']
 
 
 class DeedImageInline1st(admin.TabularInline):
@@ -246,7 +246,8 @@ class SubjectAdmin(admin.ModelAdmin):
         }),
         ('Matching parcels', {
             'fields': (
-                'geom_union_4326',
+                #'geom_union_4326',
+                'get_parcel_match_count',
                 'parcel_matches',
             )
         }),
@@ -280,6 +281,7 @@ class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = [
         'workflow',
         'get_permalink',
+        'get_parcel_match_count',
         'parcel_matches',
         'bool_parcel_match',
         'geom_union_4326',
@@ -317,6 +319,10 @@ class SubjectAdmin(admin.ModelAdmin):
         'deed_date_month_score',
         'deed_date_day_score',
     ]
+
+    def get_parcel_match_count(self, obj):
+        return obj.parcel_matches.count()
+    get_parcel_match_count.short_description = 'Parcel match count'
 
     def get_permalink(self, obj):
         abs_url = reverse('zoon_subject_lookup', kwargs={"zoon_subject_id": str(obj.zoon_subject_id)})

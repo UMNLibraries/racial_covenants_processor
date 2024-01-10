@@ -38,6 +38,7 @@ class DeedPage(models.Model):
         storage=PrivateMediaStorage(), max_length=200, null=True)
     bool_match = models.BooleanField(default=False, db_index=True)
     bool_exception = models.BooleanField(default=False, db_index=True)
+    bool_manual = models.BooleanField(default=False, db_index=True) # has bool_match or bool_exception been manually overwritten?
     matched_terms = models.ManyToManyField(MatchTerm)
 
     # These fields aid in setting up Zooniverse images
