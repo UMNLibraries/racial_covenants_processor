@@ -95,14 +95,14 @@ class Command(BaseCommand):
             else:
                 report_df['citizen_count'] = 0
 
-            if 'death certificate' in report_df.columns:
-                print(report_df['death certificate'].apply(lambda x: self.split_or_1(x)))
+            report_df['deathcert_count'] = 0
+            death_certs = ['death certificate', 'certificate of death']
+            for cert_term in death_certs:
+                if cert_term in report_df.columns:
+                    print(report_df[cert_term].apply(lambda x: self.split_or_1(x)))
 
-                report_df.loc[~report_df['death certificate'].isna(), 'deathcert_count'] = report_df['death certificate'].apply(lambda x: self.split_or_1(x))
-            else:
-                report_df['deathcert_count'] = 0
-
-            # TODO: Put exceptions work here?
+                    report_df.loc[~report_df[cert_term].isna(), 'deathcert_count'] = report_df[cert_term].apply(lambda x: self.split_or_1(x))
+                   
 
             # Set bool_match to True, unless there's a suspect value or combination
             report_df['bool_match'] = True
@@ -113,8 +113,9 @@ class Command(BaseCommand):
             report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_match'] = False
             report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_exception'] = True
 
-            report_df.loc[(report_df['num_terms'] == 1) & (report_df['deathcert_count'] > 0), 'bool_match'] = False
-            report_df.loc[(report_df['num_terms'] == 1) & (report_df['deathcert_count'] > 0), 'bool_exception'] = True
+            # Death cert is an exception no matter how many other terms found
+            report_df.loc[report_df['deathcert_count'] > 0, 'bool_match'] = False
+            report_df.loc[report_df['deathcert_count'] > 0, 'bool_exception'] = True
 
             report_df.drop(columns=term_columns.columns, inplace=True)
             print(report_df)
