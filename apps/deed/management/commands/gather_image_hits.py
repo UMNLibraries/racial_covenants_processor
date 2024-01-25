@@ -80,7 +80,7 @@ class Command(BaseCommand):
 
             report_df['num_terms'] = report_df['matched_terms'].apply(lambda x: len(x.split(',')))
 
-            # create special flag for exceptions like "occupied by any"
+            # create special flag for exceptions like "occupied by any" and "death certificate"
             if 'occupied by any' in report_df.columns:
                 print(report_df['occupied by any'].apply(lambda x: self.split_or_1(x)))
 
@@ -95,6 +95,13 @@ class Command(BaseCommand):
             else:
                 report_df['citizen_count'] = 0
 
+            if 'death certificate' in report_df.columns:
+                print(report_df['death certificate'].apply(lambda x: self.split_or_1(x)))
+
+                report_df.loc[~report_df['death certificate'].isna(), 'deathcert_count'] = report_df['death certificate'].apply(lambda x: self.split_or_1(x))
+            else:
+                report_df['deathcert_count'] = 0
+
             # TODO: Put exceptions work here?
 
             # Set bool_match to True, unless there's a suspect value or combination
@@ -105,6 +112,9 @@ class Command(BaseCommand):
 
             report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_match'] = False
             report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_exception'] = True
+
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['deathcert_count'] > 0), 'bool_match'] = False
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['deathcert_count'] > 0), 'bool_exception'] = True
 
             report_df.drop(columns=term_columns.columns, inplace=True)
             print(report_df)
