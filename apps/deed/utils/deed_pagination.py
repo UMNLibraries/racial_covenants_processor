@@ -65,7 +65,18 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
 
 def paginate_deedpage_df(df, matches_only=False):
     # TODO: Change page_num and split_page_num to ints
+    if "page_num" not in df.columns:
+        df['page_num'] = None
+    
+    df['page_num'].replace('NONE', None, inplace=True)
+    df['page_num'].replace('', None, inplace=True)
+
     df["page_num"] = pd.to_numeric(df["page_num"])
+
+        #     if 'page_num' in deed_pages_df.columns:
+            
+        # else:
+        #     deed_pages_df['page_num'] = None
 
     if "split_page_num" not in df.columns:
         df['split_page_num'] = None
@@ -123,6 +134,7 @@ def paginate_deedpage_df(df, matches_only=False):
 
     print('Join 3')
     # no doc_num, book and page only, no splitpage
+    # TODO: Need to incorporate doctype for book and page, maybe create doc_num before this part of pagination, or make book type part of the regex
 
     book_id_no_split_page_df = match_df[(match_df['book_id'] != '') & (match_df['doc_page_count'] == 1)].copy()
 
@@ -189,6 +201,8 @@ def paginate_deedpage_df(df, matches_only=False):
     ]).copy()
 
     cols_to_fill = [
+        'book_id',
+        'doc_num',
         'prev_page_image_web',
         'next_page_image_web',
         'next_next_page_image_web',
@@ -197,6 +211,7 @@ def paginate_deedpage_df(df, matches_only=False):
         'next_next_page_image_lookup'
     ]
     out_df.loc[:, cols_to_fill] = out_df.loc[:, cols_to_fill].fillna('')
+    out_df.reset_index(drop=True, inplace=True)  # Not sure this is necessary or helpful
 
     out_df = out_df.replace([np.nan], [None])
 
