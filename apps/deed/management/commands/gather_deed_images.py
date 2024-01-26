@@ -198,15 +198,20 @@ class Command(BaseCommand):
 
         # Remove fake Nones
         # deed_pages_df[['page_num']].loc[df['shield'] > 35] = 0
-        if 'page_num' in deed_pages_df.columns:
-            deed_pages_df['page_num'].replace('NONE', None, inplace=True)
-        else:
-            deed_pages_df['page_num'] = None
+        # if 'page_num' in deed_pages_df.columns:
+        #     deed_pages_df['page_num'].replace('NONE', None, inplace=True)
+        #     deed_pages_df['page_num'].replace('', None, inplace=True)
+        # else:
+        #     deed_pages_df['page_num'] = None
 
         deed_pages_df = self.add_supplemental_info(deed_pages_df, workflow)
 
         # Drop duplicates again just in case
         deed_pages_df = deed_pages_df.drop_duplicates(subset=['s3_lookup'])
+
+        # If doc_num is null, use doc_type and book as doc_num
+        deed_pages_df['doc_num'] = deed_pages_df['doc_num'].fillna('')
+        deed_pages_df.loc[deed_pages_df['doc_num'] == '', 'doc_num'] = deed_pages_df['doc_type'] + ' Book ' + deed_pages_df['book_id']
 
         # Tag docs with page count by doc_num
         print('Tagging doc num page counts...')
