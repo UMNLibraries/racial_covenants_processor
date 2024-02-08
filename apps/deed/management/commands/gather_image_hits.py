@@ -96,12 +96,20 @@ class Command(BaseCommand):
                 report_df['citizen_count'] = 0
 
             report_df['deathcert_count'] = 0
-            death_certs = ['death certificate', 'certificate of death']
-            for cert_term in death_certs:
-                if cert_term in report_df.columns:
-                    print(report_df[cert_term].apply(lambda x: self.split_or_1(x)))
+            death_certs = ['death certificate', 'certificate of death', 'date of death']
+            for term in death_certs:
+                if term in report_df.columns:
+                    print(report_df[term].apply(lambda x: self.split_or_1(x)))
 
-                    report_df.loc[~report_df[cert_term].isna(), 'deathcert_count'] = report_df[cert_term].apply(lambda x: self.split_or_1(x))
+                    report_df.loc[~report_df[term].isna(), 'deathcert_count'] = report_df[term].apply(lambda x: self.split_or_1(x))
+
+            report_df['military_count'] = 0
+            military_terms = ['report of transfer', 'transfer or discharge', 'blood group']
+            for term in military_terms:
+                if term in report_df.columns:
+                    print(report_df[term].apply(lambda x: self.split_or_1(x)))
+
+                    report_df.loc[~report_df[term].isna(), 'military_count'] = report_df[term].apply(lambda x: self.split_or_1(x))
                    
 
             # Set bool_match to True, unless there's a suspect value or combination
@@ -116,6 +124,10 @@ class Command(BaseCommand):
             # Death cert is an exception no matter how many other terms found
             report_df.loc[report_df['deathcert_count'] > 0, 'bool_match'] = False
             report_df.loc[report_df['deathcert_count'] > 0, 'bool_exception'] = True
+
+            # Military record is an exception no matter how many other terms found
+            report_df.loc[report_df['military_count'] > 0, 'bool_match'] = False
+            report_df.loc[report_df['military_count'] > 0, 'bool_exception'] = True
 
             report_df.drop(columns=term_columns.columns, inplace=True)
             print(report_df)
