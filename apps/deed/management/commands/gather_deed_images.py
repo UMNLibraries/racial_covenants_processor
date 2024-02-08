@@ -211,7 +211,8 @@ class Command(BaseCommand):
 
         # If doc_num is null, use doc_type and book as doc_num
         deed_pages_df['doc_num'] = deed_pages_df['doc_num'].fillna('')
-        deed_pages_df.loc[deed_pages_df['doc_num'] == '', 'doc_num'] = deed_pages_df['doc_type'] + ' Book ' + deed_pages_df['book_id']
+        if 'book_id' in deed_pages_df.columns:
+            deed_pages_df.loc[deed_pages_df['doc_num'] == '', 'doc_num'] = deed_pages_df['doc_type'] + ' Book ' + deed_pages_df['book_id']
 
         # Tag docs with page count by doc_num
         print('Tagging doc num page counts...')

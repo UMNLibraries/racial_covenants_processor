@@ -118,7 +118,7 @@ def paginate_deedpage_df(df, matches_only=False):
 
     print('Join 2')
     # no doc_num, book and page only, splitpage
-    book_id_split_page_df = match_df[(match_df['doc_page_count'] == 1) & (match_df['split_page_num'] >= 1)].copy()
+    book_id_split_page_df = match_df[(match_df['book_id'] != '') & (match_df['doc_page_count'] == 1) & (match_df['split_page_num'] >= 1)].copy()
 
     for offset in [-1, 1, 2]:
         book_id_split_page_df = pagination_merge(

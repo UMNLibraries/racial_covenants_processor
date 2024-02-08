@@ -262,3 +262,6 @@ python manage.py migrate
 
 ### 5. To be able to view the admin pages, create a superuser
 ```python manage.py createsuperuser```
+
+### 6. For deedstats notebook (not yet committed)
+```python manage.py shell_plus --notebook```
