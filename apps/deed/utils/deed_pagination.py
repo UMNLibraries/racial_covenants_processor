@@ -102,7 +102,7 @@ def paginate_deedpage_df(df, matches_only=False):
 
     print('Join 1')
     # same doc num with multiple pages + splitpage
-    doc_num_split_page_df = match_df[(match_df['doc_page_count'] > 1) & (match_df['split_page_num'] >= 1)].copy()
+    doc_num_split_page_df = match_df[(match_df['doc_num'] != '') & (match_df['doc_page_count'] > 1) & (match_df['split_page_num'] >= 1)].copy()
 
     for offset in [-1, 1, 2]:
         doc_num_split_page_df = pagination_merge(
