@@ -49,6 +49,32 @@ class Command(BaseCommand):
             ) if re.match(key_filter, obj.key)]
 
         return matching_keys
+    
+    def add_merge_fields(self, page_data_df, workflow):
+        '''Build field from components in regex. Note that for now components and component regex capture groups must be expected values
+        'merge_fields': {
+            'field_to_overwrite': {'fields': ['component_field_1', 'component_field_2'], 'separator': 'sep_character', 'replace_nulls': False}  # Format
+            'doc_num': {'fields': ['doc_type', 'doc_num'], 'separator': '', 'replace_nulls': False}  # Example
+        },  # Build field from components in regex
+
+        '''
+        if 'merge_fields' in settings.ZOONIVERSE_QUESTION_LOOKUP[workflow.workflow_name]:
+            merge_fields = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow.workflow_name]['merge_fields']
+
+            print("Merge field(s) found...")
+
+            for mf_key, mf_obj in merge_fields.items():
+                page_data_df[mf_obj['fields']] = page_data_df[mf_obj['fields']].fillna('')
+                if mf_obj['replace_nulls'] == True:
+                    page_data_df[mf_key] = page_data_df[mf_obj['fields']].astype(str).agg(mf_obj['separator'].join, axis=1)
+                else:
+                    page_data_df.loc[~page_data_df[mf_key].isin(['NONE', None, '', np.NaN]), [mf_key]] = page_data_df[mf_obj['fields']].astype(str).agg(mf_obj['separator'].join, axis=1)
+
+            return page_data_df
+        
+        else:
+            print("No merge fields found, moving on.")
+            return page_data_df
 
     def add_supplemental_info(self, page_data_df, workflow):
         '''
@@ -107,8 +133,9 @@ class Command(BaseCommand):
             print(page_data_df)
 
             return page_data_df
-        print("No supplemental info to join found, moving on.")
-        return page_data_df
+        else:
+            print("No supplemental info to join found, moving on.")
+            return page_data_df
 
 
     def build_django_objects(self, matching_keys, workflow):
@@ -204,15 +231,20 @@ class Command(BaseCommand):
         # else:
         #     deed_pages_df['page_num'] = None
 
+        deed_pages_df = self.add_merge_fields(deed_pages_df, workflow)
         deed_pages_df = self.add_supplemental_info(deed_pages_df, workflow)
 
         # Drop duplicates again just in case
         deed_pages_df = deed_pages_df.drop_duplicates(subset=['s3_lookup'])
 
-        # If doc_num is null, use doc_type and book as doc_num
+        # If doc_num is null, use doc_type/book/page as doc_num
+        deed_pages_df['doc_num'] = deed_pages_df['doc_num'].str.replace('NONE', '')
         deed_pages_df['doc_num'] = deed_pages_df['doc_num'].fillna('')
         if 'book_id' in deed_pages_df.columns:
-            deed_pages_df.loc[deed_pages_df['doc_num'] == '', 'doc_num'] = deed_pages_df['doc_type'] + ' Book ' + deed_pages_df['book_id']
+            deed_pages_df['book_id'] = deed_pages_df['book_id'].str.replace('NONE', '')
+            deed_pages_df['book_id'] = deed_pages_df['book_id'].fillna('')
+
+            deed_pages_df.loc[(deed_pages_df['doc_num'] == '') & (deed_pages_df['book_id'] != ''), 'doc_num'] = deed_pages_df['doc_type'] + ' Book ' + deed_pages_df['book_id'] + ' Page ' + deed_pages_df['page_num']
 
         # Tag docs with page count by doc_num
         print('Tagging doc num page counts...')
