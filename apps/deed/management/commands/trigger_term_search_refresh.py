@@ -30,12 +30,17 @@ class Command(BaseCommand):
 
     done_manifest_path = None
 
+    num_threads = None
+
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
         parser.add_argument('-f', '--full', action='store_true',
                             help='Delete old processed records and start over (as opposed to completing a half-done process.)')
+        
+        parser.add_argument('-p', '--pool', type=int,
+                            help='How many threads to use? (Default is 8)')
 
     def chunk_list(self, input_list, chunk_size):
         for i in range(0, len(input_list), chunk_size):
@@ -157,7 +162,7 @@ class Command(BaseCommand):
 
             trigger_count = 0
 
-            pool = ThreadPool(processes=12)
+            pool = ThreadPool(processes=self.num_threads)
             pool.map(self.trigger_step_function, matching_keys)
 
         else:
@@ -165,6 +170,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
+        self.num_threads = self.args.pool if self.args.pool else 16
+
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
