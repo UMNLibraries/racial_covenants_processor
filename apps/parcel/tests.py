@@ -107,3 +107,19 @@ class JoinStringTests(TestCase):
         join_strings = "; ".join([c['join_string'] for c in candidates])
         self.assertEquals(
             join_strings, 'janes block 1 lot 1; janes block 1 lot 2')
+        
+    def test_write_join_strings_with_no(self):
+        addition = "ARDEN HILLS NO. 2"
+        block = '7'
+        lot = '1'
+        self.assertEquals(write_join_strings(
+            addition, block, lot)[0]['join_string'], 'arden hills 2 block 7 lot 1')
+        
+    def test_write_join_strings_with_no_2(self):
+        addition = "arden hills no. 2"
+        block = '7'
+        lot = '1'
+        self.assertEquals(write_join_strings(
+            addition, block, lot)[0]['join_string'], 'arden hills 2 block 7 lot 1')
+
+

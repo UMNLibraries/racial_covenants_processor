@@ -52,7 +52,7 @@ class Command(BaseCommand):
                 c['num_parcels'] = 0
             self.match_report.append(c)
 
-    def match_parcels_bulk(self, workflow, parcel_lookup):
+    def match_parcels_bulk(self, workflow, parcel_lookup):  # TODO: Same for ManualCovenant objects
         print("Attempting to auto-join covenants to parcels ...")
         for covenant in ZooniverseSubject.objects.filter(
             workflow=workflow,

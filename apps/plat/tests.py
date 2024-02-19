@@ -20,6 +20,10 @@ class PlatTests(TestCase):
         s = Plat.objects.get(plat_name="F. AMB'S ADDITION TO WEST ST. PAUL")
         self.assertEquals(standardize_addition(s.plat_name), "f ambs")
 
+    def test_standardize_addition_2(self):
+        """Does standardize_addition give expected output?"""
+        self.assertEquals(standardize_addition('ARDEN HILLS NO. 2'), "arden hills 2")
+
     def test_plat_name_standardized(self):
         """Does plat_name_standardized match output of standardize_addition?"""
         s = Plat.objects.get(plat_name="F. AMB'S ADDITION TO WEST ST. PAUL")
