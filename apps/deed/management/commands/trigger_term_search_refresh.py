@@ -2,7 +2,6 @@ import os
 import re
 import csv
 import json
-import time
 import uuid
 import boto3
 import datetime
@@ -20,8 +19,8 @@ from apps.zoon.utils.zooniverse_config import get_workflow_obj
 class Command(BaseCommand):
 
     session = boto3.Session(
-             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
     s3 = session.resource('s3')
 
@@ -38,20 +37,12 @@ class Command(BaseCommand):
         parser.add_argument('-f', '--full', action='store_true',
                             help='Delete old processed records and start over (as opposed to completing a half-done process.)')
 
-    def countdown(self, seconds=5):
-        while seconds > 0:
-            print(f"{seconds}...")
-            time.sleep(1)
-            seconds-=1
-
     def chunk_list(self, input_list, chunk_size):
         for i in range(0, len(input_list), chunk_size):
             yield input_list[i:i + chunk_size]
 
     def delete_matching_hits(self, workflow):
-        print(f"WARNING: ABOUT TO DELETE ALL EXISTING HITS JSONS IN WORKFLOW {workflow.slug}...")
-
-        delete_confirmation = input('WARNING: ABOUT TO DELETE ALL EXISTING HITS JSONS IN WORKFLOW {workflow.slug}... Confirm? [Y/N] ')
+        delete_confirmation = input(f'WARNING: ABOUT TO DELETE ALL EXISTING HITS JSONS IN WORKFLOW {workflow.slug}... Confirm? [Y/N] ')
 
         # input validation
         if delete_confirmation.lower() in ('y', 'yes'):
@@ -60,7 +51,7 @@ class Command(BaseCommand):
                 Prefix=f'ocr/hits/{workflow.slug}/'
             )]
 
-            print(f'Deleting {len(keys_to_delete)} keys ...')
+            print(f'Deleting {len(keys_to_delete)} hit objects ...')
             for chunk in self.chunk_list(keys_to_delete, 1000):
                 boto3.client('s3').delete_objects(
                     Bucket=settings.AWS_STORAGE_BUCKET_NAME,
@@ -82,16 +73,16 @@ class Command(BaseCommand):
         return {
           "version": "0",
           "id": "17793124-05d4-b198-2fde-7ededc63b103",
-          "detail-type": "Mapping Prejudice deed machine term search update",
-          "source": "mappingprejudice.s3",
+          "detail-type": "Deed machine term search update",
+          "source": "deedmachine.s3",
           "account": "123456789012",
           "time": now,
-          "region": "us-east-2",
-          "resources": ["arn:aws:s3:::covenants-deed-images"],
+          "region": settings.AWS_S3_REGION_NAME,
+          "resources": [f"arn:aws:s3:::{settings.AWS_STORAGE_BUCKET_NAME}"],
           "detail": {
             "version": "0",
             "bucket": {
-              "name": "covenants-deed-images"
+              "name": settings.AWS_STORAGE_BUCKET_NAME
             },
             "object": {
               "key": key,
@@ -109,7 +100,6 @@ class Command(BaseCommand):
 
     def check_already_processed(self, workflow_slug, upload_keys):
         print("Checking for manifest to see what images have already been re-processed...")
-
 
         try:
             already_triggered_keys = pd.read_csv(self.done_manifest_path, names=['filename']).filename.to_list()
@@ -139,32 +129,39 @@ class Command(BaseCommand):
         return False
 
     def trigger_raw_put(self, workflow):
-        print("WARNING: ABOUT TO TRIGGER RAW FILE PUTS, WHICH MAY INCUR LARGE AWS CHARGES...")
+    
+        put_confirmation = input(f'WARNING: ABOUT TO TRIGGER RAW FILE PUTS IN WORKFLOW {workflow.slug}, WHICH WILL INCUR AWS CHARGES... Confirm? [Y/N] ')
 
-        self.countdown()
+        # input validation
+        if put_confirmation.lower() in ('y', 'yes'):
 
-        key_filter = re.compile(f"ocr/json/{workflow.slug}/.+\.json")
+            key_filter = re.compile(f"ocr/json/{workflow.slug}/.+\.json")
 
-        print(f'Gathering list of raw images in {workflow.slug} workflow ...')
+            print(f'Gathering list of OCRed images in {workflow.slug} workflow ...')
 
-        matching_keys = [obj.key for obj in self.bucket.objects.filter(
-            Prefix=f'ocr/json/{workflow.slug}/'
-        ) if re.match(key_filter, obj.key)]
+            matching_keys = [obj.key for obj in self.bucket.objects.filter(
+                Prefix=f'ocr/json/{workflow.slug}/'
+            ) if re.match(key_filter, obj.key)]
 
-        today = datetime.date.today().strftime('%Y%m%d')
-        self.done_manifest_path = os.path.join(
-            settings.BASE_DIR, 'data', 'main_exports', f"{workflow.slug}_re-ocr_complete_{today}.csv")
+            today = datetime.date.today().strftime('%Y%m%d')
+            export_dir = os.path.join(settings.BASE_DIR, 'data', 'main_exports')
+            os.makedirs(export_dir, exist_ok=True)
+            self.done_manifest_path = os.path.join(
+                export_dir, f"{workflow.slug}_re-ocr_complete_{today}.csv")
 
-        # Filter out ones that already have been re-processed
-        matching_keys = self.check_already_processed(workflow.slug, matching_keys)
-        # matching_keys = ['raw/wi-milwaukee-county/19010521/00421264_PLAT_0001.tif']
+            # Filter out ones that already have been re-processed
+            matching_keys = self.check_already_processed(workflow.slug, matching_keys)
+            # matching_keys = ['raw/wi-milwaukee-county/19010521/00421264_PLAT_0001.tif']
 
-        print(f'Found {len(matching_keys)} matching images to trigger events on.')
+            print(f'Found {len(matching_keys)} matching images to trigger events on.')
 
-        trigger_count = 0
+            trigger_count = 0
 
-        pool = ThreadPool(processes=12)
-        pool.map(self.trigger_step_function, matching_keys)
+            pool = ThreadPool(processes=12)
+            pool.map(self.trigger_step_function, matching_keys)
+
+        else:
+            print('Cancelling...')
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -174,7 +171,6 @@ class Command(BaseCommand):
             workflow = get_workflow_obj(workflow_name)
 
             if kwargs['full']:
-                # TODO: add confirmation requirement
                 delete_successful = self.delete_matching_hits(workflow)
                 if not delete_successful:
                     return False
