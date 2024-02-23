@@ -507,9 +507,13 @@ class Command(BaseCommand):
     
 
         # Clear invalid values in date fields caused by weird input
-        df.loc[df['deed_date_year'].apply(lambda x: type(x)) in [dict, list], 'deed_date_year'] = 'Bad value'
-        df.loc[df['deed_date_month'].apply(lambda x: type(x)) in [dict, list], 'deed_date_month'] = 'Bad value'
-        df.loc[df['deed_date_day'].apply(lambda x: type(x)) in [dict, list], 'deed_date_day'] = 'Bad value'
+        df.loc[df['deed_date_year'].apply(lambda x: type(x)) == dict, 'deed_date_year'] = 'Bad value'
+        df.loc[df['deed_date_month'].apply(lambda x: type(x)) == dict, 'deed_date_month'] = 'Bad value'
+        df.loc[df['deed_date_day'].apply(lambda x: type(x)) == dict, 'deed_date_day'] = 'Bad value'
+
+        df.loc[df['deed_date_year'].apply(lambda x: type(x)) == list, 'deed_date_year'] = 'Bad value'
+        df.loc[df['deed_date_month'].apply(lambda x: type(x)) == list, 'deed_date_month'] = 'Bad value'
+        df.loc[df['deed_date_day'].apply(lambda x: type(x)) == list, 'deed_date_day'] = 'Bad value'
 
         df = df.drop(columns=['annotations', 'subject_ids', 'zoon_subject_id'])
 
