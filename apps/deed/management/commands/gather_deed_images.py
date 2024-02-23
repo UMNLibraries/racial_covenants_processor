@@ -13,7 +13,7 @@ from django.db.models import Count
 
 from apps.deed.models import DeedPage
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
-from apps.deed.utils.deed_pagination import tag_doc_num_page_counts, paginate_deedpage_df
+from apps.deed.utils.deed_pagination import paginate_deedpage_df
 
 
 class Command(BaseCommand):
@@ -176,9 +176,9 @@ class Command(BaseCommand):
                 # Set image path and s3 lookup
                 page_data['public_uuid'] = public_uuid
                 page_data['s3_lookup'] = mk.replace(f"ocr/stats/{workflow.slug}/", "").replace(f"__{public_uuid}.json", "")
-                # In order to associate doc numbers with a file that has been split with splitpages, you need to join with an original file lookup, rather than the final s3_lookup created by the lambda process.
-                page_data['orig_file_lookup'] = re.sub(r'_SPLITPAGE_\d+', '', page_data['s3_lookup'])
-                # print(page_data['orig_file_lookup'])
+                # # In order to associate doc numbers with a file that has been split with splitpages, you need to join with an original file lookup, rather than the final s3_lookup created by the lambda process.
+                # page_data['orig_file_lookup'] = re.sub(r'_SPLITPAGE_\d+', '', page_data['s3_lookup'])
+                # # print(page_data['orig_file_lookup'])
 
                 page_data['page_stats'] = mk
 
@@ -237,31 +237,31 @@ class Command(BaseCommand):
         # Drop duplicates again just in case
         deed_pages_df = deed_pages_df.drop_duplicates(subset=['s3_lookup'])
 
-        # If doc_num is null, use doc_type/book/page as doc_num
-        deed_pages_df['doc_num'] = deed_pages_df['doc_num'].str.replace('NONE', '')
-        deed_pages_df['doc_num'] = deed_pages_df['doc_num'].fillna('')
-        if 'book_id' in deed_pages_df.columns:
-            deed_pages_df['book_id'] = deed_pages_df['book_id'].str.replace('NONE', '')
-            deed_pages_df['book_id'] = deed_pages_df['book_id'].fillna('')
+        # # If doc_num is null, use doc_type/book/page as doc_num
+        # deed_pages_df['doc_num'] = deed_pages_df['doc_num'].str.replace('NONE', '')
+        # deed_pages_df['doc_num'] = deed_pages_df['doc_num'].fillna('')
+        # if 'book_id' in deed_pages_df.columns:
+        #     deed_pages_df['book_id'] = deed_pages_df['book_id'].str.replace('NONE', '')
+        #     deed_pages_df['book_id'] = deed_pages_df['book_id'].fillna('')
 
-            deed_pages_df.loc[(deed_pages_df['doc_num'] == '') & (deed_pages_df['book_id'] != ''), 'doc_num'] = deed_pages_df['doc_type'] + ' Book ' + deed_pages_df['book_id'] + ' Page ' + deed_pages_df['page_num']
+        #     deed_pages_df.loc[(deed_pages_df['doc_num'] == '') & (deed_pages_df['book_id'] != ''), 'doc_num'] = deed_pages_df['doc_type'] + ' Book ' + deed_pages_df['book_id'] + ' Page ' + deed_pages_df['page_num']
 
-        # Tag docs with page count by doc_num
-        print('Tagging doc num page counts...')
-        deed_pages_df = tag_doc_num_page_counts(deed_pages_df)
+        # # Tag docs with page count by doc_num
+        # print('Tagging doc num page counts...')
+        # deed_pages_df = tag_doc_num_page_counts(deed_pages_df)
 
         # TODO: Tag docs with prev/next page images
         print('Tagging prev/next photos...')
         deed_pages_df = paginate_deedpage_df(deed_pages_df)
-        deed_pages_df = deed_pages_df.drop(columns=[
-            'page_num_-1',
-            'page_num_1',
-            'page_num_2',
-            'split_page_num_-1',
-            'split_page_num_1',
-            'split_page_num_2',
-            'orig_file_lookup',
-        ])
+        # deed_pages_df = deed_pages_df.drop(columns=[
+        #     'page_num_-1',
+        #     'page_num_1',
+        #     'page_num_2',
+        #     'split_page_num_-1',
+        #     'split_page_num_1',
+        #     'split_page_num_2',
+        #     'orig_file_lookup',
+        # ])
 
         # print(deed_pages_df.to_dict('records'))
 
