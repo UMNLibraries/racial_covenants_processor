@@ -5,6 +5,7 @@ from django.db import connection
 
 from apps.deed.models import DeedPage
 
+
 def tag_doc_num_page_counts(df):
     page_counts = df[['doc_num', 'public_uuid']].groupby(['doc_num']).count().reset_index().rename(columns={'public_uuid': 'doc_page_count'})
     # page_counts = df[['doc_num']].value_counts().reset_index(names='doc_page_count')
@@ -14,6 +15,7 @@ def tag_doc_num_page_counts(df):
         how='left',
         on='doc_num'
     )
+
 
 def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offset=1, split_page=False):
     split_str = ''
@@ -63,7 +65,9 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
 
     return match_df
 
+
 def paginate_deedpage_df(df, matches_only=False):
+
     # TODO: Change page_num and split_page_num to ints
     if "page_num" not in df.columns:
         df['page_num'] = None
@@ -73,17 +77,28 @@ def paginate_deedpage_df(df, matches_only=False):
 
     df["page_num"] = pd.to_numeric(df["page_num"])
 
-        #     if 'page_num' in deed_pages_df.columns:
-            
-        # else:
-        #     deed_pages_df['page_num'] = None
-
     if "split_page_num" not in df.columns:
         df['split_page_num'] = None
     df["split_page_num"] = pd.to_numeric(df["split_page_num"])
 
+    if "doc_type" not in df.columns:
+        df["doc_type"] = ''
+
+    # If doc_num is null, use doc_type/book/page as doc_num
+    df['doc_num'] = df['doc_num'].str.replace('NONE', '')
+    df['doc_num'] = df['doc_num'].fillna('')
+    if 'book_id' in df.columns:
+        df['book_id'] = df['book_id'].str.replace('NONE', '')
+        df['book_id'] = df['book_id'].fillna('')
+
+        df.loc[(df['doc_num'] == '') & (df['book_id'] != ''), 'doc_num'] = df['doc_type'] + ' Book ' + df['book_id'] + ' Page ' + str(df['page_num'])
+
     if "book_id" not in df.columns:
         df["book_id"] = ''
+
+    # Tag docs with page count by doc_num
+    print('Tagging doc num page counts...')
+    df = tag_doc_num_page_counts(df)
 
     if matches_only:
         match_df = df[df['bool_match'] == True].copy()
@@ -136,7 +151,7 @@ def paginate_deedpage_df(df, matches_only=False):
     # no doc_num, book and page only, no splitpage
     # TODO: Need to incorporate doctype for book and page, maybe create doc_num before this part of pagination, or make book type part of the regex
 
-    book_id_no_split_page_df = match_df[(match_df['book_id'] != '') & (match_df['doc_page_count'] == 1)].copy()
+    book_id_no_split_page_df = match_df[(match_df['book_id'] != '') & (~match_df['page_num'].isna()) & (match_df['doc_page_count'] == 1)].copy()
 
     for offset in [-1, 1, 2]:
         book_id_no_split_page_df = pagination_merge(
@@ -215,6 +230,15 @@ def paginate_deedpage_df(df, matches_only=False):
 
     out_df = out_df.replace([np.nan], [None])
 
+    out_df = out_df.drop(columns=[
+        'page_num_-1',
+        'page_num_1',
+        'page_num_2',
+        'split_page_num_-1',
+        'split_page_num_1',
+        'split_page_num_2',
+    ])
+
     return out_df
 
 def tag_prev_next_image_sql(workflow, matches_only=False):
@@ -226,8 +250,9 @@ def tag_prev_next_image_sql(workflow, matches_only=False):
         # 'pk',
         'bool_match',
         'doc_num',
+        'public_uuid',
         'book_id',
-        'doc_page_count',
+        # 'doc_page_count',  # Generating duplicate at next stage. Could also drop in next stage before merging.
         'page_num',
         'split_page_num',
         'page_image_web',

@@ -133,7 +133,7 @@ class Command(BaseCommand):
             return key
         return False
 
-    def trigger_raw_put(self, workflow):
+    def trigger_raw_put(self, workflow, full=False):
     
         put_confirmation = input(f'WARNING: ABOUT TO TRIGGER RAW FILE PUTS IN WORKFLOW {workflow.slug}, WHICH WILL INCUR AWS CHARGES... Confirm? [Y/N] ')
 
@@ -154,9 +154,10 @@ class Command(BaseCommand):
             self.done_manifest_path = os.path.join(
                 export_dir, f"{workflow.slug}_re-ocr_complete_{today}.csv")
 
-            # Filter out ones that already have been re-processed
-            matching_keys = self.check_already_processed(workflow.slug, matching_keys)
-            # matching_keys = ['raw/wi-milwaukee-county/19010521/00421264_PLAT_0001.tif']
+            if not full:
+                # Filter out ones that already have been re-processed
+                matching_keys = self.check_already_processed(workflow.slug, matching_keys)
+                # matching_keys = ['raw/wi-milwaukee-county/19010521/00421264_PLAT_0001.tif']
 
             print(f'Found {len(matching_keys)} matching images to trigger events on.')
 
@@ -170,7 +171,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
-        self.num_threads = self.args.pool if self.args.pool else 16
+        self.num_threads = kwargs['pool'] if kwargs['pool'] else 16
 
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
@@ -182,4 +183,6 @@ class Command(BaseCommand):
                 if not delete_successful:
                     return False
 
-            self.trigger_raw_put(workflow)
+                self.trigger_raw_put(workflow, True)
+            else:
+                self.trigger_raw_put(workflow)
