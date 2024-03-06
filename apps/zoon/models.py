@@ -70,6 +70,46 @@ class UnmappedZooniverseManager(models.Manager):
         )
 
 
+class AllCovenantedDocsZooniverseManager(models.Manager):
+    '''This model manager is mainly used for exports of all covenanted documents.
+    It returns a list of all covenant/parcel combinations, so should not be used for covenant counts.
+    It is reduced to a per-docnumber list in the export stage in apps/parcel/utils/export_utils.py
+    The main model manager used for covenant exports is in apps/parcel/models.py.
+    Unlike the main exporter, de-duping is not done here to eliminate multiple occurences
+    of the same document.'''
+
+    def get_queryset(self):
+
+        return super().get_queryset().filter(
+            bool_covenant=True
+        ).annotate(
+            db_id=F('pk'),
+            # deed_date=F('deed_date_final'),  # Need to rename with pd
+            is_mapped=F('bool_parcel_match'),
+            cov_text=F('covenant_text_final'),
+            zn_subj_id=F('zoon_subject_id'),
+            zn_dt_ret=F('dt_retired'),
+            med_score=F('median_score'),
+            manual_cx=F('bool_manual_correction'),
+            add_cov=F('addition_final'),
+            block_cov=F('block_final'),
+            lot_cov=F('lot_final'),
+            join_strgs=F('join_candidates'),
+            # city_cov=F('city_final'),
+            # seller=F('seller_final'),  # Need to rename with pd
+            # buyer=F('buyer_final'),  # Need to rename with pd
+            dt_updated=F('date_updated'),
+            doc_num=F('deedpage_doc_num'),
+            cov_type=Value('zooniverse'),
+            # match_type=Value('unmapped')  # Need to rename with pd
+            # addresses=F('parcel_addresses'),
+            mapped_address=F('parcel_matches__street_address'),
+            mapped_city=F('parcel_matches__city'),
+            mapped_state=F('parcel_matches__state'),
+            mapped_parcel_pin=F('parcel_matches__pin_primary'),
+        )
+
+
 class ValidationZooniverseManager(models.Manager):
     '''This model manager is used to run statistics on retired subjects and
     for other analysis purposes'''
@@ -206,6 +246,7 @@ class ZooniverseSubject(models.Model):
 
     objects = models.Manager()
     unmapped_objects = UnmappedZooniverseManager()
+    all_covenanted_docs_objects = AllCovenantedDocsZooniverseManager()
     validation_objects = ValidationZooniverseManager()
 
     def __str__(self):
@@ -556,6 +597,41 @@ def model_delete(sender, instance, **kwargs):
     instance.zooniverse_subject.save()
 
 
+class AllCovenantedDocsManualCovenantManager(models.Manager):
+    '''This model manager is mainly used for exports of all covenanted documents.
+    It returns a list of all covenant/parcel combinations, so should not be used for covenant counts.
+    It is reduced to a per-docnumber list in the export stage in apps/parcel/utils/export_utils.py
+    The main model manager used for covenant exports is in apps/parcel/models.py.
+    Unlike the main exporter, de-duping is not done here to eliminate multiple occurences
+    of the same document.'''
+
+    def get_queryset(self):
+
+        return super().get_queryset().filter(
+            # bool_covenant=True  # They all are covenants
+            bool_confirmed=True
+        ).annotate(
+            db_id=F('pk'),
+            # deed_date=F('deed_date_final'),  # Need to rename with pd
+            is_mapped=F('bool_parcel_match'),
+            cov_text=F('covenant_text'),
+            zn_subj_id=Value(''),
+            zn_dt_ret=Value(''),
+            med_score=Value(''),
+            manual_cx=Value(''),
+            add_cov=F('addition'),
+            block_cov=F('block'),
+            lot_cov=F('lot'),
+            join_strgs=F('join_candidates'),
+            dt_updated=F('date_updated'),
+            # cov_type_manual=Value('manual'),
+            mapped_address=F('parcel_matches__street_address'),
+            mapped_city=F('parcel_matches__city'),
+            mapped_state=F('parcel_matches__state'),
+            mapped_parcel_pin=F('parcel_matches__pin_primary'),
+        )
+
+
 MANUAL_COV_OPTIONS = (
     ('PS', 'Public submission (single property)'),
     ('SE', 'Something else'),
@@ -587,6 +663,9 @@ class ManualCovenant(models.Model):
 
     date_added = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
+    all_covenanted_docs_objects = AllCovenantedDocsManualCovenantManager()
 
     # TODO: manual geometries
 
@@ -646,31 +725,32 @@ class ManualCovenant(models.Model):
                 self.parcel_matches.all().update(bool_covenant=True)
 
     def save(self, *args, **kwargs):
-        # Can pass parcel lookup for bulk matches
-        self.check_parcel_match(kwargs.get('parcel_lookup', None))
-        if 'parcel_lookup' in kwargs:
-            del kwargs['parcel_lookup']
-
+        
         super(ManualCovenant, self).save(*args, **kwargs)
 
 
-# @receiver(models.signals.post_save, sender=ManualCovenant)
-# def manual_cov_post_save(sender, instance=None, created=False, **kwargs):
+@receiver(models.signals.post_save, sender=ManualCovenant)
+def manual_cov_post_save(sender, instance=None, created=False, **kwargs):
 
-#     if not instance:
-#         return
+    if not instance:
+        return
 
-#     if hasattr(instance, '_dirty'):
-#         return
+    if hasattr(instance, '_dirty'):
+        return
     
-#     # Can pass parcel lookup for bulk matches
-#     instance.check_parcel_match(kwargs.get('parcel_lookup', None))
+    # # Can pass parcel lookup for bulk matches
+    # instance.check_parcel_match(kwargs.get('parcel_lookup', None))
+    # Can pass parcel lookup for bulk matches
+    print('Checking parcel matches')
+    instance.check_parcel_match(kwargs.get('parcel_lookup', None))
+    if 'parcel_lookup' in kwargs:
+        del kwargs['parcel_lookup']
 
-#     try:
-#         instance._dirty = True
-#         instance.save()
-#     finally:
-#         del instance._dirty
+    try:
+        instance._dirty = True
+        instance.save()
+    finally:
+        del instance._dirty
 
 
 SUPPORTING_DOC_TYPES = (
