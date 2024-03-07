@@ -397,8 +397,8 @@ class ZooniverseSubject(models.Model):
                     except:
                         print(f"NO MATCH: {c['join_string']}")
 
-                # Tag matched parcels with bool_covenant=True
-                self.parcel_matches.all().update(bool_covenant=True)
+            # Tag matched parcels with bool_covenant=True
+            self.parcel_matches.all().update(bool_covenant=True)
 
     def save(self, *args, **kwargs):
         self.get_final_values()
@@ -721,8 +721,8 @@ class ManualCovenant(models.Model):
                     except:
                         print(f"NO MATCH: {c['join_string']}")
 
-                # Tag matched parcels with bool_covenant=True
-                self.parcel_matches.all().update(bool_covenant=True)
+            # Tag matched parcels with bool_covenant=True
+            self.parcel_matches.all().update(bool_covenant=True)
 
     def save(self, *args, **kwargs):
         
