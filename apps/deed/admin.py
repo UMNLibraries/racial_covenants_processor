@@ -21,6 +21,7 @@ class DeedPageAdmin(admin.ModelAdmin):
     readonly_fields = (
         'workflow',
         'bool_match',
+        'bool_manual',
         'bool_exception',
         'doc_num',
         'book_id',
