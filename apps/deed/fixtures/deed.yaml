@@ -803,3 +803,159 @@
         bool_exception: false
         matched_terms: []
         doc_page_count: 560
+# Olmsted examples for prev/next deedpage records and prev/next images
+# Real one with doc num and book id but only 1 page
+-   model: deed.deedpage
+    pk: 33
+    fields:
+        workflow: 1
+        s3_lookup: 'OlmstedCountyAbstracts/OldDeedBooks/D-102/HDEED102192'
+        doc_num: 'HDEED102192'
+        doc_alt_id: ''
+        batch_id: 'OlmstedCountyAbstracts/OldDeedBooks'
+        book_id: 'D-102'
+        page_num: null
+        split_page_num: null
+        doc_date: null
+        doc_type: 'Abstracts'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/OlmstedCountyAbstracts/OldDeedBooks/D-102/HDEED102192.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: 1
+# This [fake] one has doc num but no book id, only one page
+-   model: deed.deedpage
+    pk: 34
+    fields:
+        workflow: 1
+        s3_lookup: 'OlmstedCountyAbstracts/OldDeedBooks/D-102/HDEED102193'
+        doc_num: 'HDEED102193'
+        doc_alt_id: ''
+        batch_id: 'OlmstedCountyAbstracts/OldDeedBooks'
+        book_id: ''
+        page_num: null
+        split_page_num: null
+        doc_date: null
+        doc_type: 'Abstracts'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/OlmstedCountyAbstracts/OldDeedBooks/D-102/HDEED102193.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: 1
+# Olmsted splitpage example
+-   model: deed.deedpage
+    pk: 35
+    fields:
+        workflow: 1
+        s3_lookup: 'OlmstedCountyAbstracts/OldMortgageBooks/M-327/H272733_SPLITPAGE_1'
+        doc_num: 'H272733'
+        doc_alt_id: ''
+        batch_id: 'OlmstedCountyAbstracts/OldMortgageBooks'
+        book_id: ''
+        page_num: null
+        split_page_num: 1
+        doc_date: null
+        doc_type: 'Abstracts'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/OlmstedCountyAbstracts/OldMortgageBooks/M-327/H272733_SPLITPAGE_1.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
+-   model: deed.deedpage
+    pk: 36
+    fields:
+        workflow: 1
+        s3_lookup: 'OlmstedCountyAbstracts/OldMortgageBooks/M-327/H272733_SPLITPAGE_2'
+        doc_num: 'H272733'
+        doc_alt_id: ''
+        batch_id: 'OlmstedCountyAbstracts/OldMortgageBooks'
+        book_id: ''
+        page_num: null
+        split_page_num: 2
+        doc_date: null
+        doc_type: 'Abstracts'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/OlmstedCountyAbstracts/OldMortgageBooks/M-327/H272733_SPLITPAGE_2.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
+-   model: deed.deedpage
+    pk: 37
+    fields:
+        workflow: 1
+        s3_lookup: 'OlmstedCountyAbstracts/OldDeedBooks/D-088/H27165_SPLITPAGE_1'
+        doc_num: 'H27165'
+        doc_alt_id: ''
+        batch_id: 'OlmstedCountyAbstracts/OldMortgageBooks'
+        book_id: 'D-088'
+        page_num: null
+        split_page_num: 1
+        doc_date: null
+        doc_type: 'Abstracts'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/OlmstedCountyAbstracts/OldDeedBooks/D-088/H27165_SPLITPAGE_1.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
+-   model: deed.deedpage
+    pk: 38
+    fields:
+        workflow: 1
+        s3_lookup: 'OlmstedCountyAbstracts/OldDeedBooks/D-088/H27165_SPLITPAGE_2'
+        doc_num: 'H27165'
+        doc_alt_id: ''
+        batch_id: 'OlmstedCountyAbstracts/OldMortgageBooks'
+        book_id: 'D-088'
+        page_num: null
+        split_page_num: 2
+        doc_date: null
+        doc_type: 'Abstracts'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/OlmstedCountyAbstracts/OldDeedBooks/D-088/H27165_SPLITPAGE_2.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
+
+

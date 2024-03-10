@@ -50,14 +50,6 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
             new_image_field,
             new_image_lookup_field
         ]],
-        # doc_list_df.copy()[[
-        #     doc_or_book_selector,
-        #     f'{split_str}page_num',
-        #     'page_image_web'
-        # ]].rename(columns={
-        #     'page_image_web': new_image_field,
-        #     f'{split_str}page_num': f'{split_str}page_num_right'
-        # }),
         how="left",
         left_on=[doc_or_book_selector, f"{split_str}page_num_{offset}"],
         right_on=[doc_or_book_selector, f"{split_str}page_num_right"]
@@ -105,6 +97,8 @@ def paginate_deedpage_df(df, matches_only=False):
     else:
         match_df = df
 
+    print(f'Starting with {match_df.shape[0]} objects...')
+
     doc_list_df = df[[
         # 'pk',
         's3_lookup',
@@ -119,6 +113,7 @@ def paginate_deedpage_df(df, matches_only=False):
     # same doc num with multiple pages + splitpage
     doc_num_split_page_df = match_df[(match_df['doc_num'] != '') & (match_df['doc_page_count'] > 1) & (match_df['split_page_num'] >= 1)].copy()
 
+    print(f'Join 1 input: {doc_num_split_page_df.shape[0]} objects')
     for offset in [-1, 1, 2]:
         doc_num_split_page_df = pagination_merge(
             doc_num_split_page_df,
@@ -128,12 +123,21 @@ def paginate_deedpage_df(df, matches_only=False):
             split_page=True
         )
 
-    # print(doc_num_split_page_df)
+    validation_fields = ['s3_lookup', 'doc_num', 'book_id', 'page_num', 'split_page_num', 'doc_page_count']
+    page_to_find = None
+    # page_to_find = 'OlmstedCountyAbstracts/OldDeedBooks/D-102/HDEED102192'
+
+    print(doc_num_split_page_df[validation_fields])
+    if page_to_find:
+        print('Searching for target page...')
+        print(doc_num_split_page_df[doc_num_split_page_df['s3_lookup'] == page_to_find][validation_fields])
+    # print(f'Join 1 output: {doc_num_split_page_df.shape[0]} objects')
     # doc_num_split_page_df.to_csv('test_join_1.csv')
 
     print('Join 2')
     # no doc_num, book and page only, splitpage
     book_id_split_page_df = match_df[(match_df['book_id'] != '') & (match_df['doc_page_count'] == 1) & (match_df['split_page_num'] >= 1)].copy()
+    print(f'Join 2 input: {book_id_split_page_df.shape[0]} objects')
 
     for offset in [-1, 1, 2]:
         book_id_split_page_df = pagination_merge(
@@ -144,7 +148,12 @@ def paginate_deedpage_df(df, matches_only=False):
             split_page=True
         )
 
-    # print(book_id_split_page_df)
+    print(book_id_split_page_df[validation_fields])
+    if page_to_find:
+        print('Searching for target page...')
+        print(book_id_split_page_df[book_id_split_page_df['s3_lookup'] == page_to_find][validation_fields])
+
+    # print(f'Join 2 output: {book_id_split_page_df.shape[0]} objects')
     # book_id_split_page_df.to_csv('test_join_2.csv')
 
     print('Join 3')
@@ -152,6 +161,7 @@ def paginate_deedpage_df(df, matches_only=False):
     # TODO: Need to incorporate doctype for book and page, maybe create doc_num before this part of pagination, or make book type part of the regex
 
     book_id_no_split_page_df = match_df[(match_df['book_id'] != '') & (~match_df['page_num'].isna()) & (match_df['doc_page_count'] == 1)].copy()
+    print(f'Join 3 input: {book_id_no_split_page_df.shape[0]} objects')
 
     for offset in [-1, 1, 2]:
         book_id_no_split_page_df = pagination_merge(
@@ -162,12 +172,21 @@ def paginate_deedpage_df(df, matches_only=False):
             split_page=False
         )
 
-    # print(book_id_no_split_page_df)
+    print(book_id_no_split_page_df[validation_fields])
+    if page_to_find:
+        print('Searching for target page...')
+        print(book_id_no_split_page_df[book_id_no_split_page_df['s3_lookup'] == page_to_find][validation_fields])
+    # print(f'Join 3 output: {book_id_no_split_page_df.shape[0]} objects')
     # book_id_no_split_page_df.to_csv('test_join_3.csv')
 
     print('Join 4')
-    # no doc_num, book and page only, no splitpage
-    doc_num_one_page_df = match_df[(match_df['book_id'] == '') & (match_df['doc_page_count'] == 1)].copy()
+    # No splitpage, one page
+    # Old explanation: no doc_num, book and page only, no splitpage <-- this doesn't make sense
+    doc_num_one_page_df = match_df[(match_df['page_num'].isna()) & (match_df['doc_page_count'] == 1)].copy()
+    # doc_num_one_page_df = match_df[(match_df['book_id'] == '') & (match_df['doc_page_count'] == 1)].copy()
+
+    
+    print(f'Join 4 input: {doc_num_one_page_df.shape[0]} objects')
 
     # Don't really need to join, it's just one page
     doc_num_one_page_df['prev_page_image_web'] = ''
@@ -177,7 +196,11 @@ def paginate_deedpage_df(df, matches_only=False):
     doc_num_one_page_df['next_page_image_lookup'] = ''
     doc_num_one_page_df['next_next_page_image_lookup'] = ''
 
-    # print(book_id_no_split_page_df)
+    print(doc_num_one_page_df[validation_fields])
+    if page_to_find:
+        print('Searching for target page...')
+        print(doc_num_one_page_df[doc_num_one_page_df['s3_lookup'] == page_to_find][validation_fields])
+    # print(f'Join 4 output: {doc_num_one_page_df.shape[0]} objects')
     # book_id_no_split_page_df.to_csv('test_join_4.csv')
 
     print('Join 5')
@@ -188,12 +211,20 @@ def paginate_deedpage_df(df, matches_only=False):
         book_id_no_split_page_df['s3_lookup'],
         doc_num_one_page_df['s3_lookup']
     ])
-
+    
     print('isolation check')
     doc_num_no_split_page_df = match_df[~match_df['s3_lookup'].isin(already_matched_lookups)].copy()
+    print(f'Join 5 input: {doc_num_no_split_page_df.shape[0]} objects')
 
-    print('actual merge')
-    print(doc_num_no_split_page_df)
+    # print('actual merge')
+    # print(doc_num_no_split_page_df.shape)
+    # print(doc_num_no_split_page_df[['s3_lookup', 'doc_num', 'book_id', 'page_num', 'split_page_num', 'doc_page_count']])
+
+    # print('dropping duplicates...')
+    # doc_num_no_split_page_df = doc_num_no_split_page_df.drop_duplicates()
+    # print(doc_num_no_split_page_df.shape)
+    # print(doc_num_no_split_page_df[['s3_lookup', 'doc_num', 'book_id', 'page_num', 'split_page_num', 'doc_page_count']])
+
     for offset in [-1, 1, 2]:
         doc_num_no_split_page_df = pagination_merge(
             doc_num_no_split_page_df,
@@ -203,7 +234,11 @@ def paginate_deedpage_df(df, matches_only=False):
             split_page=False
         )
 
-    # print(doc_num_no_split_page_df)
+    print(doc_num_no_split_page_df[validation_fields])
+    if page_to_find:
+        print('Searching for target page...')
+        print(doc_num_no_split_page_df[doc_num_no_split_page_df['s3_lookup'] == page_to_find][validation_fields])
+    # print(f'Join 5 output: {doc_num_no_split_page_df.shape[0]} objects')
     # doc_num_no_split_page_df.to_csv('test_join_5.csv')
 
     print("Building out_df...")
@@ -238,6 +273,8 @@ def paginate_deedpage_df(df, matches_only=False):
         'split_page_num_1',
         'split_page_num_2',
     ])
+
+    print(out_df[validation_fields])
 
     return out_df
 
