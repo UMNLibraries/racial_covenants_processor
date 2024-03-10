@@ -57,6 +57,11 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
 
     return match_df
 
+def round_float_to_str(x):
+    try:
+        return str(round(x))
+    except:
+        return 'None'
 
 def paginate_deedpage_df(df, matches_only=False):
 
@@ -83,7 +88,7 @@ def paginate_deedpage_df(df, matches_only=False):
         df['book_id'] = df['book_id'].str.replace('NONE', '')
         df['book_id'] = df['book_id'].fillna('')
 
-        df.loc[(df['doc_num'] == '') & (df['book_id'] != ''), 'doc_num'] = df['doc_type'] + ' Book ' + df['book_id'] + ' Page ' + str(df['page_num'])
+        df.loc[(df['doc_num'] == '') & (df['book_id'] != ''), 'doc_num'] = df['doc_type'] + ' Book ' + df['book_id'] + ' Page ' + df['page_num'].apply(lambda x: round_float_to_str(x))
 
     if "book_id" not in df.columns:
         df["book_id"] = ''

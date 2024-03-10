@@ -19,14 +19,14 @@ class DeedPage(models.Model):
     workflow = models.ForeignKey(
         ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
     s3_lookup = models.CharField(blank=True, max_length=500, db_index=True)
-    doc_num = models.CharField(blank=True, max_length=100, db_index=True)
-    doc_alt_id = models.CharField(blank=True, max_length=100, db_index=True)
+    doc_num = models.CharField(blank=True, max_length=101, db_index=True)
+    doc_alt_id = models.CharField(blank=True, max_length=102, db_index=True)
     batch_id = models.CharField(blank=True, max_length=255)
-    book_id = models.CharField(blank=True, max_length=100, db_index=True)
+    book_id = models.CharField(blank=True, max_length=103, db_index=True)
     page_num = models.IntegerField(null=True, db_index=True)
     split_page_num = models.IntegerField(null=True, db_index=True)  # Alternate page numbering that happens when a multipage image file has been split by the ingestion process
     doc_date = models.DateField(null=True, db_index=True)
-    doc_type = models.CharField(blank=True, max_length=100)
+    doc_type = models.CharField(blank=True, max_length=104)
     public_uuid = models.CharField(blank=True, max_length=50, db_index=True)
     page_image_web = models.ImageField(
         storage=PublicDeedStorage(), max_length=200, null=True)
@@ -44,18 +44,18 @@ class DeedPage(models.Model):
     # These fields aid in setting up Zooniverse images
     doc_page_count = models.IntegerField(null=True)
     prev_page_image_web = models.ImageField(
-        storage=PublicDeedStorage(), max_length=200, null=True, db_index=True)
+        storage=PublicDeedStorage(), max_length=201, null=True, db_index=True)
     next_page_image_web = models.ImageField(
-        storage=PublicDeedStorage(), max_length=200, null=True, db_index=True)
+        storage=PublicDeedStorage(), max_length=202, null=True, db_index=True)
     next_next_page_image_web = models.ImageField(
-        storage=PublicDeedStorage(), max_length=200, null=True, db_index=True)
+        storage=PublicDeedStorage(), max_length=203, null=True, db_index=True)
 
     prev_page_image_lookup = models.CharField(
-        blank=True, max_length=100, null=True)
+        blank=True, max_length=201, null=True)
     next_page_image_lookup = models.CharField(
-        blank=True, max_length=100, null=True)
+        blank=True, max_length=202, null=True)
     next_next_page_image_lookup = models.CharField(
-        blank=True, max_length=100, null=True)
+        blank=True, max_length=203, null=True)
 
     # Used to join to the matching subject for this if it's a hit
     zooniverse_subject = models.ForeignKey(
