@@ -422,3 +422,37 @@ class DeedPagePrevNextTests(TestCase):
         self.assertEqual(deed_page_2.prev_deedpage, deed_page_1)
         self.assertEqual(deed_page_2.next_deedpage, None)
         self.assertEqual(deed_page_2.next_next_deedpage, None)
+
+    # Washington County examples
+    def test_prev_next_wash_split_page(self):
+        """Does deedpage find correct prev/next images and deedpage records??
+        """
+
+        deed_page_1 = DeedPage.objects.get(
+            s3_lookup='1900 A DEED BL-Z/1900/1900_01_01_A_NONE_DEED_N_248_2446553_SPLITPAGE_1'
+        )
+
+        deed_page_2 = DeedPage.objects.get(
+            s3_lookup='1900 A DEED BL-Z/1900/1900_01_01_A_NONE_DEED_N_248_2446553_SPLITPAGE_2'
+        )
+
+        # Should not really match with anything
+        deed_page_3 = DeedPage.objects.get(
+            s3_lookup='1900 A DEED BL-Z/1900/1900_01_01_A_NONE_DEED_N_249_2475325_SPLITPAGE_1'
+        )
+
+        self.assertEqual(deed_page_1.prev_page_image_web.__str__(), '')
+        self.assertEqual(deed_page_1.next_page_image_web.__str__(), 'web/fake/1900 A DEED BL-Z/1900/1900_01_01_A_NONE_DEED_N_248_2446553_SPLITPAGE_2.jpg')
+        self.assertEqual(deed_page_1.next_next_page_image_web.__str__(), '')
+
+        self.assertEqual(deed_page_2.prev_page_image_web.__str__(), 'web/fake/1900 A DEED BL-Z/1900/1900_01_01_A_NONE_DEED_N_248_2446553_SPLITPAGE_1.jpg')
+        self.assertEqual(deed_page_2.next_page_image_web.__str__(), '')
+        self.assertEqual(deed_page_2.next_next_page_image_web.__str__(), '')
+
+        self.assertEqual(deed_page_1.prev_deedpage, None)
+        self.assertEqual(deed_page_1.next_deedpage, deed_page_2)
+        self.assertEqual(deed_page_1.next_next_deedpage, None)
+
+        self.assertEqual(deed_page_2.prev_deedpage, deed_page_1)
+        self.assertEqual(deed_page_2.next_deedpage, None)
+        self.assertEqual(deed_page_2.next_next_deedpage, None)
