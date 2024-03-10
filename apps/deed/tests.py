@@ -35,18 +35,24 @@ class DeedPagePaginationTests(TestCase):
 class DeedPagePrevNextTests(TestCase):
     fixtures = ['deed', 'zoon']
 
-    def setUp(self):
-        # Set up database first time
+    # def setUp(self):
+    #     # Set up database first time
+    #     workflow = ZooniverseWorkflow.objects.get(pk=1)
+    #     tag_prev_next_image_sql(workflow, True)
+    #     # tag_prev_next_records(workflow, True)
+
+    @classmethod
+    def setUpTestData(cls):
+        # Set up data for the whole TestCase
         workflow = ZooniverseWorkflow.objects.get(pk=1)
         tag_prev_next_image_sql(workflow, True)
-        # tag_prev_next_records(workflow, True)
 
     def test_prev_next_doc_num_page_2(self):
 
         deed_page = DeedPage.objects.get(
             s3_lookup='Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_1234_book_NONE_page_2'
         )
-        print(deed_page.prev_page_image_web)
+        # print(deed_page.prev_page_image_web)
 
         self.assertEqual(deed_page.prev_page_image_web.__str__(), 'web/fake/DEEDS/doc_1234_book_NONE_page_1.jpg')
         self.assertEqual(deed_page.next_page_image_web.__str__(), 'web/fake/DEEDS/doc_1234_book_NONE_page_3.jpg')
@@ -54,13 +60,12 @@ class DeedPagePrevNextTests(TestCase):
 
     def test_prev_next_deed_page_doc_num_page_2(self):
 
-        deed_page = DeedPage.objects.get(
-            s3_lookup='Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_1234_book_NONE_page_2'
-        )
-        print(deed_page.prev_deedpage)
-
         deed_page_1 = DeedPage.objects.get(
             s3_lookup='Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_1234_book_NONE_page_1'
+        )
+
+        deed_page_2 = DeedPage.objects.get(
+            s3_lookup='Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_1234_book_NONE_page_2'
         )
 
         deed_page_3 = DeedPage.objects.get(
@@ -71,16 +76,20 @@ class DeedPagePrevNextTests(TestCase):
             s3_lookup='Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_1234_book_NONE_page_4'
         )
 
-        self.assertEqual(deed_page.prev_deedpage, deed_page_1)
-        self.assertEqual(deed_page.next_deedpage, deed_page_3)
-        self.assertEqual(deed_page.next_next_deedpage, deed_page_4)
+        self.assertEqual(deed_page_1.prev_deedpage, None)
+        self.assertEqual(deed_page_1.next_deedpage, deed_page_2)
+        self.assertEqual(deed_page_1.next_next_deedpage, deed_page_3)
+
+        self.assertEqual(deed_page_2.prev_deedpage, deed_page_1)
+        self.assertEqual(deed_page_2.next_deedpage, deed_page_3)
+        self.assertEqual(deed_page_2.next_next_deedpage, deed_page_4)
 
     def test_prev_next_deed_page_doc_num_has_page_num(self):
 
         deed_page = DeedPage.objects.get(
             s3_lookup='Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_NONE_book_107_page_548'
         )
-        print(deed_page.prev_deedpage)
+        # print(deed_page.prev_deedpage)
 
         deed_page_547 = DeedPage.objects.get(
             s3_lookup='Abstract_Images_Books_Deeds 104-277 by Book and Page/DEEDS/doc_NONE_book_107_page_547'
@@ -109,7 +118,7 @@ class DeedPagePrevNextTests(TestCase):
         deed_page = DeedPage.objects.get(
             s3_lookup='9779605'
         )
-        print(deed_page.prev_page_image_web)
+        # print(deed_page.prev_page_image_web)
 
         self.assertEqual(deed_page.prev_page_image_web.__str__(), '')
         self.assertEqual(deed_page.next_page_image_web.__str__(), '')
@@ -329,3 +338,87 @@ class DeedPagePrevNextTests(TestCase):
         self.assertEqual(deed_page.prev_page_image_web.__str__(), '')
         self.assertEqual(deed_page.next_page_image_web.__str__(), 'web/fake/30000102/02720303_NOTINDEX_0002.jpg')
         self.assertEqual(deed_page.next_next_page_image_web.__str__(), 'web/fake/30000102/02720303_NOTINDEX_0003.jpg')
+
+    def test_prev_next_olmsted_doc_num_and_book_1_page(self):
+        """Does deedpage find correct prev/next images?
+        In this case, should be:
+            prev_page_image_web: None
+            next_page_image_web: None
+            next_next_page_image_web: None
+        """
+
+        deed_page = DeedPage.objects.get(
+            s3_lookup='OlmstedCountyAbstracts/OldDeedBooks/D-102/HDEED102192'
+        )
+
+        self.assertEqual(deed_page.prev_page_image_web.__str__(), '')
+        self.assertEqual(deed_page.next_page_image_web.__str__(), '')
+        self.assertEqual(deed_page.next_next_page_image_web.__str__(), '')
+
+    def test_prev_next_olmsted_doc_num_no_book_id_1_page(self):
+        """Does deedpage find correct prev/next images?
+        In this case, should be:
+            prev_page_image_web: None
+            next_page_image_web: None
+            next_next_page_image_web: None
+        """
+
+        deed_page = DeedPage.objects.get(
+            s3_lookup='OlmstedCountyAbstracts/OldDeedBooks/D-102/HDEED102193'
+        )
+
+        self.assertEqual(deed_page.prev_page_image_web.__str__(), '')
+        self.assertEqual(deed_page.next_page_image_web.__str__(), '')
+        self.assertEqual(deed_page.next_next_page_image_web.__str__(), '')
+
+    def test_prev_next_olmsted_split_page(self):
+        """Does deedpage find correct prev/next images?
+        """
+
+        deed_page = DeedPage.objects.get(
+            s3_lookup='OlmstedCountyAbstracts/OldMortgageBooks/M-327/H272733_SPLITPAGE_1'
+        )
+
+        self.assertEqual(deed_page.prev_page_image_web.__str__(), '')
+        self.assertEqual(deed_page.next_page_image_web.__str__(), 'web/fake/OlmstedCountyAbstracts/OldMortgageBooks/M-327/H272733_SPLITPAGE_2.jpg')
+        self.assertEqual(deed_page.next_next_page_image_web.__str__(), '')
+
+    def test_prev_next_olmsted_split_page_2(self):
+        """Does deedpage find correct prev/next images?
+        """
+
+        deed_page = DeedPage.objects.get(
+            s3_lookup='OlmstedCountyAbstracts/OldMortgageBooks/M-327/H272733_SPLITPAGE_2'
+        )
+
+        self.assertEqual(deed_page.prev_page_image_web.__str__(), 'web/fake/OlmstedCountyAbstracts/OldMortgageBooks/M-327/H272733_SPLITPAGE_1.jpg')
+        self.assertEqual(deed_page.next_page_image_web.__str__(), '')
+        self.assertEqual(deed_page.next_next_page_image_web.__str__(), '')
+
+    def test_prev_next_olmsted_split_page_3(self):
+        """Does deedpage find correct prev/next images and deedpage records??
+        """
+
+        deed_page_1 = DeedPage.objects.get(
+            s3_lookup='OlmstedCountyAbstracts/OldDeedBooks/D-088/H27165_SPLITPAGE_1'
+        )
+
+        deed_page_2 = DeedPage.objects.get(
+            s3_lookup='OlmstedCountyAbstracts/OldDeedBooks/D-088/H27165_SPLITPAGE_2'
+        )
+
+        self.assertEqual(deed_page_1.prev_page_image_web.__str__(), '')
+        self.assertEqual(deed_page_1.next_page_image_web.__str__(), 'web/fake/OlmstedCountyAbstracts/OldDeedBooks/D-088/H27165_SPLITPAGE_2.jpg')
+        self.assertEqual(deed_page_1.next_next_page_image_web.__str__(), '')
+
+        self.assertEqual(deed_page_2.prev_page_image_web.__str__(), 'web/fake/OlmstedCountyAbstracts/OldDeedBooks/D-088/H27165_SPLITPAGE_1.jpg')
+        self.assertEqual(deed_page_2.next_page_image_web.__str__(), '')
+        self.assertEqual(deed_page_2.next_next_page_image_web.__str__(), '')
+
+        self.assertEqual(deed_page_1.prev_deedpage, None)
+        self.assertEqual(deed_page_1.next_deedpage, deed_page_2)
+        self.assertEqual(deed_page_1.next_next_deedpage, None)
+
+        self.assertEqual(deed_page_2.prev_deedpage, deed_page_1)
+        self.assertEqual(deed_page_2.next_deedpage, None)
+        self.assertEqual(deed_page_2.next_next_deedpage, None)

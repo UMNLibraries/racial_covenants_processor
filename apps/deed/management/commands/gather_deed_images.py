@@ -212,8 +212,6 @@ class Command(BaseCommand):
                         page_data['bool_match'] = False
                 else:
                     page_data['bool_match'] = False
-                # else:
-                #     page_data['bool_match'] = False
 
                 deed_pages.append(page_data)
 
@@ -223,47 +221,19 @@ class Command(BaseCommand):
 
         print(deed_pages_df)
 
-        # Remove fake Nones
-        # deed_pages_df[['page_num']].loc[df['shield'] > 35] = 0
-        # if 'page_num' in deed_pages_df.columns:
-        #     deed_pages_df['page_num'].replace('NONE', None, inplace=True)
-        #     deed_pages_df['page_num'].replace('', None, inplace=True)
-        # else:
-        #     deed_pages_df['page_num'] = None
-
         deed_pages_df = self.add_merge_fields(deed_pages_df, workflow)
         deed_pages_df = self.add_supplemental_info(deed_pages_df, workflow)
 
         # Drop duplicates again just in case
         deed_pages_df = deed_pages_df.drop_duplicates(subset=['s3_lookup'])
 
-        # # If doc_num is null, use doc_type/book/page as doc_num
-        # deed_pages_df['doc_num'] = deed_pages_df['doc_num'].str.replace('NONE', '')
-        # deed_pages_df['doc_num'] = deed_pages_df['doc_num'].fillna('')
-        # if 'book_id' in deed_pages_df.columns:
-        #     deed_pages_df['book_id'] = deed_pages_df['book_id'].str.replace('NONE', '')
-        #     deed_pages_df['book_id'] = deed_pages_df['book_id'].fillna('')
-
-        #     deed_pages_df.loc[(deed_pages_df['doc_num'] == '') & (deed_pages_df['book_id'] != ''), 'doc_num'] = deed_pages_df['doc_type'] + ' Book ' + deed_pages_df['book_id'] + ' Page ' + deed_pages_df['page_num']
-
-        # # Tag docs with page count by doc_num
-        # print('Tagging doc num page counts...')
-        # deed_pages_df = tag_doc_num_page_counts(deed_pages_df)
-
-        # TODO: Tag docs with prev/next page images
+        # Tag docs with prev/next page images
         print('Tagging prev/next photos...')
         deed_pages_df = paginate_deedpage_df(deed_pages_df)
-        # deed_pages_df = deed_pages_df.drop(columns=[
-        #     'page_num_-1',
-        #     'page_num_1',
-        #     'page_num_2',
-        #     'split_page_num_-1',
-        #     'split_page_num_1',
-        #     'split_page_num_2',
-        #     'orig_file_lookup',
-        # ])
 
-        # print(deed_pages_df.to_dict('records'))
+        return deed_pages_df
+
+    def import_to_django(self, deed_pages_df, workflow):
 
         print("Creating Django DeedPage objects...")
         deed_pages = [DeedPage(**page_data) for page_data in deed_pages_df.to_dict('records')]
@@ -284,5 +254,7 @@ class Command(BaseCommand):
 
             matching_keys = self.find_matching_keys(workflow)
 
-            image_objs = self.build_django_objects(
-                matching_keys, workflow)
+            deed_page_df = self.build_django_objects(matching_keys, workflow)
+
+            image_objs = self.import_to_django(
+                deed_page_df, workflow)

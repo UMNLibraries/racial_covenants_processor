@@ -111,7 +111,7 @@ class DeedPage(models.Model):
             'book_id': self.book_id,
 
         }
-        if self.split_page_num and self.split_page_num > 1:
+        if self.split_page_num and self.split_page_num >= 1:
                 kwargs['split_page_num'] = self.split_page_num + offset
                 kwargs['page_num'] = self.page_num
                 kwargs['doc_num'] = self.doc_num
