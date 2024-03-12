@@ -19,12 +19,16 @@ class ZooniverseWorkflow(models.Model):
     workflow_name = models.CharField(max_length=100, db_index=True)
     # version = models.FloatField(null=True, blank=True)
     version = models.CharField(max_length=20, null=True, blank=True)
+    slug = models.CharField(max_length=100, db_index=True)
 
     def __str__(self):
         return self.workflow_name
+    
+    def save(self, *args, **kwargs):
+        self.slug = self.get_slug()
+        super(ZooniverseWorkflow, self).save(*args, **kwargs)
 
-    @property
-    def slug(self):
+    def get_slug(self):
         return slugify(self.workflow_name)
 
 
