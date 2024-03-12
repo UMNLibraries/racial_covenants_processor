@@ -39,6 +39,8 @@ urlpatterns = [
     path('workflow/<int:workflow_id>/', views.workflow_summary, name='workflow'),
     path('workflow/<int:workflow_id>/matches/', views.covenant_matches, name='workflow_matches'),
 
+    path('workflow/<str:workflow_slug>/', views.workflow_summary_slug, name='workflow_slug'),
+
     path('zooniverse-subject-lookup/<int:zoon_subject_id>/', views.zoon_subject_lookup, name='zoon_subject_lookup'),
 
     path('', views.index, name='index'),

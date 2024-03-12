@@ -26,10 +26,7 @@ def zoon_subject_lookup(request, zoon_subject_id):
     except:
         raise
 
-
-@login_required(login_url='/admin/login/')
-def workflow_summary(request, workflow_id):
-    workflow = ZooniverseWorkflow.objects.get(id=workflow_id)
+def generate_workflow_summary_context(request, workflow):
     subjects = ZooniverseSubject.objects.filter(
         workflow=workflow
     )
@@ -61,6 +58,21 @@ def workflow_summary(request, workflow_id):
         'covenants_maybe_count': subjects.filter(bool_covenant=None).count(),
         'mapped_count': mapped_count
     }
+    return context
+
+@login_required(login_url='/admin/login/')
+def workflow_summary(request, workflow_id):
+    workflow = ZooniverseWorkflow.objects.get(id=workflow_id)
+
+    context = generate_workflow_summary_context(request, workflow)
+
+    return render(request, 'workflow_summary.html', context)
+
+@login_required(login_url='/admin/login/')
+def workflow_summary_slug(request, workflow_slug):
+    workflow = ZooniverseWorkflow.objects.get(slug=workflow_slug)
+
+    context = generate_workflow_summary_context(request, workflow)
 
     return render(request, 'workflow_summary.html', context)
 
