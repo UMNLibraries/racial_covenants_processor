@@ -63,6 +63,11 @@
     <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.covenant_count|intcomma }} mapped covenants</p>
   {% endfor %}
 
+  <h3>Download all covenanted docs CSVs</h3>
+  {% for csv in all_covenanted_docs %}
+    <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.doc_count|intcomma }} covenanted docs</p>
+  {% endfor %}
+
   <h3>Download unmapped CSVs</h3>
   {% for csv in unmapped_exports %}
     <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.covenant_count|intcomma }} unmapped subjects</p>
