@@ -136,6 +136,7 @@ python manage.py match_parcels --workflow "WI Milwaukee County"
 python manage.py dump_covenants_shapefile --workflow "WI Milwaukee County"
 python manage.py dump_covenants_geojson --workflow "WI Milwaukee County"
 python manage.py dump_covenants_csv --workflow "WI Milwaukee County"
+python manage.py dump_all_covenanted_docs_csv --workflow "WI Milwaukee County"
 ```
 
 ## Other workflow elements

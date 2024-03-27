@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Max
 from apps.deed.models import SearchHitReport
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
-from apps.parcel.models import GeoJSONExport, ShpExport, CSVExport, UnmappedCSVExport, ValidationCSVExport, JoinReport, Parcel
+from apps.parcel.models import GeoJSONExport, ShpExport, CSVExport, AllCovenantedDocsCSVExport, UnmappedCSVExport, ValidationCSVExport, JoinReport, Parcel
 
 
 @login_required(login_url='/admin/login/')
@@ -38,6 +38,7 @@ def generate_workflow_summary_context(request, workflow):
     geojson_exports = GeoJSONExport.objects.filter(workflow=workflow).order_by('-created_at')
     shp_exports = ShpExport.objects.filter(workflow=workflow).order_by('-created_at')
     csv_exports = CSVExport.objects.filter(workflow=workflow).order_by('-created_at')
+    all_covenanted_docs = AllCovenantedDocsCSVExport.objects.filter(workflow=workflow).order_by('-created_at')
     unmapped_exports = UnmappedCSVExport.objects.filter(workflow=workflow).order_by('-created_at')
     validation_exports = ValidationCSVExport.objects.filter(workflow=workflow).order_by('-created_at')
     join_reports = JoinReport.objects.filter(workflow=workflow).order_by('-created_at')
@@ -48,6 +49,7 @@ def generate_workflow_summary_context(request, workflow):
         'geojson_exports': geojson_exports,
         'shp_exports': shp_exports,
         'csv_exports': csv_exports,
+        'all_covenanted_docs': all_covenanted_docs,
         'unmapped_exports': unmapped_exports,
         'validation_exports': validation_exports,
         'join_reports': join_reports,
