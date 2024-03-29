@@ -101,9 +101,12 @@ def standardize_addition(input_str):
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r'([sn])[\'`]', r'\1',
                            input_str, flags=re.IGNORECASE)
+        # Variations of "addition"
         input_str = re.sub(r'ADD(?:IT)?\.', 'ADDITION',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r'ADDN(\.)?', 'ADDITION',
+        input_str = re.sub(r' ADDN(\.)?', ' ADDITION',
+                           input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r' ADD(\.)?$', ' ADDITION',
                            input_str, flags=re.IGNORECASE)
         # Sometimes it's misspelled
         input_str = re.sub(r'SUBDIVSION', 'SUBDIVISION',

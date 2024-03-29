@@ -16,6 +16,25 @@ class JoinStringTests(TestCase):
         ]:
             self.assertEquals(standardize_addition(example), 'janes')
 
+    def test_standardize_addition_2nd(self):
+        for example in [
+            "Jane's 2nd Addition",
+            "Jane's 2nd Addition to the City of Minneapolis",
+            "Jane's 2nd Addn",
+            "Jane's 2nd Add'n",
+            "Jane's 2nd Add",
+            # FOREST PARK 2ND ADD
+        ]:
+            self.assertEquals(standardize_addition(example), 'janes 2nd')
+
+
+    def test_standardize_addition_negatives(self):
+        '''Things the standardizer should NOT standardize'''
+        self.assertEquals(standardize_addition("Jane's Addiction"), 'janes addiction')
+        self.assertEquals(standardize_addition("Jane's caddbury"), 'janes caddbury')
+        self.assertEquals(standardize_addition("Jane's dfAddn"), 'janes dfaddn')
+        self.assertEquals(standardize_addition("Jane's Add It Up"), 'janes add it up')  # Not sure I want this, may reconsider
+
     def test_standardize_addition_subdivision(self):
         for example in [
             'Another Subdivision',
@@ -35,6 +54,13 @@ class JoinStringTests(TestCase):
         ]:
             self.assertEquals(standardize_addition(example), 'resubdivision of blocks 1 2 3 in summit park')
 
+    def test_write_join_strings_with_no_2(self):
+        addition = "arden hills no. 2"
+        block = '7'
+        lot = '1'
+        self.assertEquals(write_join_strings(
+            addition, block, lot)[0]['join_string'], 'arden hills 2 block 7 lot 1')
+        
     def test_get_blocks_none_text(self):
         """Does get_blocks give expected output for 'none' as entry?"""
         s = ZooniverseSubject.objects.get(pk=1)
@@ -121,5 +147,3 @@ class JoinStringTests(TestCase):
         lot = '1'
         self.assertEquals(write_join_strings(
             addition, block, lot)[0]['join_string'], 'arden hills 2 block 7 lot 1')
-
-
