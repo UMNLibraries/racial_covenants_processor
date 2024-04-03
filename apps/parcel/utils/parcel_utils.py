@@ -96,10 +96,26 @@ def get_lots(input_str):
 
 def standardize_addition(input_str):
     if input_str:
-        # apostrophe with 's or 'n (ass'n)
-        input_str = re.sub(r'[\'`]([sn])', r'\1',
+        # replace ordinal words with numerical abbreviations
+        for word, abbr in {
+            'first': '1st',
+            'second': '2nd',
+            'third': '3rd',
+            'fourth': '4th',
+            'fifth': '5th',
+            'sixth': '6th',
+            'seventh': '7th',
+            'eighth': '8th',
+            'ninth': '9th',
+            'tenth': '10th',
+        }.items():
+            input_str = re.sub(f'{word}', f'{abbr}',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r'([sn])[\'`]', r'\1',
+
+        # apostrophe with 's or 'n (ass'n)
+        input_str = re.sub(r'[\'`’]([sn])', r'\1',
+                           input_str, flags=re.IGNORECASE)
+        input_str = re.sub(r'([sn])[\'`’]', r'\1',
                            input_str, flags=re.IGNORECASE)
         # Variations of "addition"
         input_str = re.sub(r'ADD(?:IT)?\.', 'ADDITION',
@@ -116,12 +132,6 @@ def standardize_addition(input_str):
         # SUBD abbreviation followed by space or end of string
         input_str = re.sub(r'SUBD*\.*(?=\s|$)', 'SUBDIVISION',
                            input_str, flags=re.IGNORECASE)
-        # input_str = re.sub(r'RESUBDIV(?:\.)?(?!IVISION)', 'RESUBDIVISION',
-        #                    input_str, flags=re.IGNORECASE)
-        # input_str = re.sub(r'(?<!RE)SUBD(?:\.)?(?!IVISION)', 'SUBDIVISION',
-        #                    input_str, flags=re.IGNORECASE)
-        # input_str = re.sub(r' SUB(?:\.)? ', ' SUBDIVISION ',
-        #                    input_str, flags=re.IGNORECASE)
         input_str = re.sub(r',(?: )?', ' ',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r' & ', ' and ',
@@ -130,7 +140,8 @@ def standardize_addition(input_str):
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r'#\s*(?=\d+)', '',
                            input_str, flags=re.IGNORECASE)
-        input_str = re.sub(r' (?:an )?addition to (?:the city of )?.+', ' ',
+        # Some weird cases (Crow Wing County) where it's not an addition to a city, so leave those alone (the (?<=.{4}) part)
+        input_str = re.sub(r'(?<=.{4}) (?:an )?addition to (?:the city of )?.+', ' ',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r'\.\s*', ' ',
                            input_str, flags=re.IGNORECASE)

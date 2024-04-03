@@ -10,11 +10,25 @@ class JoinStringTests(TestCase):
     def test_standardize_addition_basic(self):
         for example in [
             "Jane's Addition",
+            "Janes' Addition",
+            "Jane’s Addition",
+            "Janes’ Addition",
             "Jane's Addition to the City of Minneapolis",
             "Jane's Addn",
             "Jane's Add'n",
         ]:
             self.assertEquals(standardize_addition(example), 'janes')
+
+    def test_standardize_addition_weird_1st(self):
+        '''Leave these (mostly) alone, these are not additions to CITIES'''
+
+        self.assertEquals(standardize_addition("1st Addition To Eskesens Lots"), "1st to eskesens lots")
+        self.assertEquals(standardize_addition("2nd Addition To Eskesens Lots"), "2nd to eskesens lots")
+        self.assertEquals(standardize_addition("1st Addition To Maple Ridge Estates"), "1st to maple ridge estates")
+        self.assertEquals(standardize_addition("3rd Addition To Maple Ridge Estates"), "3rd to maple ridge estates")
+        self.assertEquals(standardize_addition("Fourth Addition To Maple Ridge Estates"), "4th to maple ridge estates")
+        self.assertEquals(standardize_addition("First Addition To Maple Ridge Estates"), "1st to maple ridge estates")
+        self.assertEquals(standardize_addition("1st Addition to Jane's"), "1st to janes")
 
     def test_standardize_addition_2nd(self):
         for example in [
