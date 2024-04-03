@@ -19,7 +19,7 @@ class ZooniverseWorkflow(models.Model):
     workflow_name = models.CharField(max_length=100, db_index=True)
     # version = models.FloatField(null=True, blank=True)
     version = models.CharField(max_length=20, null=True, blank=True)
-    slug = models.CharField(max_length=100, db_index=True)
+    slug = models.CharField(max_length=100, db_index=True, blank=True)
 
     def __str__(self):
         return self.workflow_name
@@ -649,8 +649,8 @@ class ManualCovenant(models.Model):
     bool_confirmed = models.BooleanField(default=False)
     covenant_text = models.TextField(blank=True)
     addition = models.CharField(max_length=500, blank=True)
-    lot = models.TextField(blank=True)
-    block = models.CharField(max_length=500, blank=True)
+    lot = models.TextField(null=True, blank=True)
+    block = models.CharField(max_length=500, null=True, blank=True)
     seller = models.CharField(max_length=500, blank=True)
     buyer = models.CharField(max_length=500, blank=True)
     deed_date = models.DateField(null=True, blank=True)
@@ -668,7 +668,8 @@ class ManualCovenant(models.Model):
     date_added = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
-    objects = models.Manager()
+    # objects = models.Manager()
+    objects = CopyManager()
     all_covenanted_docs_objects = AllCovenantedDocsManualCovenantManager()
 
     # TODO: manual geometries
