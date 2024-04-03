@@ -141,7 +141,7 @@ def standardize_addition(input_str):
         input_str = re.sub(r'#\s*(?=\d+)', '',
                            input_str, flags=re.IGNORECASE)
         # Some weird cases (Crow Wing County) where it's not an addition to a city, so leave those alone (the (?<=.{4}) part)
-        input_str = re.sub(r'(?<=.{4}) (?:an )?addition to (?:the city of )?.+', ' ',
+        input_str = re.sub(r'(?<=.{5}) (?:an )?addition to (?:the city of )?.+', ' ',
                            input_str, flags=re.IGNORECASE)
         input_str = re.sub(r'\.\s*', ' ',
                            input_str, flags=re.IGNORECASE)

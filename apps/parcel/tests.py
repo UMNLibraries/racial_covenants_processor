@@ -29,6 +29,7 @@ class JoinStringTests(TestCase):
         self.assertEquals(standardize_addition("Fourth Addition To Maple Ridge Estates"), "4th to maple ridge estates")
         self.assertEquals(standardize_addition("First Addition To Maple Ridge Estates"), "1st to maple ridge estates")
         self.assertEquals(standardize_addition("1st Addition to Jane's"), "1st to janes")
+        self.assertEquals(standardize_addition("10th Addition To Breezy Point Estates"), "10th to breezy point estates")
 
     def test_standardize_addition_2nd(self):
         for example in [
