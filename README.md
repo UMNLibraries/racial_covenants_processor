@@ -4,6 +4,8 @@ This is the main repository for The Deed Machine, a generalized set of tools to 
 
 The Deed Machine was created at Mapping Prejudice at the University of Minnesota Libraries. Current collaborators include Michael Corey, Justin Schell and Nicholas Boren.
 
+<img src="https://s3.us-east-2.amazonaws.com/static.mappingprejudice.com/deed-machine/Draft%20-%20Updated%20Workflow_alpha.png"/>
+
 The basic steps involved in the Deed Machine process for covenant identification and mapping are:
 
 1. Image pre-processing and OCR
