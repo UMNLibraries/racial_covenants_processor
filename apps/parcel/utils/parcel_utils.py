@@ -24,6 +24,14 @@ def check_repeated_text_num(input_str):
     return None
 
 
+def strip_leading_0s_str(input_str):
+    return str(input_str).lstrip('0')
+
+
+def strip_leading_0s_list(input_list):
+    return [str(x).lstrip('0') for x in input_list]
+
+
 def get_blocks(input_str):
     if input_str:
         # First, strip "block" and make all lowercase
@@ -34,16 +42,16 @@ def get_blocks(input_str):
         # Simple number
         simple_num = re.match(r'^\d+$', input_str)
         if simple_num:
-            return input_str, 'simple_num'
+            return strip_leading_0s_str(input_str), 'simple_num'
 
         # Simple letter
         simple_letter = len(input_str) == 1 and re.match(r'[a-z]', input_str)
         if simple_letter:
-            return input_str.upper(), 'simple_letter'
+            return strip_leading_0s_str(input_str.upper()), 'simple_letter'
 
         repeated_text_num = check_repeated_text_num(input_str)
         if repeated_text_num:
-            return repeated_text_num, 'repeated_text_num'
+            return strip_leading_0s_str(repeated_text_num), 'repeated_text_num'
 
         if str(input_str).lower() == 'none':
             return 'none', 'no_block'
@@ -69,27 +77,27 @@ def get_lots(input_str):
         # Simple number
         simple_num = re.match(r'^\d+$', input_str)
         if simple_num:
-            return [input_str], 'simple_num'
+            return strip_leading_0s_list([input_str]), 'simple_num'
 
         repeated_text_num = check_repeated_text_num(input_str)
         if repeated_text_num:
-            return [repeated_text_num], 'repeated_text_num'
+            return strip_leading_0s_list([repeated_text_num]), 'repeated_text_num'
 
         num_range = re.search(r'^(\d+)-(\d+)$', input_str)
         if num_range:
             start = int(num_range.group(1))
             end = int(num_range.group(2))
-            return list(range(start, end+1)), 'num_range'
+            return strip_leading_0s_list(list(range(start, end+1))), 'num_range'
 
         simple_multi_lot = [x.group() for x in re.finditer(r'(?:((?:(?<=^)|(?<=^LOTS )|(?<=& ))\d+(?= |$)))', input_str)]
         if len(simple_multi_lot) > 0:
-            return simple_multi_lot, 'simple_multi_lot'
+            return strip_leading_0s_list(simple_multi_lot), 'simple_multi_lot'
 
         list_of_nums_preprocess = input_str.replace(', & ', ',').replace(' & ', ',').replace(', and', ',').replace(
             ' and ', ',').replace(', ', ',')
         list_of_nums = re.match(r'^[\d,]+$', list_of_nums_preprocess)
         if list_of_nums:
-            return sorted(set(list_of_nums_preprocess.split(','))), 'list_of_nums'
+            return strip_leading_0s_list(sorted(set(list_of_nums_preprocess.split(',')))), 'list_of_nums'
 
     return None, None
 

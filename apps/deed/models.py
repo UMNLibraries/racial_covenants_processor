@@ -16,8 +16,16 @@ class MatchTerm(models.Model):
 
 
 class DeedPage(models.Model):
+    """
+    Each DeedPage object represents a single page of a property 
+    record that has been uploaded, processed, and ingested into the
+    Django portion of the Deed Machine. Multi-page documents like
+    multi-page TIF files will be split into individual DeedPage objects during
+    initial processing.
+    """
     workflow = models.ForeignKey(
         ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
+    """Foreign key to associated workflow"""
     s3_lookup = models.CharField(blank=True, max_length=500, db_index=True)
     doc_num = models.CharField(blank=True, max_length=101, db_index=True)
     doc_alt_id = models.CharField(blank=True, max_length=102, db_index=True)
@@ -38,7 +46,8 @@ class DeedPage(models.Model):
         storage=PrivateMediaStorage(), max_length=200, null=True)
     bool_match = models.BooleanField(default=False, db_index=True)
     bool_exception = models.BooleanField(default=False, db_index=True)
-    bool_manual = models.BooleanField(default=False, db_index=True) # has bool_match or bool_exception been manually overwritten?
+    bool_manual = models.BooleanField(default=False, db_index=True)
+    """ Has bool_match or bool_exception been manually overwritten? """
     matched_terms = models.ManyToManyField(MatchTerm)
 
     # These fields aid in setting up Zooniverse images

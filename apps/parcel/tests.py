@@ -96,7 +96,7 @@ class JoinStringTests(TestCase):
     def test_lot_range(self):
         """Does get_lots render '1-20' as list [1,2,3,...20]"""
         lots, lots_meta = get_lots("1-20")
-        self.assertEquals(lots, list(range(1,21)))
+        self.assertEquals(lots, [str(x) for x in list(range(1,21))])
 
     def test_lot_bad_range_start(self):
         """Does get_lots render 'x1-20' None"""
@@ -132,6 +132,31 @@ class JoinStringTests(TestCase):
         """Does get_lots render 'East 20 feet of LOT 24 & 25 & 26' as None"""
         lots, lots_meta = get_lots("East 20 feet of LOT 24 & E 20 FT OF LOT 10")
         self.assertEquals(lots, None)
+
+    def test_lot_leading_zero(self):
+        '''Do leading zeroes get removed from lots, e.g. 001 should be 1'''
+        lots, lots_meta = get_lots("001")
+        self.assertEquals(lots, ['1'])
+
+    def test_lot_leading_zero_list(self):
+        '''Do leading zeroes get removed from lots, e.g. 001 should be 1'''
+        lots, lots_meta = get_lots("Lot 024 & 01")
+        self.assertEquals(lots, ['24', '1'])
+
+    def test_lot_fake_leading_zero(self):
+        '''Do leading zeroes after another digit get ignored, e.g. 1001 should be 1001'''
+        lots, lots_meta = get_lots("1001")
+        self.assertEquals(lots, ['1001'])
+
+    def test_block_leading_zero(self):
+        '''Do leading zeroes get removed from blocks, e.g. 001 should be 1'''
+        blocks, blocks_meta = get_blocks("001")
+        self.assertEquals(blocks, '1')
+
+    def test_block_fake_leading_zero(self):
+        '''Do leading zeroes after another digit get ignored, e.g. 1001 should be 1001'''
+        blocks, blocks_meta = get_blocks("1001")
+        self.assertEquals(blocks, '1001')
 
     def test_write_join_strings_basic(self):
         addition = "JANE'S ADDITION"
