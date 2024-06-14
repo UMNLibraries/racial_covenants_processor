@@ -111,8 +111,8 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_doc_num_no_page(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: None
-            next_page_image_web: None
+        prev_page_image_web: None
+        next_page_image_web: None
         """
 
         deed_page = DeedPage.objects.get(
@@ -128,8 +128,8 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_deed_page_doc_num_page_4(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: doc_1234_book_NONE_page_3
-            next_page_image_web: None
+        prev_page_image_web: doc_1234_book_NONE_page_3
+        next_page_image_web: None
         """
 
         deed_page = DeedPage.objects.get(
@@ -148,9 +148,9 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_book_only_page_2(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            page count: 1
-            prev_page_image_web: doc_NONE_book_140_page_1
-            next_page_image_web: doc_NONE_book_140_page_3
+        page count: 1
+        prev_page_image_web: doc_NONE_book_140_page_1
+        next_page_image_web: doc_NONE_book_140_page_3
         """
 
         deed_page = DeedPage.objects.get(
@@ -164,9 +164,9 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_book_only_page_4(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            page count: 1
-            prev_page_image_web: doc_NONE_book_140_page_3
-            next_page_image_web: None
+        page count: 1
+        prev_page_image_web: doc_NONE_book_140_page_3
+        next_page_image_web: None
         """
 
         deed_page = DeedPage.objects.get(
@@ -181,9 +181,9 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_book_only_page_1(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            page count: 1
-            prev_page_image_web: None
-            next_page_image_web: doc_NONE_book_140_page_2
+        page count: 1
+        prev_page_image_web: None
+        next_page_image_web: doc_NONE_book_140_page_2
         """
 
         deed_page = DeedPage.objects.get(
@@ -199,8 +199,8 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_book_only_page_2_splitpage(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: doc_NONE_book_140_page_200_SPLITPAGE_1
-            next_page_image_web: doc_NONE_book_140_page_200_SPLITPAGE_3
+        prev_page_image_web: doc_NONE_book_140_page_200_SPLITPAGE_1
+        next_page_image_web: doc_NONE_book_140_page_200_SPLITPAGE_3
         """
 
         deed_page = DeedPage.objects.get(
@@ -215,8 +215,8 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_book_only_page_4_splitpage(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: doc_NONE_book_140_page_200_SPLITPAGE_3
-            next_page_image_web: None
+        prev_page_image_web: doc_NONE_book_140_page_200_SPLITPAGE_3
+        next_page_image_web: None
         """
 
         deed_page = DeedPage.objects.get(
@@ -230,8 +230,8 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_book_only_page_1_splitpage(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: None (This is a choice, another answer could be it should return the last available item from the previous page number, but that seems very complicated and hopefully an edge case that mostly impacts odd notes stapled to docs rather than previous pages on a multipage TIF)
-            next_page_image_web: doc_NONE_book_140_page_200_SPLITPAGE_2.jpg
+        prev_page_image_web: None (This is a choice, another answer could be it should return the last available item from the previous page number, but that seems very complicated and hopefully an edge case that mostly impacts odd notes stapled to docs rather than previous pages on a multipage TIF)
+        next_page_image_web: doc_NONE_book_140_page_200_SPLITPAGE_2.jpg
         """
 
         deed_page = DeedPage.objects.get(
@@ -246,8 +246,8 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_doc_num_no_page_splitpage_1(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: None
-            next_page_image_web: doc_9991_book_NONE_page_NONE_SPLITPAGE_2.jpg
+        prev_page_image_web: None
+        next_page_image_web: doc_9991_book_NONE_page_NONE_SPLITPAGE_2.jpg
         """
 
         deed_page = DeedPage.objects.get(
@@ -261,8 +261,8 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_doc_num_no_page_splitpage_2(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: doc_9991_book_NONE_page_NONE_SPLITPAGE_1.jpg
-            next_page_image_web: doc_9991_book_NONE_page_NONE_SPLITPAGE_3.jpg
+        prev_page_image_web: doc_9991_book_NONE_page_NONE_SPLITPAGE_1.jpg
+        next_page_image_web: doc_9991_book_NONE_page_NONE_SPLITPAGE_3.jpg
         """
 
         deed_page = DeedPage.objects.get(
@@ -276,8 +276,8 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_doc_num_no_page_splitpage_4(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: doc_9991_book_NONE_page_NONE_SPLITPAGE_3.jpg
-            next_page_image_web: None
+        prev_page_image_web: doc_9991_book_NONE_page_NONE_SPLITPAGE_3.jpg
+        next_page_image_web: None
         """
 
         deed_page = DeedPage.objects.get(
@@ -294,9 +294,9 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_milw_doc_num_page_2_only_2(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: 02806155_NOTINDEX_0001.jpg
-            next_page_image_web: None
-            next_next_page_image_web: None
+        prev_page_image_web: 02806155_NOTINDEX_0001.jpg
+        next_page_image_web: None
+        next_next_page_image_web: None
         """
 
         deed_page = DeedPage.objects.get(
@@ -310,9 +310,9 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_milw_doc_num_page_2_of_3(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: 02806155_NOTINDEX_0001.jpg
-            next_page_image_web: None
-            next_next_page_image_web: None
+        prev_page_image_web: 02806155_NOTINDEX_0001.jpg
+        next_page_image_web: None
+        next_next_page_image_web: None
         """
 
         deed_page = DeedPage.objects.get(
@@ -326,9 +326,9 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_milw_doc_num_page_1_of_3(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: None
-            next_page_image_web: 02806155_NOTINDEX_0002.jpg
-            next_next_page_image_web: 02806155_NOTINDEX_0003.jpg
+        prev_page_image_web: None
+        next_page_image_web: 02806155_NOTINDEX_0002.jpg
+        next_next_page_image_web: 02806155_NOTINDEX_0003.jpg
         """
 
         deed_page = DeedPage.objects.get(
@@ -342,9 +342,9 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_olmsted_doc_num_and_book_1_page(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: None
-            next_page_image_web: None
-            next_next_page_image_web: None
+        prev_page_image_web: None
+        next_page_image_web: None
+        next_next_page_image_web: None
         """
 
         deed_page = DeedPage.objects.get(
@@ -358,9 +358,9 @@ class DeedPagePrevNextTests(TestCase):
     def test_prev_next_olmsted_doc_num_no_book_id_1_page(self):
         """Does deedpage find correct prev/next images?
         In this case, should be:
-            prev_page_image_web: None
-            next_page_image_web: None
-            next_next_page_image_web: None
+        prev_page_image_web: None
+        next_page_image_web: None
+        next_next_page_image_web: None
         """
 
         deed_page = DeedPage.objects.get(
