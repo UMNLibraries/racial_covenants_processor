@@ -8,3 +8,4 @@ django-localflavor
 django-admin-rangefilter
 djangorestframework
 djangorestframework-gis
+sphinx_rtd_theme
