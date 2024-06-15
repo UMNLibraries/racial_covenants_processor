@@ -1,3 +1,4 @@
 django
 django-postgres-copy
 psycopg2
+django-storages
