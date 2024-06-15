@@ -7,6 +7,9 @@ Location: /docs/django_settings.py
 # SECRET_KEY for the documentation
 SECRET_KEY = 'docs-super-secret'
 
+GDAL_LIBRARY_PATH = None
+GEOS_LIBRARY_PATH = None
+
 # INSTALLED_APPS with these apps is necessary for Sphinx to build without warnings & errors
 # Depending on your package, the list of apps may be different
 INSTALLED_APPS = [
