@@ -45,6 +45,7 @@ jupyter = "*"
 ipython = "*"
 altair = "*"
 sphinx = "*"
+sphinx-rtd-theme = "*"
 
 [requires]
 python_version = "3.9"

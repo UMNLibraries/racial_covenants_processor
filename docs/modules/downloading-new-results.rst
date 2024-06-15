@@ -56,7 +56,8 @@ Downloading new batches of Zooniverse results
     python manage.py rebuild_covenant_spatial_lookups --workflow "WI Milwaukee County"
     python manage.py match_parcels --workflow "WI Milwaukee County"
 
-8. Manual cleanup as needed.
+8. :doc:`Manual cleanup <manual-data-cleaning>` of non-mapped covenants as needed.
+
 9. Export shapefile/data layers
 
 .. code-block:: bash
