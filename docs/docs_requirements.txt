@@ -1,3 +1,7 @@
 django
 django-admin-rangefilter
 django-storages
+django-localflavor
+djangorestframework
+djangorestframework-gis
+django-filter
