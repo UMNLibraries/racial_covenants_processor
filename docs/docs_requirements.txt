@@ -1,2 +1,3 @@
 django
-django-postgres-copy 
+django-postgres-copy
+psycopg2
