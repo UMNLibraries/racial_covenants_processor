@@ -5,3 +5,6 @@ django-storages
 boto3
 inflect
 django-localflavor
+django-admin-rangefilter
+djangorestframework
+djangorestframework-gis
