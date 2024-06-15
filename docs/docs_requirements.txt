@@ -3,3 +3,4 @@ django-postgres-copy
 psycopg2
 django-storages
 boto3
+inflect
