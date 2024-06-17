@@ -18,7 +18,7 @@ django.setup()
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'The Deed Machine'
-copyright = f'{date.today().year}, Mapping Prejudice'
+copyright = f'{date.today().year} Regents of the University of Minnesota'
 author = 'Mapping Prejudice'
 release = '1.0 dev1'
 

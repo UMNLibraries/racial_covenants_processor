@@ -65,3 +65,4 @@ Downloading new batches of Zooniverse results
     python manage.py dump_covenants_shapefile --workflow "WI Milwaukee County"
     python manage.py dump_covenants_geojson --workflow "WI Milwaukee County"
     python manage.py dump_covenants_csv --workflow "WI Milwaukee County"
+
