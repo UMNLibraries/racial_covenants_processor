@@ -66,17 +66,45 @@ To add data from one or more supplemental CSV files, add a ``deed_supplemental_i
     }
 
 In the example above, the ingestion process will expect each ingested file to include a ``doc_alt_id`` field in the regular expression that matches the value ``itemnum`` in the supplemental spreadsheet. Based on the values in the ``mapping`` section of the ``deed_supplemental_info`` dictionary, the values in the CSV's ``mp_doc_num`` column will be ingested into the Deed Machine's ``doc_num`` field, and likewise values in the ``landtype`` CSV field will be ingested into the Deed Machine's ``doc_type`` field.
-  
-Sample supplemental CSV with matching data:
 
-+----------+---------+--------------------------------------+---------+----------+----------------+-------------+
-| itemnum  | pagecnt | itemname                             | docnum  | landtype | instrumenttype | mp_doc_num  |
-+==========+=========+======================================+=========+==========+================+=============+
-| 12117219 | 1       | ABSTRACT - 1483219 -  - R-CONVERSION | 1483219 | ABSTRACT | R-CONVERSION   | A1483219    |
-| 12117223 | 1       | ABSTRACT - 1483678 -  - R-CONVERSION | 1483678 | ABSTRACT | R-CONVERSION   | A1483678    |
-| 12117224 | 1       | ABSTRACT - 1483679 -  - R-CONVERSION | 1483679 | ABSTRACT | R-CONVERSION   | A1483679    |
-| 12117228 | 1       | ABSTRACT - 1485353 -  - R-CONVERSION | 1485353 | ABSTRACT | R-CONVERSION   | A1485353    |
-+----------+---------+--------------------------------------+---------+----------+----------------+-------------+
+.. list-table:: Sample supplemental CSV with matching data
+    :header-rows: 1
+
+    * - itemnum
+      - pagecnt
+      - itemname
+      - docnum
+      - landtype
+      - instrumenttype
+      - mp_doc_num
+    * - 12117219
+      - 1
+      - ABSTRACT - 1483219 -  - R-CONVERSION
+      - 1483219
+      - ABSTRACT
+      - R-CONVERSION
+      - A1483219
+    * - 12117223
+      - 1
+      - ABSTRACT - 1483678 -  - R-CONVERSION
+      - 1483678
+      - ABSTRACT
+      - R-CONVERSION
+      - A1483678
+    * - 12117224
+      - 1
+      - ABSTRACT - 1483679 -  - R-CONVERSION
+      - 1483679
+      - ABSTRACT
+      - R-CONVERSION
+      - A1483679
+    * - 12117228
+      - 1
+      - ABSTRACT - 1485353 -  - R-CONVERSION
+      - 1485353
+      - ABSTRACT
+      - R-CONVERSION
+      - A1485353
 
 
 3. Create a Django ZooniverseWorkflow object
