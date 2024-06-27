@@ -96,7 +96,7 @@ class Command(BaseCommand):
                 report_df['citizen_count'] = 0
 
             report_df['deathcert_count'] = 0
-            death_certs = ['death certificate', 'certificate of death', 'date of death']
+            death_certs = ['death certificate', 'certificate of death', 'date of death', 'name of deceased']
             for term in death_certs:
                 if term in report_df.columns:
                     print(report_df[term].apply(lambda x: self.split_or_1(x)))
