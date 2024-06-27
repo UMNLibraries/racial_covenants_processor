@@ -224,6 +224,10 @@ class Command(BaseCommand):
         deed_pages_df = self.add_merge_fields(deed_pages_df, workflow)
         deed_pages_df = self.add_supplemental_info(deed_pages_df, workflow)
 
+        # Fill na on optional fields
+        if 'batch_id' in deed_pages_df.columns:
+            deed_pages_df[['batch_id']] = deed_pages_df[['batch_id']].fillna('')
+
         # Drop duplicates again just in case
         deed_pages_df = deed_pages_df.drop_duplicates(subset=['s3_lookup'])
 
