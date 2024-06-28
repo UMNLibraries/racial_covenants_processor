@@ -40,6 +40,7 @@ The Deed Machine was created at Mapping Prejudice at the University of Minnesota
    modules/starting-a-workflow.rst
    modules/uploading-files.rst
    modules/ingesting-hits.rst
+   modules/uploading-to-zooniverse.rst
    modules/downloading-new-results.rst
    modules/manual-data-cleaning.rst
    
