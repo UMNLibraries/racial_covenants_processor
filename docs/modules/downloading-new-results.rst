@@ -21,6 +21,8 @@ Downloading new batches of Zooniverse results
             ├── data
                 ├── zooniverse_exports
                     |── your-workflow-slug/
+                        |── your-workflow-slug-classifications.csv
+                        |── your-workflow-slug-workflows.csv
 
     E. If necessary, rename downloaded files to ``your-workflow-slug-classifications.csv`` (e.g. ``wi-milwaukee-county-classifications.csv``) and ``your-workflow-slug-workflows.csv`` (e.g. ``wi-milwaukee-county-workflows.csv``)
 
