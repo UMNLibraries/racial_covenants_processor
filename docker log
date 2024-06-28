@@ -1,0 +1,58 @@
+docker build --platform=linux/amd64 -t 813228900636.dkr.ecr.us-east-2.amazonaws.com/racial-covenants-processor:latest .
+
+[create repo called racial-covenants-processor in ecs console]
+
+aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 813228900636.dkr.ecr.us-east-2.amazonaws.com
+
+docker push 813228900636.dkr.ecr.us-east-2.amazonaws.com/racial-covenants-processor:latest
+
+export AWS_ACCESS_KEY_ID="AKIA32WBYIEOOLSLZSQU"
+export AWS_SECRET_ACCESS_KEY="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"
+export AWS_DEFAULT_REGION="us-east-2"
+
+export TF_VAR_rds_password="bingotestpingsuccessful"
+
+python deploy/update-ecs.py --cluster=production-cluster --service=production-service
+
+# To initialize database settings...
+ssh ec2-user@18.217.81.157
+alternate: 18.117.129.219
+
+docker exec -it 70c7ca33255e python3 manage.py migrate
+
+http://production-alb-1425875362.us-east-2.elb.amazonaws.com/admin/
+
+(don't forget to re-enable rds backups)
+
+On local db...
+pg_dump -Fc -O racial_covenants_processor > racial_covenants_processor/data/backup/racial_covenants_processor_db_local_20220509.dump
+
+pg_restore -h production.cqnzynxunqak.us-east-2.rds.amazonaws.com -U racial_covenants_processor -d racial_covenants_processor --clean --if-exists --disable-triggers racial_covenants_processor/data/backup/racial_covenants_processor_db_local_20220509.dump
+
+pg_restore -h production.cqnzynxunqak.us-east-2.rds.amazonaws.com -U racial_covenants_processor -d racial_covenants_processor --data-only --verbose --disable-triggers racial_covenants_processor/data/backup/racial_covenants_processor_db_local_20220509.dump
+
+psql -h production.cqnzynxunqak.us-east-2.rds.amazonaws.com -U racial_covenants_processor -d racial_covenants_processor
+
+or
+
+pg_restore -d racial_covenants_processor --clean --if-exists --disable-triggers racial_covenants_processor/data/backup/racial_covenants_processor_db_local_20220509.dump
+
+# Directory method
+pg_dump -Fd racial_covenants_processor -j 5 -f racial_covenants_processor/data/backup/racial_covenants_processor_db_local_20220509
+
+pg_restore -j
+pg_restore -h production.cqnzynxunqak.us-east-2.rds.amazonaws.com -U racial_covenants_processor -d racial_covenants_processor -Fc < racial_covenants_processor/data/backup/racial_covenants_processor_db_local_20220509.dump
+
+To enable SSL cert:
+ssh ec2-user@18.217.81.157
+
+openssl req -new -newkey rsa:2048 -nodes -keyout deed-machine.mappingprejudice.umn.edu.key -out deed-machine.mappingprejudice.umn.edu.csr
+
+aws s3 cp \
+  --exclude "*" \
+  --include "*.jpg" \
+  --content-type="image/jpeg"  \
+  --metadata-directive="REPLACE" \
+  --recursive \
+   s3://covenants-deed-images/web/ \
+   s3://covenants-deed-images/web/
