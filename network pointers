@@ -1,0 +1,4 @@
+one of the route tables was incorrectly associating the 0.0.0.0/0 range to "unmapped" to a NAT gateway instead of an internet gateway
+
+why do we have two routing tables?
+if both of those routing tables have the same rules but are associated to different subnets, it should be possible to eliminate one of the routing tables and associated both subnets to one routing table
