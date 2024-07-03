@@ -591,14 +591,14 @@ class ExtraParcelCandidate(models.Model):
 
 @receiver(models.signals.post_delete, sender=ManualCorrection)
 def model_delete(sender, instance, **kwargs):
-    if instance != None:
+    if instance is not None:
         instance.zooniverse_subject.get_final_values()
         instance.zooniverse_subject.save()
 
 
 @receiver(models.signals.post_delete, sender=ExtraParcelCandidate)
 def model_delete(sender, instance, **kwargs):
-    if instance != None:
+    if instance is not None:
         instance.zooniverse_subject.get_final_values()
         instance.zooniverse_subject.save()
 
