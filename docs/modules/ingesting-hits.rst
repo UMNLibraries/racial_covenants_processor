@@ -1,3 +1,5 @@
+.. _ingesting-hits:
+
 Ingesting results of initial processing
 =======================================
 
