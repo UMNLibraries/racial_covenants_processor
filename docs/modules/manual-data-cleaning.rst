@@ -22,3 +22,4 @@ Once all of the steps used to process new results have been run, many covenants 
 9. Choose a "match type" value to indicate how this parcel was matched (or how it will need to be matched in the future).
 
 10. If you need to map lots across more than one block, add ExtraParcelCandidate objects for each additional block or lot range. ONLY ONE ManualCorrection OBJECT should be added per ZooniverseSubject.
+
