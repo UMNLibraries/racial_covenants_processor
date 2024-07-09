@@ -41,6 +41,7 @@ The Deed Machine was created at Mapping Prejudice at the University of Minnesota
    modules/uploading-files.rst
    modules/ingesting-hits.rst
    modules/uploading-to-zooniverse.rst
+   modules/uploading-parcel-data.rst
    modules/downloading-new-results.rst
    modules/manual-data-cleaning.rst
    
@@ -49,7 +50,9 @@ The Deed Machine was created at Mapping Prejudice at the University of Minnesota
    :maxdepth: 2
    :caption: Models
 
+   modules/django-models.rst
    modules/apps-deed-models.rst
+   modules/apps-zoon-models.rst
 
 Indices and tables
 ==================

@@ -1,3 +1,5 @@
+.. _initial-processing:
+
 Uploading images/initial processing
 ===================================
 

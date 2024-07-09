@@ -15,6 +15,7 @@ from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_
 
 
 class ZooniverseWorkflow(models.Model):
+    '''The main shell that keeps each project separate from others. Generally, each county will require a separate ZooniverseWorkflow object.'''
     zoon_id = models.IntegerField(null=True, blank=True, db_index=True)
     workflow_name = models.CharField(max_length=100, db_index=True)
     # version = models.FloatField(null=True, blank=True)
@@ -156,7 +157,7 @@ class ValidationZooniverseManager(models.Manager):
 
 
 class ZooniverseSubject(models.Model):
-    '''Future: Assign an id to correspond to a deed image pre-Zooniverse'''
+    '''This is the main model representing an individual suspected covenant coming back from Zooniverse transcription. Each subject should have five individual transcription responses, which will be aggregated to be displayed with each ZooniverseSubject. Possible future task: Assign an id to correspond to a deed image pre-Zooniverse'''
     workflow = models.ForeignKey(ZooniverseWorkflow, on_delete=models.CASCADE)
     zoon_subject_id = models.IntegerField(db_index=True)
 
@@ -419,6 +420,7 @@ class ZooniverseSubject(models.Model):
 
 
 class ZooniverseResponseRaw(models.Model):
+    '''Information imported after Zooniverse transcription in its natural state after Zooniverse's panoptes-aggregation scripts. Most useful data is still contained inside annotations and subject_data fields, which will be further processed to produce a ZooniverseResponseProcessed.'''
     classification_id = models.IntegerField()
     user_name = models.CharField(max_length=100, blank=True, db_index=True)
     user_id = models.IntegerField(null=True)
@@ -443,6 +445,7 @@ class ZooniverseResponseRaw(models.Model):
 
 
 class ZooniverseResponseProcessed(models.Model):
+    '''Information about an individual transcription that will show up under a ZooniverseSubject during manual review. A more fully processed version of ZooniverseResponseRaw.'''
     workflow = models.ForeignKey(ZooniverseWorkflow, on_delete=models.CASCADE)
     classification_id = models.IntegerField()
     user_name = models.CharField(max_length=100, blank=True, db_index=True)
@@ -772,6 +775,7 @@ SUPPORTING_DOC_TYPES = (
 
 
 class ManualSupportingDocument(models.Model):
+    '''An uploaded document that provides evidence of a racial covenant, which is attached to a ManualCovenant object.'''
     workflow = models.ForeignKey(
         ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
     manual_covenant = models.ForeignKey(ManualCovenant, on_delete=models.CASCADE)
