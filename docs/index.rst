@@ -17,6 +17,13 @@ Racial covenants are clauses that were inserted into property deeds to prevent p
 
 The Deed Machine was created at Mapping Prejudice at the University of Minnesota Libraries. Current collaborators include Michael Corey, Suleman Diwan, Justin Schell, and the University of Minnesota Libraries IT staff.
 
+.. image:: _static/DeedMachineBasicSteps2023.png
+  :width: 800
+  :alt: A diagram showing the five basic steps of the Deed Machine process: Digitized Docs, Optical Character Recognition, Text, Zooniverse, and Digitized map.
+
+Deed Machine full workflow
+--------------------------
+
 .. image:: https://s3.us-east-2.amazonaws.com/static.mappingprejudice.com/deed-machine/Draft%20-%20Updated%20Workflow_alpha.png
   :width: 800
   :alt: A diagram of the components of the Deed Machine. To the left, an initial processing stage using AWS Step Functions is used to output a series of S3 files, which are ingested into a Django project in the center of the diagram.
