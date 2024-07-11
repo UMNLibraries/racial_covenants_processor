@@ -1,15 +1,21 @@
 # Racial Covenants Processor
 
-This is the main repository for The Deed Machine, a generalized set of tools to OCR property deeds to look for racially restrictive covenant language, then map the results.
+The Deed Machine is a multi-language set of tools that use OCR and crowdsourced transcription to identify racially restrictive covenant language, then map the results.
 
-The Deed Machine was created at Mapping Prejudice at the University of Minnesota Libraries. Current collaborators include Michael Corey, Justin Schell and Nicholas Boren.
+Racial covenants are clauses that were inserted into property deeds to prevent people who are not white from buying or occupying land. As of June 2024, Mapping Prejudice volunteers have helped to map [more than 52,000 covenanted properties](https://github.com/umnlibraries/mp-us-racial-covenants) across 3 states, with more on the way soon.
+
+The Deed Machine was created at [Mapping Prejudice](https://mappingprejudice.umn.edu/) at the [University of Minnesota Libraries](https://www.lib.umn.edu/). Current collaborators include Michael Corey, Suleman Diwan, Justin Schell, and the University of Minnesota Libraries IT staff.
+
+This is the code repository for the Django component of the Deed Machine, `racial_covenants_processor`. See [the full docs](https://the-deed-machine.readthedocs.io/en/latest/) for more information about other components.
 
 <img src="https://s3.us-east-2.amazonaws.com/static.mappingprejudice.com/deed-machine/Draft%20-%20Updated%20Workflow_alpha.png"/>
 
 
-## Documentation
-
-- Full documentation, still a work in progress: https://the-deed-machine.readthedocs.io/en/latest/ 
+## Key links
+- [License](https://github.com/UMNLibraries/racial_covenants_processor/blob/main/LICENSE)
+- [Documentation](https://the-deed-machine.readthedocs.io/en/latest/)
+- [Downloadable Racial covenants data](https://github.com/umnlibraries/mp-us-racial-covenants)
+- [Mapping Prejudice main site](https://mappingprejudice.umn.edu/)
 
 ## Software requirements
 - geos and gdal
