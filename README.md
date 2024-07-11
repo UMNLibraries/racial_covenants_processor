@@ -1,4 +1,4 @@
-# Racial Covenants Processor
+# The Deed Machine
 
 The Deed Machine is a multi-language set of tools that use OCR and crowdsourced transcription to identify racially restrictive covenant language, then map the results.
 
