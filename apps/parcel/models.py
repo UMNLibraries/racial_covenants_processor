@@ -7,7 +7,7 @@ from apps.plat.models import Plat, Subdivision
 
 
 class CovenantsParcelManager(models.Manager):
-    '''This is the main heavy-lifter for exports -- as much work as possible being done here to tag the parcel with the earliest mention of the covenant and its related attributes'''
+    '''This is the main heavy-lifter for exports -- as much work as possible being done here to tag the parcel with the earliest mention of the covenant and its related attributes. A lot of work gets done here. The oldest_deed line finds the oldest covenant document linked to a parcel, which determines the exported covenant date and which ZooniverseSubject will be used (in case of duplication) to populate things like the covenant text, buyer and seller. This manager also brings together covenants identified via Zooniverse transcription (ZooniverseSubject objects) and covenants entered manually (ManualCovenant.)'''
 
     def get_queryset(self):
         from apps.zoon.models import ZooniverseSubject, ManualCovenant
@@ -315,41 +315,65 @@ class CovenantsParcelManager(models.Manager):
 
 
 class Parcel(models.Model):
+    '''A modern GIS parcel record imported from a shapefile, generally sourced from a county GIS system or open records portal. Imported via load_parcel_shp management command. Racial covenant exports (besides unmapped documents) are aggregated to identify the earliest recorded covenant for each modern parcel, which means each row in covenants exports is equivalent to one Parcel object. By filling out the parcel_shps -> mapping object in the workflow config, users can tell the load_parcel_shp management command which attributes/columns in the original shapefile correspond to the attribute names needed to import into the Parcel table.'''
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL, help_text="Testing documentation")
     feature_id = models.IntegerField()
+    '''A unique identifier in the original shapefile.'''
     pin_primary = models.CharField(max_length=50, null=True, blank=True)
+    '''The primary property identification number used by the records custodian to look up the parcel in modern systems.'''
     pin_secondary = models.CharField(max_length=50, null=True, blank=True)
+    '''An optional secondary identification number used by the records custodian to look up the parcel in modern systems.'''
     street_address = models.CharField(max_length=255, null=True, blank=True)
+    '''The street address of the parcel, e.g. "123 Main Street" Note that many counties have columns for both the address of the parcel AND the address of the responsible taxpayer, so be sure that this is the address of the parcel, often known as the situs address'''
     city = models.CharField(db_index=True, max_length=100, null=True, blank=True)
+    '''The city name where the parcel is located. (Not taxpayer city.)'''
     state = models.CharField(db_index=True, max_length=2, null=True,
                              blank=True, choices=US_STATES)
+    '''The 2-digit state abbreviation where the parcel is located. (Not taxpayer state.)'''
     zip_code = models.CharField(max_length=20, null=True, blank=True)
+    '''The zip code where the parcel is located. (Not taxpayer zip.)'''
     county_name = models.CharField(max_length=50, null=True, blank=True)
+    '''The county name where the parcel is located. (Usually set statically for whole county at import)'''
     county_fips = models.CharField(max_length=5, null=True, blank=True)
+    '''The 5-digit U.S. Census county FIPS where the parcel is located. (Usually set statically for whole county at import). Note that FIPS codes may change with each decenniel census.'''
     plat_name = models.CharField(db_index=True, max_length=255, null=True, blank=True)
+    '''The addition name of this parcel, as it originally appears (not standardized).'''
     plat_standardized = models.CharField(db_index=True, max_length=255, null=True, blank=True)
+    '''The addition name of this parcel, standardized by running plat_name through a series of regexes.'''
     block = models.CharField(max_length=255, null=True, blank=True)
+    '''The block or square name of this parcel.'''
     lot = models.CharField(max_length=500, null=True, blank=True)
+    '''The lot number or letter of this parcel.'''
     join_description = models.TextField(null=True, blank=True)
+    '''The full physical description of this parcel. Not used for matching as yet.'''
     phys_description = models.TextField(null=True, blank=True)
+    '''The full physical description of this parcel, generally a duplicate of join_description. Not well thought out.'''
     township = models.IntegerField(null=True, blank=True)
+    '''In the PLSS system, the township of this parcel. Not particularly useful currently, but good information to have.'''
     range = models.IntegerField(null=True, blank=True)
+    '''In the PLSS system, the range of this parcel. Not particularly useful currently, but good information to have.'''
     section = models.IntegerField(null=True, blank=True)
+    '''In the PLSS system, the section of this parcel. Not particularly useful currently, but good information to have.'''
     orig_data = models.JSONField(null=True, blank=True)
+    '''A JSON field storing the original set of attributes found in the shapefile under their original column names, including values not imported to a Deed Machine field. Can be accessed via Django shell.'''
     orig_filename = models.CharField(max_length=255, null=True, blank=True)
+    '''The original filename of the imported shapefile.'''
     geom_4326 = models.MultiPolygonField(srid=4326)
+    '''Multipolygon geometry of the parcel, in SRID:4326 coordinate reference system (WGS-84). Make sure that your shapefile has been correctly transformed to SRID:4326 if it was originally projected to another coordinate system. If you experience import errors due to invalid geometries, try using "Repair geometries" in the QGIS Processing Toolbox or equivalent tool.'''
 
-    # Plat refers to a plat map, which is often old, and Subdivision refers to a modern GIS layer
     plat = models.ForeignKey(Plat, on_delete=models.SET_NULL, null=True)
+    """Plat refers to a plat map, which is often old, and Subdivision refers to a modern GIS layer"""
     subdivision_spatial = models.ForeignKey(Subdivision, on_delete=models.SET_NULL, null=True)
-    # zoon_subjects = models.ManyToManyField("zoon.ZooniverseSubject")
+    """The Subdivision object that this parcel lies inside, geospatially. May not have the same name as plat_name."""
 
-    # Hard-coded for easier filtering, set by match_parcels.py and individual save routines.
     bool_covenant = models.BooleanField(default=False, db_index=True)
+    """Has this Parcel been linked to a confirmed racial covenant? Set by match_parcels.py and individual save routines of ZooniverseSubject, ManualCovenant, PlatAlternateName, and SubdivisionAlternateName."""
 
     objects = models.Manager()
+    """Manager used to list all Parcel rows, not just parcels linked to covenants."""
     covenant_objects = CovenantsParcelManager()
+    """Manager used to list only parcels linked to racial covenants See CovenantsParcelManager() for details."""
 
     def __str__(self):
         return f"{self.county_name} {self.plat_name} LOT {self.lot} BLOCK {self.block} ({self.pk})"
@@ -378,6 +402,7 @@ class ParcelJoinCandidate(models.Model):
 
 
 class JoinReport(models.Model):
+    """A CSV report generated in the course of the match_parcels management command to show what racial covenants did and didn't successfully match to a Parcel record. File saved to S3."""
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     report_csv = models.FileField(
@@ -389,6 +414,7 @@ class JoinReport(models.Model):
 
 
 class ShpExport(models.Model):
+    """One of the Deed Machine's main public data exports. A shapefile export of modern properties that have confirmed racial covenants. Generated by dump_covenants_shp management command. File saved to S3 by default, but can be saved locally as well."""
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     shp_zip = models.FileField(
@@ -400,7 +426,21 @@ class ShpExport(models.Model):
         ordering = ('-id',)
 
 
+class GeoJSONExport(models.Model):
+    """One of the Deed Machine's main public data exports. A GeoJSON export of modern properties that have confirmed racial covenants. Generated by dump_covenants_geojson management command. File saved to S3 by default, but can be saved locally as well."""
+    workflow = models.ForeignKey(
+         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
+    geojson = models.FileField(
+        storage=PublicMediaStorage(), upload_to="main_exports/", null=True)
+    covenant_count = models.IntegerField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ('-id',)
+
+
 class CSVExport(models.Model):
+    """One of the Deed Machine's main public data exports. A CSV export of modern properties that have confirmed racial covenants. Generated by dump_covenants_csv management command. File saved to S3 by default, but can be saved locally as well."""
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     csv = models.FileField(
@@ -413,6 +453,7 @@ class CSVExport(models.Model):
 
 
 class UnmappedCSVExport(models.Model):
+    """One of the Deed Machine's main public data exports. A CSV export of confirmed racial covenants that have not successfully been matched to a Parcel yet. Generated by dump_unmapped_csv management command. File saved to S3 by default, but can be saved locally as well."""
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     csv = models.FileField(
@@ -425,6 +466,7 @@ class UnmappedCSVExport(models.Model):
 
 
 class ValidationCSVExport(models.Model):
+    """I don't remember what this is for."""
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     csv = models.FileField(
@@ -437,23 +479,12 @@ class ValidationCSVExport(models.Model):
 
 
 class AllCovenantedDocsCSVExport(models.Model):
+    """A CSV export of all documents that have confirmed racial covenants, whether they have been mapped or not. Note that the count of these rows will differ from the main Deed Machine exports because this is a list of all documents, not all parcels with covenants. (Racial covenants on a propery are often repeated in subsequent sales.) This export is useful for determining which documents may need to be flagged in property records for racial language. Generated by dump_all_covenanted_docs management command. File saved to S3 by default, but can be saved locally as well."""
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     csv = models.FileField(
         storage=PublicMediaStorage(), upload_to="main_exports/", null=True)
     doc_count = models.IntegerField()
-    created_at = models.DateTimeField()
-
-    class Meta:
-        ordering = ('-id',)
-
-
-class GeoJSONExport(models.Model):
-    workflow = models.ForeignKey(
-         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
-    geojson = models.FileField(
-        storage=PublicMediaStorage(), upload_to="main_exports/", null=True)
-    covenant_count = models.IntegerField()
     created_at = models.DateTimeField()
 
     class Meta:
