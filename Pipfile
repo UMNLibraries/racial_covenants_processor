@@ -38,6 +38,7 @@ panoptes-aggregation = {editable = true, ref = "master", git = "git+https://gith
 jupyter = "*"
 notebook = "==6.5.5"
 traitlets = "==5.9.0"
+sphinxcontrib-django = "*"
 
 [dev-packages]
 csvkit = "*"
