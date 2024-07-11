@@ -5,9 +5,14 @@ import django
 from datetime import date
 
 sys.path.insert(0, os.path.abspath(".."))
+sys.path.insert(0, os.path.abspath("../src"))
 # os.environ['DJANGO_SETTINGS_MODULE'] = 'racial_covenants_processor.settings'
 os.environ["DJANGO_SETTINGS_MODULE"] = "docs.django_settings"
 django.setup()
+
+
+# Configure the path to the Django settings module
+django_settings = "docs.django_settings"
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -25,7 +30,7 @@ release = '1.0 dev1'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'sphinxcontrib_django']
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']

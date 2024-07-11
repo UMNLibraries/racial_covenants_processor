@@ -147,7 +147,8 @@ class Command(BaseCommand):
 
             csv_export_obj = SearchHitReport(
                 workflow=workflow,
-                num_hits=df.shape[0],
+                num_hits=df[df['bool_match'] == True].shape[0],
+                num_exceptions=df[df['bool_exception'] == True].shape[0],
                 created_at = created_at
             )
 

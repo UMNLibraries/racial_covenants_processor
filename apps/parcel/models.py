@@ -316,7 +316,7 @@ class CovenantsParcelManager(models.Manager):
 
 class Parcel(models.Model):
     workflow = models.ForeignKey(
-         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
+         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL, help_text="Testing documentation")
     feature_id = models.IntegerField()
     pin_primary = models.CharField(max_length=50, null=True, blank=True)
     pin_secondary = models.CharField(max_length=50, null=True, blank=True)

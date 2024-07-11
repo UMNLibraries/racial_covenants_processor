@@ -59,6 +59,8 @@ Deed Machine full workflow
 
    modules/django-models.rst
    modules/apps-deed-models.rst
+   modules/apps-parcel-models.rst
+   modules/apps-plat-models.rst
    modules/apps-zoon-models.rst
 
 Indices and tables
