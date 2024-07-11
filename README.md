@@ -7,6 +7,10 @@ The Deed Machine was created at Mapping Prejudice at the University of Minnesota
 <img src="https://s3.us-east-2.amazonaws.com/static.mappingprejudice.com/deed-machine/Draft%20-%20Updated%20Workflow_alpha.png"/>
 
 
+## Documentation
+
+- Full documentation, still a work in progress: https://the-deed-machine.readthedocs.io/en/latest/ 
+
 ## Software requirements
 - geos and gdal
 - proj
@@ -15,11 +19,6 @@ The Deed Machine was created at Mapping Prejudice at the University of Minnesota
 - PostGIS/PostgreSQL
 - AWS SAM for lambdas (separate repos)
 - libmagic (mostly to silence panoptes/zooniverse warnings)
-
-## Documentation
-
-- Full documentation, still a work in progress: https://the-deed-machine.readthedocs.io/en/latest/ 
-
 
 ## Standalone deed uploader
 Often deed images are stored on a local machine or network drive, and it's not feasible or efficient to move them. This standalone uploader is designed to avoid the user having to do a full install on this computer.
