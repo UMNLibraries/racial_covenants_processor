@@ -4,6 +4,13 @@ Django model structure
 Core concepts
 -------------
 
+.. image:: https://s3.us-east-2.amazonaws.com/static.mappingprejudice.com/deed-machine/Draft%20-%20Updated%20Workflow_alpha.png
+  :width: 400
+  :align: right
+  :alt: A diagram of the components of the Deed Machine. To the left, an initial processing stage using AWS Step Functions is used to output a series of S3 files, which are ingested into a Django project in the center of the diagram.
+
+The Django component of the Deed Machine can generally be thought of as the conductor or hub that turns raw processing results into structured data, facilitates the import and export to the Zooniverse crowdsourcing platform, allows for manual GUI editing, and manages final data exports.
+
 The Django component of the Deed Machine is divided up into apps, and within each app, models.
 
 The four Django apps are ``deed``, ``parcel``, ``plat``, and ``zoon``.
@@ -19,8 +26,7 @@ Main models that end users will interact with:
             ├── Parcel
             ├── ParcelJoinCandidate
             ├── ShpExport/CSVExport/GeoJSONExport
-            ├── UnmappedCSVExport
-            ├── AllCovenantedDocsCSVExport
+            ├── UnmappedCSVExport/AllCovenantedDocsCSVExport
         ├── plat
             ├── Plat
             ├── PlatAlternateName
@@ -40,16 +46,16 @@ The Deed app
 
 The Deed app houses information about historical property record images provided by records custodians to be searched for racial covenants.
 
-After :ref:`_initial-processing`, management commands in the Deed app ingest metadata about these raw documents and whether or not they have been identified as potential racial covenants (i.e. the "hits") into the Django/postgresql database.
+After :ref:`initial-processing`, management commands in the Deed app ingest metadata about these raw documents and whether or not they have been identified as potential racial covenants (i.e. the "hits") into the Django/postgresql database.
 
-See :ref:`_ingesting-hits` for more about this process.
+See :ref:`ingesting-hits` for more about this process.
 
 The Parcel app
 --------------
 
 The Parcel app is used to house information about modern, GIS-enabled property records, which are used to map historical racial covenants. The Deed Machine uses transcribed information about each historical covenant to try to link the addition, block and lot of each covenant to matching information in modern parcel records stored in the Parcel app. The Parcel app is populated by uploading parcel shapefiles into the GeoDjango Parcel model, with or without preprocessing.
 
-See :ref:`_uploading-parcel-data`.
+See :ref:`uploading-parcel-data`.
 
 Mapping Prejudice counts racial covenants by identifying the earliest racial covenant document that is associated with a modern property. Thus, each row in Mapping Prejudice's covenants exports represents one modern property, as opposed to each row representing one document, as the same racial covenant was often repeated in subsequent sales of the same property.
 
