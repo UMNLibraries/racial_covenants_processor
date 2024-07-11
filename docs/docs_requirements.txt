@@ -9,3 +9,4 @@ django-admin-rangefilter
 djangorestframework
 djangorestframework-gis
 sphinx_rtd_theme
+sphinxcontrib_django
