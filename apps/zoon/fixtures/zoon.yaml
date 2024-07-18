@@ -68,3 +68,41 @@
         block_final: ''
         image_ids: ''
         bool_parcel_match: False
+
+# For testing parcel matching/mapping
+-   model: zoon.zooniversesubject
+    pk: 4
+    fields:
+        workflow: 1
+        zoon_subject_id: 4
+        bool_covenant_final: True
+        covenant_text_final: This is sample covenant text
+        addition_final: JANE'S ADDITION
+        image_ids: ''
+        lot_final: 2,3
+        block_final: 1
+        bool_parcel_match: False
+-   model: zoon.manualcovenant
+    pk: 1
+    fields:
+        workflow: 1
+        bool_confirmed: True
+        covenant_text: This is sample covenant manual text
+        addition: JANE'S ADDITION
+        lot: 4
+        block: 1
+        bool_parcel_match: False
+        date_added: '2024-07-18 00:00:00.123456+00:00'
+        date_updated: '2024-07-18 00:00:00.123456+00:00'
+# Addition-wide manual covenant
+-   model: zoon.manualcovenant
+    pk: 2
+    fields:
+        workflow: 1
+        bool_confirmed: True
+        covenant_text: This is sample covenant manual text
+        addition: MANY COVENANTS 1ST ADDITION
+        cov_type: PT
+        bool_parcel_match: False
+        date_added: '2024-07-18 00:00:00.123456+00:00'
+        date_updated: '2024-07-18 00:00:00.123456+00:00'

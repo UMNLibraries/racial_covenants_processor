@@ -50,3 +50,129 @@
         orig_data: '{"foo": "bar"}'
         orig_filename: 'test/fixtures/parcel.shp'
         geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+
+# For testing parcel matching/mapping
+-   model: parcel.parcel
+    pk: 3
+    fields:
+        workflow: 1
+        feature_id: 3
+        pin_primary: '1234'
+        pin_secondary: '4321'
+        street_address: '124 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: JANE'S ADDITION
+        plat_standardized: 'janes'
+        block: '1'
+        lot: '2'
+        join_description: BLOCK 1 LOT 2 JANE'S ADDITION
+        phys_description: BLOCK 1 LOT 2 JANE'S ADDITION
+        township: 3
+        range: 69
+        section: 34
+        subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+-   model: parcel.parcel
+    pk: 4
+    fields:
+        workflow: 1
+        feature_id: 4
+        pin_primary: '12345'
+        pin_secondary: '54321'
+        street_address: '125 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: JANE'S ADDITION
+        plat_standardized: 'janes'
+        block: '1'
+        lot: '3'
+        join_description: BLOCK 1 LOT 3 JANE'S ADDITION
+        phys_description: BLOCK 1 LOT 3 JANE'S ADDITION
+        township: 3
+        range: 69
+        section: 34
+        subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+-   model: parcel.parcel
+    pk: 5
+    fields:
+        workflow: 1
+        feature_id: 5
+        pin_primary: '123456'
+        pin_secondary: '654321'
+        street_address: '126 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: JANE'S ADDITION
+        plat_standardized: 'janes'
+        block: '1'
+        lot: '4'
+        join_description: BLOCK 1 LOT 3 JANE'S ADDITION
+        phys_description: BLOCK 1 LOT 3 JANE'S ADDITION
+        township: 3
+        range: 69
+        section: 34
+        subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+-   model: parcel.parcel
+    pk: 6
+    fields:
+        workflow: 1
+        feature_id: 6
+        pin_primary: '123456'
+        pin_secondary: '654321'
+        street_address: '126 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: MANY COVENANTS 1ST ADDITION
+        plat_standardized: many covenants 1st
+        block: '1'
+        lot: '1'
+        join_description: BLOCK 1 LOT 1 MANY COVENANTS 1ST ADDITION
+        phys_description: BLOCK 1 LOT 1 MANY COVENANTS 1ST ADDITION
+        subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+-   model: parcel.parcel
+    pk: 7
+    fields:
+        workflow: 1
+        feature_id: 7
+        pin_primary: '123456'
+        pin_secondary: '654321'
+        street_address: '126 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: MANY COVENANTS 1ST ADDITION
+        plat_standardized: many covenants 1st
+        block: '2'
+        lot: '1'
+        join_description: BLOCK 2 LOT 1 MANY COVENANTS 1ST ADDITION
+        phys_description: BLOCK 2 LOT 1 MANY COVENANTS 1ST ADDITION
+        subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'

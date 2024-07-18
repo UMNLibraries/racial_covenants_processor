@@ -12,11 +12,13 @@ from apps.zoon.models import ZooniverseSubject, ManualCovenant
 from apps.parcel.models import JoinReport, Parcel
 from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, addition_wide_parcel_match
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
+from apps.zoon.utils.zooniverse_join import set_addresses
 
 
 class Command(BaseCommand):
     '''Attempt to auto-join covenants to modern parcels using current values'''
-    matched_lots = []
+    matched_lots_zoon = []
+    matched_lots_manual = []
     match_report = []
 
     def add_arguments(self, parser):
@@ -27,7 +29,7 @@ class Command(BaseCommand):
         parser.add_argument('-t', '--test', action='store_true',
                             help="Don't save match report, this is only a test")
 
-    def match_parcel(self, parcel_lookup, target_obj, subject_obj):
+    def match_parcel(self, parcel_lookup, target_obj, subject_obj, matched_lots_list):
         ''' Separate subject necessary because you also have to run this on the ExtraParcelCandidate objects and then link the result to its subject'''
         # candidates = get_covenant_parcel_options(target_obj)
         candidates = target_obj.join_candidates
@@ -44,7 +46,7 @@ class Command(BaseCommand):
 
                 for parcel_id in lot_match['parcel_ids']:
                     subject_obj.parcel_matches.add(parcel_id)
-                self.matched_lots.append(c)
+                matched_lots_list.append(c)
 
             except KeyError as e:
                 print(f"NO MATCH: {c['join_string']}")
@@ -52,8 +54,8 @@ class Command(BaseCommand):
                 c['num_parcels'] = 0
             self.match_report.append(c)
 
-    def match_parcels_bulk(self, workflow, parcel_lookup):  # TODO: Same for ManualCovenant objects
-        print("Attempting to auto-join covenants to parcels ...")
+    def match_parcels_bulk_zoon(self, workflow, parcel_lookup):
+        print("Attempting to auto-join zooniverse covenants to parcels ...")
         for covenant in ZooniverseSubject.objects.filter(
             workflow=workflow,
             bool_covenant_final=True
@@ -62,10 +64,10 @@ class Command(BaseCommand):
         ).exclude(
             match_type_final='AW'  # Addition-wide covenants handled later
         ).order_by('addition_final'):
-            self.match_parcel(parcel_lookup, covenant, covenant)
+            self.match_parcel(parcel_lookup, covenant, covenant, self.matched_lots_zoon)
 
         matched_qs = ZooniverseSubject.objects.filter(
-            pk__in=[c['subject_id'] for c in self.matched_lots])
+            pk__in=[c['subject_id'] for c in self.matched_lots_zoon])
 
         # Update boolean for subjects with matching parcels in bulk
         matched_qs.update(bool_parcel_match=True)
@@ -74,20 +76,45 @@ class Command(BaseCommand):
         update_objs = []
         for z in matched_qs:
             z.set_geom_union()
-            z.set_addresses()
+            set_addresses(z)
             update_objs.append(z)
         ZooniverseSubject.objects.bulk_update(
             update_objs, ['geom_union_4326', 'parcel_addresses', 'parcel_city'], batch_size=1000)
+        
+    def match_parcels_bulk_manual(self, workflow, parcel_lookup):  # TODO: Same for ManualCovenant objects
+
+        print("Attempting to auto-join manual covenants to parcels ...")
+        for covenant in ManualCovenant.objects.filter(
+            workflow=workflow,
+            bool_confirmed=True
+        ).exclude(
+            cov_type='PT'  # Addition-wide covenants handled later TODO
+        ).order_by('addition'):
+            self.match_parcel(parcel_lookup, covenant, covenant, self.matched_lots_manual)
+
+        matched_qs = ManualCovenant.objects.filter(
+            pk__in=[c['subject_id'] for c in self.matched_lots_manual])
+
+        # Update boolean for subjects with matching parcels in bulk
+        matched_qs.update(bool_parcel_match=True)
+
+        # Update geo union fields for final export
+        update_objs = []
+        for m in matched_qs:
+            set_addresses(m)
+            update_objs.append(m)
+        ManualCovenant.objects.bulk_update(
+            update_objs, ['parcel_addresses', 'parcel_city'], batch_size=1000)
 
     def tag_matched_parcels(self, workflow):
         # Clear previous bool_covenant values on workflow
         print("Clearing old bool_covenant values from Parcels in this workflow...")
         Parcel.objects.filter(workflow=workflow, bool_covenant=True).update(bool_covenant=False)
 
-        print("Tagging bool_covenant=True for matched Parcels...")
+        print("Tagging bool_covenant=True for matched Parcels on ZooniverseSubjects...")
         Parcel.objects.filter(workflow=workflow, zooniversesubject__isnull=False).update(bool_covenant=True)
 
-        # Now do ManualCovenant records
+        print("Tagging bool_covenant=True for matched Parcels on ManualCovenants...")
         Parcel.objects.filter(workflow=workflow, manualcovenant__isnull=False).update(bool_covenant=True)
 
     def write_match_report(self, workflow, bool_local=False, bool_test=False):
@@ -97,20 +124,37 @@ class Command(BaseCommand):
         now = datetime.datetime.now()
         timestamp = now.strftime('%Y%m%d_%H%m')
 
-        matched_lots = [s for s in self.match_report if s['match'] is True]
-        matched_subjects = set([s['subject_id'] for s in matched_lots])
+        # matched_lots = [s for s in self.match_report_zoon if s['match'] is True] # TODO
+        # matched_subjects = set([s['subject_id'] for s in matched_lots])
 
-        covenant_count = ZooniverseSubject.objects.filter(
+        covenanted_doc_count_zoon = ZooniverseSubject.objects.filter(
             workflow=workflow,
             bool_covenant_final=True
         ).count()
 
-        matched_lot_count = len(matched_lots)
-        matched_subject_count = len(matched_subjects)
+        covenanted_doc_count_manual = ManualCovenant.objects.filter(
+            workflow=workflow,
+            bool_confirmed=True
+        ).count()
 
-        print(f"{covenant_count} covenant subjects")
+        matched_parcel_zoon_count = ZooniverseSubject.objects.filter(
+            workflow=workflow,
+            bool_covenant_final=True,
+            bool_parcel_match=True
+        ).count()
+
+        matched_parcel_manual_count = ManualCovenant.objects.filter(
+            workflow=workflow,
+            bool_confirmed=True,
+            bool_parcel_match=True
+        ).count()
+
+        matched_lot_count = Parcel.covenant_objects.filter(workflow=workflow).count()
+
+        print(f"{covenanted_doc_count_zoon} covenant subjects")
+        print(f"{covenanted_doc_count_manual} manual covenanted docs")
         print(
-            f"{matched_lot_count} lot matches found on {matched_subject_count} subjects.")
+            f"{matched_lot_count} covenanted lots mapped.")
 
         filename_tail = f'{workflow.slug}_match_report_{timestamp}.csv'
 
@@ -136,9 +180,9 @@ class Command(BaseCommand):
             report_obj = JoinReport(
                 workflow=workflow,
                 # report_csv=csv_file,
-                covenant_count=covenant_count,
+                covenanted_doc_count=covenanted_doc_count_zoon+covenanted_doc_count_manual,
                 matched_lot_count=matched_lot_count,
-                matched_subject_count=matched_subject_count,
+                matched_subject_count=matched_parcel_zoon_count+matched_parcel_manual_count,
                 created_at=now
             )
             report_obj.report_csv.save(filename_tail, csv_file)
@@ -159,6 +203,18 @@ class Command(BaseCommand):
             # Save method should pick up addition-wide covenants
             covenant.save()
 
+        print("Auto-joining addition-wide manual covenants...")
+        for covenant in ManualCovenant.objects.filter(
+            workflow=workflow,
+            bool_confirmed=True,
+            cov_type='PT',
+        ).exclude(
+            addition__in=['', None, 'NONE', 'UNKNOWN']
+        ).order_by('addition'):
+            print(f'{covenant.addition}...')
+            # Save method should pick up addition-wide covenants
+            covenant.save()
+
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -169,7 +225,8 @@ class Command(BaseCommand):
             # Get all possible parcel lots to join
             parcel_lookup = build_parcel_spatial_lookups(workflow)
 
-            self.match_parcels_bulk(workflow, parcel_lookup)
+            self.match_parcels_bulk_zoon(workflow, parcel_lookup)
+            self.match_parcels_bulk_manual(workflow, parcel_lookup)
 
             # Join addition-wide covenants
             self.match_addition_wide_covenants(workflow, parcel_lookup)

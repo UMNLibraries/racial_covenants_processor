@@ -12,6 +12,7 @@ from racial_covenants_processor.storage_backends import PublicMediaStorage
 from apps.plat.models import Plat, PlatAlternateName, Subdivision, SubdivisionAlternateName
 from apps.parcel.models import Parcel
 from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, gather_all_covenant_candidates, gather_all_manual_covenant_candidates, standardize_addition, addition_wide_parcel_match
+from apps.zoon.utils.zooniverse_join import set_addresses
 
 
 class ZooniverseWorkflow(models.Model):
@@ -291,19 +292,19 @@ class ZooniverseSubject(models.Model):
             return union_final
         return None
 
-    def get_parcel_addresses(self):
-        return list(self.parcel_matches.all().values('street_address', 'city', 'state', 'zip_code'))
+    # def get_parcel_addresses(self):
+    #     return list(self.parcel_matches.all().values('street_address', 'city', 'state', 'zip_code'))
 
-    def get_parcel_cities(self):
-        return self.parcel_matches.all().values_list('city', flat=True)
+    # def get_parcel_cities(self):
+    #     return self.parcel_matches.all().values_list('city', flat=True)
 
-    def set_addresses(self):
-        if self.bool_parcel_match:
-            self.parcel_addresses = json.dumps(self.get_parcel_addresses())
-            cities = self.get_parcel_cities()
-            if len(cities) > 0:
-                # Assuming for the most part that we can generally take the first city we find. There will be edge cases, but those can be accessed via the address JSON object and this one is more of a shorthand
-                self.parcel_city = cities[0]
+    # def set_addresses(self):
+    #     if self.bool_parcel_match:
+    #         self.parcel_addresses = json.dumps(self.get_parcel_addresses())
+    #         cities = self.get_parcel_cities()
+    #         if len(cities) > 0:
+    #             # Assuming for the most part that we can generally take the first city we find. There will be edge cases, but those can be accessed via the address JSON object and this one is more of a shorthand
+    #             self.parcel_city = cities[0]
 
     def set_geom_union(self):
         if self.bool_parcel_match:
@@ -414,7 +415,8 @@ class ZooniverseSubject(models.Model):
             del kwargs['parcel_lookup']
 
         self.set_geom_union()
-        self.set_addresses()
+        # self.set_addresses()
+        set_addresses(self)
 
         super(ZooniverseSubject, self).save(*args, **kwargs)
 
@@ -678,6 +680,10 @@ class ManualCovenant(models.Model):
     date_added = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
+    # Fields resulting from join to Parcel models
+    parcel_addresses = models.JSONField(null=True, blank=True)
+    parcel_city = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+
     # objects = models.Manager()
     objects = CopyManager()
     all_covenanted_docs_objects = AllCovenantedDocsManualCovenantManager()
@@ -762,6 +768,7 @@ def manual_cov_post_save(sender, instance=None, created=False, **kwargs):
         del kwargs['parcel_lookup']
 
     try:
+        set_addresses(instance)
         instance._dirty = True
         instance.save()
     finally:
