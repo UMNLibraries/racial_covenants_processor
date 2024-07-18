@@ -407,7 +407,7 @@ class JoinReport(models.Model):
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     report_csv = models.FileField(
         storage=PublicMediaStorage(), upload_to="analysis/", null=True)
-    covenant_count = models.IntegerField()
+    covenanted_doc_count = models.IntegerField()
     matched_lot_count = models.IntegerField()
     matched_subject_count = models.IntegerField()
     created_at = models.DateTimeField()
