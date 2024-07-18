@@ -71,7 +71,7 @@
 
 # For testing parcel matching/mapping
 -   model: zoon.zooniversesubject
-    pk: 4
+    pk: 5
     fields:
         workflow: 1
         zoon_subject_id: 4
