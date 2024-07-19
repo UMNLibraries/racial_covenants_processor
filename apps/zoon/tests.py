@@ -238,7 +238,7 @@ class ParcelMatchTests(TestCase):
         parcel_lot_2 = Parcel.objects.get(workflow_id=1, plat_standardized='janes', block=1, lot=2)
         parcel_lot_3 = Parcel.objects.get(workflow_id=1, plat_standardized='janes', block=1, lot=3)
 
-        zoon_lot_2_and_3 = ZooniverseSubject.objects.get(pk=4)
+        zoon_lot_2_and_3 = ZooniverseSubject.objects.get(pk=5)
 
         self.assertEqual(parcel_lot_2.bool_covenant, True)
         self.assertEqual(parcel_lot_3.bool_covenant, True)
