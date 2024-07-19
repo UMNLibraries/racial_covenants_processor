@@ -23,3 +23,4 @@ Once all of the steps used to process new results have been run, many covenants 
 
 10. If you need to map lots across more than one block, add ExtraParcelCandidate objects for each additional block or lot range. ONLY ONE ManualCorrection OBJECT should be added per ZooniverseSubject.
 
+10. If you find a Parcel record that SHOULD join to this covenant, but the Parcel record has not generated appropriate join strings, you can also consider adding a ManualParcelCandidate to the matching Parcel record. This can be necessary, for example, if the needed lot information is inside the full physical description and not captured by the lot/block/addition values saved to the Parcel record. This should not be used to deal with variations that will affect many lots, for example a different spelling for the property addition. In that case, consider a SubdivisionAlternateName or PlatAlternateName. More on these decisions TK TK TK.

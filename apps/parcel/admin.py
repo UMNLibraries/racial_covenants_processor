@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from .models import Parcel
+from .models import Parcel, ManualParcelCandidate
+
+
+class ManualParcelCandidateInline(admin.StackedInline):
+    model = ManualParcelCandidate
+    extra = 0
+    exclude = ['workflow', 'parcel_pin_primary']
 
 
 @admin.register(Parcel)
@@ -34,6 +40,10 @@ class ParcelAdmin(admin.ModelAdmin):
     list_display = ['pin_primary', 'street_address', 'plat', 'subdivision_spatial', 'city', 'plat_name', 'block', 'lot']
     search_fields = ['plat_name', 'pin_primary', 'street_address', 'city']
     # readonly_fields = ['geom_4326', 'plat']
+
+    inlines = [
+        ManualParcelCandidateInline
+    ]
 
     def get_readonly_fields(self, request, obj=None):
         '''Make all fields read-only'''
