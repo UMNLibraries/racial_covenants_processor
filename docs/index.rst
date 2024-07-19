@@ -49,6 +49,7 @@ Deed Machine full workflow
    modules/ingesting-hits.rst
    modules/uploading-to-zooniverse.rst
    modules/uploading-parcel-data.rst
+   modules/mapping-covenants.rst
    modules/downloading-new-results.rst
    modules/manual-data-cleaning.rst
    
