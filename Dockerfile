@@ -27,7 +27,7 @@ RUN apt-get install -y python3.9-dev
 RUN apt-get install -y python3-pip
 
 # install dependencies
-RUN pip install --upgrade pip
+# RUN pip install --upgrade pip  # With v 24 of pip lots of requirements inside dependencies will break. So don't force upgrade for now.
 COPY ./requirements.txt .
 RUN pip install --force git+https://github.com/scikit-learn-contrib/hdbscan.git
 RUN pip install -r requirements.txt

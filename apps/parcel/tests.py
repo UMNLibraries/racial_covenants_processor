@@ -98,6 +98,11 @@ class JoinStringTests(TestCase):
         lots, lots_meta = get_lots("1-20")
         self.assertEquals(lots, [str(x) for x in list(range(1,21))])
 
+    def test_lot_range_thru(self):
+        """Does get_lots render 'LOTS 2525 THRU 2529' as list [2525,2526,...2529]"""
+        lots, lots_meta = get_lots("LOTS 2525 THRU 2529")
+        self.assertEquals(lots, ['2525', '2526', '2527', '2528', '2529'])
+
     def test_lot_bad_range_start(self):
         """Does get_lots render 'x1-20' None"""
         lots, lots_meta = get_lots("x1-20")

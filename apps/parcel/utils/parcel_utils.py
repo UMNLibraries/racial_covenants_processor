@@ -83,7 +83,7 @@ def get_lots(input_str):
         if repeated_text_num:
             return strip_leading_0s_list([repeated_text_num]), 'repeated_text_num'
 
-        num_range = re.search(r'^(\d+)-(\d+)$', input_str)
+        num_range = re.search(r'^(\d+)(?:-| thru )(\d+)$', input_str)
         if num_range:
             start = int(num_range.group(1))
             end = int(num_range.group(2))
