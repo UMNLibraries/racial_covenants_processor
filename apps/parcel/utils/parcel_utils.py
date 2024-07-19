@@ -231,6 +231,10 @@ def get_all_parcel_options(parcel_obj):
     for a in [addition] + extra_additions:
         join_strings += write_join_strings(a, parcel_obj.block, parcel_obj.lot)
 
+    # ManualParcelCandidates
+    for mpc in parcel_obj.manualparcelcandidate_set.all():
+        join_strings += write_join_strings(mpc.addition, mpc.block, mpc.lot)
+
     for candidate in join_strings:
         candidate['parcel_id'] = parcel_obj.id
     return join_strings
