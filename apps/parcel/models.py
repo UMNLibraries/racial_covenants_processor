@@ -321,7 +321,7 @@ class CovenantsParcelManager(models.Manager):
 class Parcel(models.Model):
     '''A modern GIS parcel record imported from a shapefile, generally sourced from a county GIS system or open records portal. Imported via load_parcel_shp management command. Racial covenant exports (besides unmapped documents) are aggregated to identify the earliest recorded covenant for each modern parcel, which means each row in covenants exports is equivalent to one Parcel object. By filling out the parcel_shps -> mapping object in the workflow config, users can tell the load_parcel_shp management command which attributes/columns in the original shapefile correspond to the attribute names needed to import into the Parcel table.'''
     workflow = models.ForeignKey(
-         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL, help_text="Testing documentation")
+         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     feature_id = models.IntegerField()
     '''A unique identifier in the original shapefile.'''
     pin_primary = models.CharField(max_length=50, null=True, blank=True)
@@ -415,11 +415,15 @@ class ParcelJoinCandidate(models.Model):
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     parcel = models.ForeignKey(Parcel, on_delete=models.CASCADE)
+    """Foreign key to parcel record this is tied to"""
     plat_name_standardized = models.CharField(
         max_length=255, db_index=True, null=True)
+    """Addition/plat name after filtering"""
     join_string = models.CharField(
         max_length=500, db_index=True, null=True)
+    """Join string associated with this candidate, which is what will be used to attempt auto-mapping"""
     metadata = models.JSONField(null=True, blank=True)
+    """Information about the filtering/processing of this candidate, see parcel_utils.py"""
 
 
 class ManualParcelCandidate(models.Model):
@@ -427,22 +431,30 @@ class ManualParcelCandidate(models.Model):
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     parcel = models.ForeignKey(Parcel, on_delete=models.CASCADE)
+    """Foreign key to parcel record this is tied to"""
 
-    # These are kept separate of the foreign key relationship in case this needs to be reconnected later
     parcel_pin_primary = models.CharField(max_length=50, null=True, blank=True)
+    """Primary PIN number (not DB ID) of the parcel this candidate is linked to. These are kept separate of the foreign key relationship in case this needs to be reconnected later by import/export process."""
 
     addition = models.CharField(max_length=500, null=True, blank=True)
+    """User-entered addition/plat/subdivision. Must be filled out to generate join string."""
     lot = models.TextField(null=True, blank=True)
+    """User-entered lot, which can be any parseable lot value, like "1", "1-3", "1,2,3". Must be filled out to generate join string."""
     block = models.CharField(max_length=500, null=True, blank=True)
+    """User-entered block. One ManualParcelCandidate should be added for each block or addition needed. May be blank."""
 
     date_added = models.DateTimeField(auto_now_add=True)
+    """Auto-generated"""
     date_updated = models.DateTimeField(auto_now=True)
+    """Auto-generated"""
 
     comments = models.TextField(null=True, blank=True)
+    """User comments on why this ManualParcelCandidate has been added."""
 
     objects = CopyManager()
 
     def save(self, *args, **kwargs):
+        """Saving a ManualParcelCandidate populates values needed for export/import, and also triggers the attached Parcel to run its save routine to re-generate its set of parcel candidates."""
         self.workflow = self.parcel.workflow
         self.parcel_pin_primary = self.parcel.pin_primary
         super(ManualParcelCandidate, self).save(*args, **kwargs)
@@ -450,6 +462,7 @@ class ManualParcelCandidate(models.Model):
 
 @receiver(models.signals.post_delete, sender=ManualParcelCandidate)
 def model_delete(sender, instance, **kwargs):
+    """If ManualParcelCandidate is deleted, re-run the parent Parcel save method to remove it from the list of join candidates used by Parcel"""
     try:
         instance.parcel.save()
     except AttributeError:
