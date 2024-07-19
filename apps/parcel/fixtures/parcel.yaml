@@ -176,3 +176,62 @@
         orig_data: '{"foo": "bar"}'
         orig_filename: 'test/fixtures/parcel.shp'
         geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+
+# ManualParcelCandidate stuff
+-   model: parcel.parcel
+    pk: 8
+    fields:
+        workflow: 1
+        feature_id: 8
+        pin_primary: 'mpc-pin-1'
+        pin_secondary: '654321'
+        street_address: '126 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: MPC BASE ADDITION
+        plat_standardized: mpc base
+        block: '1'
+        lot: '1'
+        join_description: BLOCK 1 LOT 1 MPC BASE ADDITION & BLOCK 1 LOT 1 NEW ADDITION
+        phys_description: BLOCK 1 LOT 1 MPC BASE ADDITION & BLOCK 1 LOT 1 NEW ADDITION
+        # subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+-   model: parcel.parcel
+    pk: 9
+    fields:
+        workflow: 1
+        feature_id: 9
+        pin_primary: 'mpc-pin-2'
+        pin_secondary: '654321'
+        street_address: '126 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: MPC BASE ADDITION
+        plat_standardized: mpc base
+        block: '1'
+        lot: '5'
+        join_description: BLOCK 1 LOT 5 & 6 MPC BASE ADDITION
+        phys_description: BLOCK 1 LOT 5 & 6 MPC BASE ADDITION
+        # subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+-   model: parcel.manualparcelcandidate
+    pk: 1
+    fields:
+        workflow: 1
+        parcel: 9
+        addition: MPC BASE ADDITION
+        block: 1
+        lot: 6
+        comments: "Let's add an MPC"
+        date_added: '2024-07-18 00:00:00.123456+00:00'
+        date_updated: '2024-07-18 00:00:00.123456+00:00'

@@ -1,9 +1,13 @@
 from django.db.models import OuterRef, Subquery, F, Case, Value, When, Exists, BooleanField, DateField, CharField, IntegerField, JSONField, FloatField
 from django.contrib.gis.db import models
+from django.dispatch import receiver
 from localflavor.us.us_states import US_STATES
+
+from postgres_copy import CopyManager
 
 from racial_covenants_processor.storage_backends import PublicMediaStorage
 from apps.plat.models import Plat, Subdivision
+from .utils.parcel_utils import get_all_parcel_options
 
 
 class CovenantsParcelManager(models.Manager):
@@ -378,13 +382,30 @@ class Parcel(models.Model):
     def __str__(self):
         return f"{self.county_name} {self.plat_name} LOT {self.lot} BLOCK {self.block} ({self.pk})"
 
-
     @property
     def join_strings(self):
         strings = []
         for candidate in self.parceljoincandidate_set.all():
             strings.append(candidate.join_string)
         return strings
+    
+    def save(self, *args, **kwargs):
+        # Rebuild ParcelJoinCandidate objects, which will incorporate ManualParcelCandidate objects
+        ParcelJoinCandidate.objects.filter(parcel=self).delete()
+        candidates = get_all_parcel_options(self)
+        join_cands = []
+        for c in candidates:
+            join_cands.append(ParcelJoinCandidate(
+                workflow=self.workflow,
+                parcel=self,
+                plat_name_standardized=self.plat_standardized,
+                join_string=c['join_string'],
+                metadata=c['metadata']
+            ))
+        print('Candidates generated, saving to DB...')
+        ParcelJoinCandidate.objects.bulk_create(join_cands, batch_size=2000)
+
+        super(Parcel, self).save(*args, **kwargs)
 
 
 class ParcelJoinCandidate(models.Model):
@@ -399,6 +420,40 @@ class ParcelJoinCandidate(models.Model):
     join_string = models.CharField(
         max_length=500, db_index=True, null=True)
     metadata = models.JSONField(null=True, blank=True)
+
+
+class ManualParcelCandidate(models.Model):
+    '''Similar to ExtraParcelCandidate on ZooniverseSubject, this would let you fill out a smart range of lots in combo with addition and block, and would generate additional join strings. To be used where the physical description is difficult to automatically parse, but simple lots are extractable manually.'''
+    workflow = models.ForeignKey(
+         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
+    parcel = models.ForeignKey(Parcel, on_delete=models.CASCADE)
+
+    # These are kept separate of the foreign key relationship in case this needs to be reconnected later
+    parcel_pin_primary = models.CharField(max_length=50, null=True, blank=True)
+
+    addition = models.CharField(max_length=500, null=True, blank=True)
+    lot = models.TextField(null=True, blank=True)
+    block = models.CharField(max_length=500, null=True, blank=True)
+
+    date_added = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    comments = models.TextField(null=True, blank=True)
+
+    objects = CopyManager()
+
+    def save(self, *args, **kwargs):
+        self.workflow = self.parcel.workflow
+        self.parcel_pin_primary = self.parcel.pin_primary
+        super(ManualParcelCandidate, self).save(*args, **kwargs)
+        self.parcel.save()
+
+@receiver(models.signals.post_delete, sender=ManualParcelCandidate)
+def model_delete(sender, instance, **kwargs):
+    try:
+        instance.parcel.save()
+    except AttributeError:
+        pass
 
 
 class JoinReport(models.Model):
