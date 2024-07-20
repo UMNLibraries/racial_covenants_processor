@@ -118,6 +118,15 @@ if os.environ.get('GITHUB_WORKFLOW'):
         }
     }
 
+    ZOONIVERSE_QUESTION_LOOKUP = {
+        'Ramsey County': {  # Legacy Ramsey County for testing
+            'panoptes_folder': 'mn_ramsey',
+            'zoon_workflow_id': 13143,
+            'zoon_workflow_version': '4.1',
+            # 'config_yaml': 'Extractor_config_workflow_13143_V4.10.yaml',
+        }
+    }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
