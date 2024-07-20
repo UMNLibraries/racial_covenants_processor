@@ -43,7 +43,7 @@ Re-loading parcel shapefile(s)
 If you need to re-load a workflow's Parcel shapefile due to a need to add data or reformat columns, be sure to export backups of any ManualParcelCandidate objects you may have created during manual cleanup
 
 Exporting/reconnecting ManualParcelCandidate objects
----------------------------------------
+----------------------------------------------------
 
 Before re-loading a parcel shapefile, create a backup of ManualParcelCandidate records.
 
