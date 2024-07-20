@@ -6,7 +6,7 @@ from .models import Parcel, ManualParcelCandidate
 class ManualParcelCandidateInline(admin.StackedInline):
     model = ManualParcelCandidate
     extra = 0
-    exclude = ['workflow', 'parcel_pin_primary']
+    exclude = ['workflow', 'parcel_pin_primary', 'workflow_name']
 
 
 @admin.register(Parcel)
