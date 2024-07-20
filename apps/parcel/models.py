@@ -430,11 +430,13 @@ class ManualParcelCandidate(models.Model):
     '''Similar to ExtraParcelCandidate on ZooniverseSubject, this would let you fill out a smart range of lots in combo with addition and block, and would generate additional join strings. To be used where the physical description is difficult to automatically parse, but simple lots are extractable manually.'''
     workflow = models.ForeignKey(
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
-    parcel = models.ForeignKey(Parcel, on_delete=models.CASCADE)
+    parcel = models.ForeignKey(Parcel, on_delete=models.SET_NULL, null=True)
     """Foreign key to parcel record this is tied to"""
 
     parcel_pin_primary = models.CharField(max_length=50, null=True, blank=True)
     """Primary PIN number (not DB ID) of the parcel this candidate is linked to. These are kept separate of the foreign key relationship in case this needs to be reconnected later by import/export process."""
+    workflow_name = models.CharField(max_length=100, blank=True)
+    """Name of workflow. Mostly hidden from user input, used to connect to appropriate workflow on re-import"""
 
     addition = models.CharField(max_length=500, null=True, blank=True)
     """User-entered addition/plat/subdivision. Must be filled out to generate join string."""
@@ -456,6 +458,7 @@ class ManualParcelCandidate(models.Model):
     def save(self, *args, **kwargs):
         """Saving a ManualParcelCandidate populates values needed for export/import, and also triggers the attached Parcel to run its save routine to re-generate its set of parcel candidates."""
         self.workflow = self.parcel.workflow
+        self.workflow_name = self.workflow.workflow_name
         self.parcel_pin_primary = self.parcel.pin_primary
         super(ManualParcelCandidate, self).save(*args, **kwargs)
         self.parcel.save()

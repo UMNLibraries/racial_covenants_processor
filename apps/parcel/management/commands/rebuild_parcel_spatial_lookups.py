@@ -27,7 +27,8 @@ class Command(BaseCommand):
             'plat',
             'plat__platalternatename_set',
             'subdivision_spatial',
-            'subdivision_spatial__subdivisionalternatename_set'
+            'subdivision_spatial__subdivisionalternatename_set',
+            'manualparcelcandidate_set'
         ).only(
             'id',
             'plat',
