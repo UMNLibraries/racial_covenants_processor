@@ -53,10 +53,15 @@ Deed Machine full workflow
    modules/mapping-covenants.rst
    modules/manual-data-cleaning.rst
    
+.. toctree::
+   :maxdepth: 2
+   :caption: Step function lambdas
+
+   modules/lambdas/mp-covenants-split-pages.rst
 
 .. toctree::
    :maxdepth: 2
-   :caption: Models
+   :caption: Django models
 
    modules/django-models.rst
    modules/apps-deed-models.rst
