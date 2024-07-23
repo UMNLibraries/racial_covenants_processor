@@ -18,7 +18,8 @@ Lambda functions used for OCR step machine
 
 The individual lambda functions that make up the OCR, term search and web image optimization processes are in separate repositories:
 
-- `mp-covenants-split-pages <https://github.com/UMNLibraries/mp-covenants-split-pages>`_
+- :ref:`mp-covenants-split-pages`
+
 - `mp-covenants-ocr-page <https://github.com/UMNLibraries/mp-covenants-ocr-page>`_
 - `mp-covenants-term-search-basic <https://github.com/UMNLibraries/mp-covenants-term-search-basic>`_
 - `mp-covenants-resize-image <https://github.com/UMNLibraries/mp-covenants-resize-image>`_
