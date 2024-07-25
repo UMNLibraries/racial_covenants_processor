@@ -59,6 +59,7 @@ Deed Machine full workflow
 
    modules/lambdas/mp-covenants-split-pages.rst
    modules/lambdas/mp-covenants-ocr-page.rst
+   modules/lambdas/mp-covenants-term-search-basic.rst
 
 .. toctree::
    :maxdepth: 2
