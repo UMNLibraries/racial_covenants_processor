@@ -1,8 +1,3 @@
-.. The Deed Machine documentation master file, created by
-   sphinx-quickstart on Fri Jun 14 13:08:44 2024.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 The Deed Machine
 ================
 
@@ -12,7 +7,7 @@ The Deed Machine
    :alt: Mapping Prejudice logo
    :target: https://mappingprejudice.umn.edu/
 
-The Deed Machine is a multi-language set of tools that use OCR and crowdsourced transcription to identify racially restrictive covenant language, then map the results.
+`The Deed Machine <https://github.com/umnlibraries/racial_covenants_processor>`_ is a multi-language set of tools that use OCR and crowdsourced transcription to identify racially restrictive covenant language, then map the results.
 
 Racial covenants are clauses that were inserted into property deeds to prevent people who are not white from buying or occupying land. As of June 2024, Mapping Prejudice volunteers have helped to map `more than 52,000 covenanted properties <https://github.com/umnlibraries/mp-us-racial-covenants>`_ across 3 states, with more on the way soon.
 
