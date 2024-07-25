@@ -58,6 +58,7 @@ Deed Machine full workflow
    :caption: Step function lambdas
 
    modules/lambdas/mp-covenants-split-pages.rst
+   modules/lambdas/mp-covenants-ocr-page.rst
 
 .. toctree::
    :maxdepth: 2
