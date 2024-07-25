@@ -1,3 +1,5 @@
+.. _django-models:
+
 Django model structure
 ======================
 
