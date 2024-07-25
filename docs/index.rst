@@ -10,12 +10,13 @@ The Deed Machine
    :width: 200
    :align: right
    :alt: Mapping Prejudice logo
+   :target: https://mappingprejudice.umn.edu/
 
 The Deed Machine is a multi-language set of tools that use OCR and crowdsourced transcription to identify racially restrictive covenant language, then map the results.
 
 Racial covenants are clauses that were inserted into property deeds to prevent people who are not white from buying or occupying land. As of June 2024, Mapping Prejudice volunteers have helped to map `more than 52,000 covenanted properties <https://github.com/umnlibraries/mp-us-racial-covenants>`_ across 3 states, with more on the way soon.
 
-The Deed Machine was created at Mapping Prejudice at the University of Minnesota Libraries. Current collaborators include Michael Corey, Suleman Diwan, Justin Schell, and the University of Minnesota Libraries IT staff.
+The Deed Machine was created at `Mapping Prejudice <https://mappingprejudice.umn.edu/>`_ at the `University of Minnesota Libraries <https://www.lib.umn.edu/>`_. Current collaborators include Michael Corey, Suleman Diwan, Justin Schell, and the University of Minnesota Libraries IT staff.
 
 .. image:: _static/DeedMachineBasicSteps2023.png
   :width: 800
