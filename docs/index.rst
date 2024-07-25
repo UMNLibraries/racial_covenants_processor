@@ -52,15 +52,6 @@ Deed Machine full workflow
    modules/downloading-new-results.rst
    modules/mapping-covenants.rst
    modules/manual-data-cleaning.rst
-   
-.. toctree::
-   :maxdepth: 2
-   :caption: Step function lambdas
-
-   modules/lambdas/mp-covenants-split-pages.rst
-   modules/lambdas/mp-covenants-ocr-page.rst
-   modules/lambdas/mp-covenants-term-search-basic.rst
-   modules/lambdas/mp-covenants-resize-image.rst
 
 .. toctree::
    :maxdepth: 2
@@ -71,6 +62,17 @@ Deed Machine full workflow
    modules/apps-parcel-models.rst
    modules/apps-plat-models.rst
    modules/apps-zoon-models.rst
+   
+.. toctree::
+   :maxdepth: 2
+   :caption: Step function lambdas
+
+   modules/lambdas/mp-covenants-split-pages.rst
+   modules/lambdas/mp-covenants-ocr-page.rst
+   modules/lambdas/mp-covenants-term-search-basic.rst
+   modules/lambdas/mp-covenants-resize-image.rst
+   modules/lambdas/mp-covenants-fake-ocr.rst
+
 
 Indices and tables
 ==================
