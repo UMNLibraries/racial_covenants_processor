@@ -21,6 +21,6 @@ The individual lambda functions that make up the OCR, term search and web image 
 - :ref:`mp-covenants-split-pages`
 - :ref:`mp-covenants-ocr-page`
 - :ref:`mp-covenants-term-search-basic`
+- :ref:`mp-covenants-resize-image`
 
-- `mp-covenants-resize-image <https://github.com/UMNLibraries/mp-covenants-resize-image>`_
 - `mp-covenants-fake-ocr <https://github.com/UMNLibraries/mp-covenants-fake-ocr>`_
