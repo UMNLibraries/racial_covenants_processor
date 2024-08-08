@@ -23,19 +23,19 @@ class Command(BaseCommand):
         parser.add_argument('-l', '--local', action='store_true',
                             help='Save to local geojson in "main_exports" dir, rather than Django object/S3')
 
-    def save_geojson_local(self, gdf, version_slug, schema):
+    def save_geojson_local(self, gdf, version_slug):
         out_geojson = os.path.join(
             settings.BASE_DIR, 'data', 'main_exports', f"{version_slug}.geojson")
-        gdf.to_file(out_geojson, schema=schema, index=False)
+        gdf.to_file(out_geojson, index=False)
 
         return out_geojson
 
-    def save_geojson_model(self, gdf, version_slug, workflow, created_at, schema):
+    def save_geojson_model(self, gdf, version_slug, workflow, created_at):
         # export to .geojson temp file and serve it to the user
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_file_path = os.path.join(tmp_dir, f'{version_slug}.geojson')
             # df.to_geojson(tmp_file_path, index=False)
-            gdf.to_file(tmp_file_path, schema=schema, index=False)
+            gdf.to_file(tmp_file_path, index=False)
 
             geojson_export_obj = GeoJSONExport(
                 workflow=workflow,
@@ -58,12 +58,6 @@ class Command(BaseCommand):
 
             covenants_gdf = build_gdf(workflow)
 
-            # Shapefiles don't like datetime format, so specify date in manual schema
-            schema = gpd.io.file.infer_schema(covenants_gdf)
-            schema['properties']['deed_date'] = 'date'
-            schema['properties']['dt_updated'] = 'date'
-            schema['properties']['zn_dt_ret'] = 'date'
-
             print(covenants_gdf)
 
             now = datetime.datetime.now()
@@ -71,7 +65,7 @@ class Command(BaseCommand):
             version_slug = f"{workflow.slug}_covenants_{timestamp}"
 
             if kwargs['local']:
-                geojson_local = self.save_geojson_local(covenants_gdf, version_slug, schema)
+                geojson_local = self.save_geojson_local(covenants_gdf, version_slug)
             else:
                 # Save to geojson in Django storages/model
-                geojson_export_obj = self.save_geojson_model(covenants_gdf, version_slug, workflow, now, schema)
+                geojson_export_obj = self.save_geojson_model(covenants_gdf, version_slug, workflow, now)
