@@ -24,22 +24,22 @@ class Command(BaseCommand):
         parser.add_argument('-l', '--local', action='store_true',
                             help='Save to local un-zipped shp in "main_exports" dir, rather than Django object/S3')
 
-    def save_shp_local(self, gdf, version_slug, schema):
+    def save_shp_local(self, gdf, version_slug):
 
         os.makedirs(os.path.join(
             settings.BASE_DIR, 'data', 'main_exports', version_slug), exist_ok=True)
         out_shp = os.path.join(
             settings.BASE_DIR, 'data', 'main_exports', version_slug, f"{version_slug}.shp")
-        gdf.to_file(out_shp, schema=schema, index=False)
+        gdf.to_file(out_shp, index=False)
 
         return out_shp
 
-    def generate_zip_tmp(self, gdf, version_slug, workflow, created_at, schema):
+    def generate_zip_tmp(self, gdf, version_slug, workflow, created_at):
         # Convert to shapefile and serve it to the user
         with tempfile.TemporaryDirectory() as tmp_dir:
 
             # Export gdf as shapefile
-            gdf.to_file(os.path.join(tmp_dir, f'{version_slug}.shp'), schema=schema, index=False, driver='ESRI Shapefile')
+            gdf.to_file(os.path.join(tmp_dir, f'{version_slug}.shp'), index=False, driver='ESRI Shapefile')
 
             # Zip the exported files to a single file
             tmp_zip_file_name = f'{version_slug}.zip'
@@ -73,12 +73,6 @@ class Command(BaseCommand):
 
             covenants_geo_df = build_gdf(workflow)
 
-            # Shapefiles don't like datetime format, so specify date in manual schema
-            schema = gpd.io.file.infer_schema(covenants_geo_df)
-            schema['properties']['deed_date'] = 'date'
-            schema['properties']['dt_updated'] = 'date'
-            schema['properties']['zn_dt_ret'] = 'date'
-
             print(covenants_geo_df)
 
             now = datetime.datetime.now()
@@ -86,7 +80,7 @@ class Command(BaseCommand):
             version_slug = f"{workflow.slug}_covenants_{timestamp}"
 
             if kwargs['local']:
-                shp_local = self.save_shp_local(covenants_geo_df, version_slug, schema)
+                shp_local = self.save_shp_local(covenants_geo_df, version_slug)
             else:
                 # Save to zipped shp in Django storages/model
-                shp_export_obj = self.generate_zip_tmp(covenants_geo_df, version_slug, workflow, now, schema)
+                shp_export_obj = self.generate_zip_tmp(covenants_geo_df, version_slug, workflow, now)
