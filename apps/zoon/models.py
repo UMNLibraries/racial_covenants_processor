@@ -175,8 +175,8 @@ class ZooniverseSubject(models.Model):
     lot = models.TextField(blank=True)
     block = models.CharField(max_length=502, blank=True)
     city = models.CharField(max_length=503, blank=True)
-    seller = models.CharField(max_length=800, blank=True)
-    buyer = models.CharField(max_length=800, blank=True)
+    seller = models.CharField(max_length=1200, blank=True)
+    buyer = models.CharField(max_length=1200, blank=True)
     deed_date = models.DateField(null=True)
 
     # Match type not a part of Ramsey County workflow but will be used in future.
@@ -221,9 +221,9 @@ class ZooniverseSubject(models.Model):
     block_final = models.CharField(
         max_length=500, null=True, blank=True, verbose_name="Block")
     seller_final = models.CharField(
-        max_length=800, null=True, blank=True, verbose_name="Seller name")
+        max_length=1200, null=True, blank=True, verbose_name="Seller name")
     buyer_final = models.CharField(
-        max_length=800, null=True, blank=True, verbose_name="Buyer name")
+        max_length=1200, null=True, blank=True, verbose_name="Buyer name")
     deed_date_final = models.DateField(
         null=True, blank=True, verbose_name="Deed date")
 
@@ -460,8 +460,8 @@ class ZooniverseResponseProcessed(models.Model):
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
     city = models.CharField(max_length=500, null=True, blank=True)  # When addition/block/lot not available in workflow
-    seller = models.CharField(max_length=800, null=True, blank=True)
-    buyer = models.CharField(max_length=800, null=True, blank=True)
+    seller = models.CharField(max_length=1200, null=True, blank=True)
+    buyer = models.CharField(max_length=1200, null=True, blank=True)
     match_type = models.CharField(max_length=100, null=True, blank=True)
     bool_handwritten = models.CharField(max_length=50, null=True, blank=True)
     deed_date_year = models.CharField(max_length=10, blank=True)
