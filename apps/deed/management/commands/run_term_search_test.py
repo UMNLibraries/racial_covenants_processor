@@ -45,10 +45,12 @@ class Command(BaseCommand):
         if bool_hits_only:
             kwargs['bool_match'] = True
 
+        out_values = ['workflow__slug', 's3_lookup', 'page_ocr_json', 'page_ocr_text', 'page_image_web', 'page_stats', 'public_uuid', 'bool_match']
+
         if len(kwargs) > 0:
-            random_deedpages = DeedPage.objects.filter(**kwargs).order_by('?').values('workflow__slug', 's3_lookup', 'page_ocr_json', 'page_ocr_text', 'page_image_web', 'page_stats', 'public_uuid')[:n]
+            random_deedpages = DeedPage.objects.filter(**kwargs).order_by('?').values(*out_values)[:n]
         else:
-            random_deedpages = DeedPage.objects.all().order_by('?').values('workflow__slug', 's3_lookup', 'page_ocr_json', 'page_ocr_text', 'page_image_web', 'page_stats', 'public_uuid')[:n]
+            random_deedpages = DeedPage.objects.all().order_by('?').values(*out_values)[:n]
 
         return random_deedpages
     
@@ -75,6 +77,7 @@ class Command(BaseCommand):
             'workflow': deedpage_obj['workflow__slug'],
             's3_lookup': deedpage_obj['s3_lookup'],
             'page_ocr_text': deedpage_obj['page_ocr_text'],
+            'bool_basic_match': str(deedpage_obj['bool_match']),
             'bool_fuzzy_match': bool_fuzzy_match,
             'fuzzy_match_json': fuzzy_match_json,
             'test_status': test_status,
@@ -186,7 +189,7 @@ class Command(BaseCommand):
             settings.BASE_DIR, 'data', 'main_exports', f"{workflow_slug}_fuzzy_term_search_test{hit_str}_{now}.csv")
         
         with open(self.term_test_result_path, 'w') as done_manifest:
-            done_manifest.write("workflow,s3_lookup,page_ocr_text,bool_fuzzy_match,fuzzy_match_json,test_status,match_context\n")
+            done_manifest.write("workflow,s3_lookup,page_ocr_text,bool_basic_match,bool_fuzzy_match,fuzzy_match_json,test_status,match_context\n")
 
         # Get random set of DeedPage objects to test against
         random_deedpages = self.get_test_deedpages(workflow, num_results, bool_hits_only)
