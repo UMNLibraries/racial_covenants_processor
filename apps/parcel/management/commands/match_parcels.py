@@ -112,10 +112,10 @@ class Command(BaseCommand):
         Parcel.objects.filter(workflow=workflow, bool_covenant=True).update(bool_covenant=False)
 
         print("Tagging bool_covenant=True for matched Parcels on ZooniverseSubjects...")
-        Parcel.objects.filter(workflow=workflow, zooniversesubject__isnull=False).update(bool_covenant=True)
+        Parcel.objects.filter(workflow=workflow, zooniversesubject__isnull=False, zooniversesubject__bool_covenant_final=True).update(bool_covenant=True)
 
         print("Tagging bool_covenant=True for matched Parcels on ManualCovenants...")
-        Parcel.objects.filter(workflow=workflow, manualcovenant__isnull=False).update(bool_covenant=True)
+        Parcel.objects.filter(workflow=workflow, manualcovenant__isnull=False, manualcovenant__bool_confirmed=True).update(bool_covenant=True)
 
     def write_match_report(self, workflow, bool_local=False, bool_test=False):
         fieldnames = ['join_string', 'match', 'subject_id',

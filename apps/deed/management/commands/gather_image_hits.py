@@ -80,20 +80,37 @@ class Command(BaseCommand):
 
             report_df['num_terms'] = report_df['matched_terms'].apply(lambda x: len(x.split(',')))
 
-            # create special flag for exceptions like "occupied by any" and "death certificate"
-            if 'occupied by any' in report_df.columns:
-                print(report_df['occupied by any'].apply(lambda x: self.split_or_1(x)))
+            # create special flag for exceptions when they occur as the only term hit like "occupied by any" and "death certificate"
+            bad_solo_terms = ['any person of', 'any person other', 'citizen', 'decent', 'descent', 'occupied by any', 'person not of', 'persons not of', 'persons other than', 'used or occupied']
 
-                report_df.loc[~report_df['occupied by any'].isna(), 'occupied_count'] = report_df['occupied by any'].apply(lambda x: self.split_or_1(x))
-            else:
-                report_df['occupied_count'] = 0
+            for term in bad_solo_terms:
+                if term in report_df.columns:
+                    report_df.loc[~report_df[term].isna(), 'bad_solo_count'] = report_df[term].apply(lambda x: self.split_or_1(x))
+                else:
+                    report_df['bad_solo_count'] = 0
 
-            if 'citizen' in report_df.columns:
-                print(report_df['citizen'].apply(lambda x: self.split_or_1(x)))
+            # non-racial terms, for example as requested by CC County. If this is only term found, set as exception so it can be exported separately
+            nonracial_terms = ['disorderly persons', 'less than 18 years', 'no children', 'no minor', 'occupy said real property', 'poverty', 'under the age of', 'years of age or older']
 
-                report_df.loc[~report_df['citizen'].isna(), 'citizen_count'] = report_df['citizen'].apply(lambda x: self.split_or_1(x))
-            else:
-                report_df['citizen_count'] = 0
+            for term in workflow_special_terms:
+                if term in report_df.columns:
+                    report_df.loc[~report_df[term].isna(), 'nonracial_term_count'] = report_df[term].apply(lambda x: self.split_or_1(x))
+                else:
+                    report_df['nonracial_term_count'] = 0
+
+            # if 'occupied by any' in report_df.columns:
+            #     print(report_df['occupied by any'].apply(lambda x: self.split_or_1(x)))
+
+            #     report_df.loc[~report_df['occupied by any'].isna(), 'occupied_count'] = report_df['occupied by any'].apply(lambda x: self.split_or_1(x))
+            # else:
+            #     report_df['occupied_count'] = 0
+
+            # if 'citizen' in report_df.columns:
+            #     print(report_df['citizen'].apply(lambda x: self.split_or_1(x)))
+
+            #     report_df.loc[~report_df['citizen'].isna(), 'citizen_count'] = report_df['citizen'].apply(lambda x: self.split_or_1(x))
+            # else:
+            #     report_df['citizen_count'] = 0
 
             report_df['deathcert_count'] = 0
             death_certs = ['death certificate', 'certificate of death', 'date of death', 'name of deceased']
@@ -115,11 +132,14 @@ class Command(BaseCommand):
             # Set bool_match to True, unless there's a suspect value or combination
             report_df['bool_match'] = True
             report_df['bool_exception'] = False
-            report_df.loc[(report_df['num_terms'] == 1) & (report_df['occupied_count'] > 0), 'bool_match'] = False
-            report_df.loc[(report_df['num_terms'] == 1) & (report_df['occupied_count'] > 0), 'bool_exception'] = True
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['bad_solo_count'] > 0), 'bool_match'] = False
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['bad_solo_count'] > 0), 'bool_exception'] = True
 
-            report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_match'] = False
-            report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_exception'] = True
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['nonracial_term_count'] > 0), 'bool_match'] = False
+            report_df.loc[(report_df['num_terms'] == 1) & (report_df['nonracial_term_count'] > 0), 'bool_exception'] = True
+
+            # report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_match'] = False
+            # report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_exception'] = True
 
             # Death cert is an exception no matter how many other terms found
             report_df.loc[report_df['deathcert_count'] > 0, 'bool_match'] = False
