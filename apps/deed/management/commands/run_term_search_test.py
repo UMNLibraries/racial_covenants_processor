@@ -116,7 +116,7 @@ class Command(BaseCommand):
             for line in term['line_nums']:
                 print(ocr_lines[line]['Text'])
                 line_texts.append(ocr_lines[line]['Text'])
-            out_context.append({'term': term, 'line_nums': term['line_nums'], 'lines': line_texts})
+            out_context.append({'term': term['term'], 'line_nums': term['line_nums'], 'lines': line_texts})
         return out_context
             
     def trigger_lambda(self, deedpage_obj):
