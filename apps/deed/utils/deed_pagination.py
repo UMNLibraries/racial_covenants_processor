@@ -45,14 +45,15 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
 
     match_df = match_df.merge(
         doc_list_df[[
+            'doc_type',
             doc_or_book_selector,
             f'{split_str}page_num_right',
             new_image_field,
             new_image_lookup_field
         ]],
         how="left",
-        left_on=[doc_or_book_selector, f"{split_str}page_num_{offset}"],
-        right_on=[doc_or_book_selector, f"{split_str}page_num_right"]
+        left_on=["doc_type", doc_or_book_selector, f"{split_str}page_num_{offset}"],
+        right_on=["doc_type", doc_or_book_selector, f"{split_str}page_num_right"]
     ).drop(columns=[f"{split_str}page_num_right"]).drop_duplicates(subset=['s3_lookup'])
 
     return match_df
@@ -82,6 +83,8 @@ def paginate_deedpage_df(df, matches_only=False):
         df["doc_type"] = ''
 
     # If doc_num is null, use doc_type/book/page as doc_num
+    if "doc_num" not in df.columns:
+        df["doc_num"] = ''
     df['doc_num'] = df['doc_num'].str.replace('NONE', '')
     df['doc_num'] = df['doc_num'].fillna('')
     if 'book_id' in df.columns:
@@ -92,6 +95,10 @@ def paginate_deedpage_df(df, matches_only=False):
 
     if "book_id" not in df.columns:
         df["book_id"] = ''
+
+    # Drop duplicates for non-unique doc_num, book_id, page_num, split_page combos
+    print("Dropping duplicate doc/page/split page combos...")
+    df = df.drop_duplicates(subset=['doc_type', 'doc_num', 'book_id', 'page_num', 'split_page_num'])
 
     # Tag docs with page count by doc_num
     print('Tagging doc num page counts...')
@@ -107,6 +114,7 @@ def paginate_deedpage_df(df, matches_only=False):
     doc_list_df = df[[
         # 'pk',
         's3_lookup',
+        'doc_type',
         'doc_num',
         'book_id',
         'page_num',
@@ -128,7 +136,7 @@ def paginate_deedpage_df(df, matches_only=False):
             split_page=True
         )
 
-    validation_fields = ['s3_lookup', 'doc_num', 'book_id', 'page_num', 'split_page_num', 'doc_page_count']
+    validation_fields = ['s3_lookup', 'doc_type', 'doc_num', 'book_id', 'page_num', 'split_page_num', 'doc_page_count']
     page_to_find = None
     # page_to_find = 'OlmstedCountyAbstracts/OldDeedBooks/D-102/HDEED102192'
 
@@ -291,6 +299,7 @@ def tag_prev_next_image_sql(workflow, matches_only=False):
     ).values(
         # 'pk',
         'bool_match',
+        'doc_type',
         'doc_num',
         'public_uuid',
         'book_id',
@@ -316,6 +325,7 @@ def tag_prev_next_image_sql(workflow, matches_only=False):
     update_df = pd.DataFrame(objs_to_update).merge(
         match_df[[
             's3_lookup',
+            'doc_page_count',
             'prev_page_image_web',
             'next_page_image_web',
             'next_next_page_image_web',
@@ -333,6 +343,7 @@ def tag_prev_next_image_sql(workflow, matches_only=False):
     DeedPage.objects.bulk_update(
         dp_objs,
         [
+            'doc_page_count',
             'prev_page_image_web',
             'next_page_image_web',
             'next_next_page_image_web',

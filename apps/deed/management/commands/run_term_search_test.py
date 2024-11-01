@@ -126,10 +126,11 @@ class Command(BaseCommand):
             "body": {
                 "message": "Term search test",
                 "bucket": settings.AWS_STORAGE_BUCKET_NAME,
-                "orig": 'Test key',
-                "json": deedpage_obj['page_ocr_json'],
-                "txt": deedpage_obj['page_ocr_text'],
-                "stats": deedpage_obj['page_stats'],
+                "orig_img": 'Test key',
+                "ocr_json": deedpage_obj['page_ocr_json'],
+                # "txt": deedpage_obj['page_ocr_text'],
+                # "stats": deedpage_obj['page_stats'],
+                "web_img": deedpage_obj['page_image_web'],
                 "uuid": deedpage_obj['public_uuid'],
                 "handwriting_pct": '0'
             },
