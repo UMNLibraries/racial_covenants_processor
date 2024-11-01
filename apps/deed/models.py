@@ -145,6 +145,7 @@ class DeedPage(models.Model):
     def deedpage_offset_finder(self, offset):
         kwargs = {
             'workflow': self.workflow,
+            'doc_type': self.doc_type,
             'batch_id': self.batch_id,
             'book_id': self.book_id,
 

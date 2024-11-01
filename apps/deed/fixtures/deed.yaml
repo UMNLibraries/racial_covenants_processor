@@ -1033,3 +1033,80 @@
         bool_exception: false
         matched_terms: []
         doc_page_count: null
+# Forsyth County, NC pagination
+-   model: deed.deedpage
+    pk: 42
+    fields:
+        workflow: 1
+        s3_lookup: 'deedhold/t/0833/08330290.002'
+        doc_num: ''
+        # doc_alt_id: '2475325'
+        # batch_id: '1900 A DEED BL-Z'
+        book_id: '0833'
+        page_num: 290
+        split_page_num: null
+        doc_date: null
+        doc_type: 'deedhold'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/deedhold/t/0833/08330290.002.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
+-   model: deed.deedpage
+    pk: 43
+    fields:
+        workflow: 1
+        s3_lookup: 'deedhold/t/0833/08330291.002'
+        doc_num: ''
+        # doc_alt_id: '2475325'
+        # batch_id: '1900 A DEED BL-Z'
+        book_id: '0833'
+        page_num: 291
+        split_page_num: null
+        doc_date: null
+        doc_type: 'deedhold'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/deedhold/t/0833/08330291.002.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
+# Same book/page/doc_num but different doc_type than previous
+-   model: deed.deedpage
+    pk: 44
+    fields:
+        workflow: 1
+        s3_lookup: 'otherdoctype/t/0833/08330291.002'
+        doc_num: ''
+        # doc_alt_id: '2475325'
+        # batch_id: '1900 A DEED BL-Z'
+        book_id: '0833'
+        page_num: 291
+        split_page_num: null
+        doc_date: null
+        doc_type: 'otherdoctype'
+        public_uuid: 'XXXX'
+        page_image_web: 'web/fake/otherdoctype/t/0833/08330291.002.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null

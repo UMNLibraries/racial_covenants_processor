@@ -2,7 +2,7 @@
     pk: 1
     fields:
         zoon_id: 13143
-        workflow_name: Ramsey County
+        workflow_name: MN Test County
         version: 4.1
 
 -   model: zoon.zooniversesubject

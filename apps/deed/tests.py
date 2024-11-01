@@ -469,3 +469,43 @@ class DeedPagePrevNextTests(TestCase):
         self.assertEqual(deed_page_2.prev_deedpage, deed_page_1)
         self.assertEqual(deed_page_2.next_deedpage, None)
         self.assertEqual(deed_page_2.next_next_deedpage, None)
+
+    # Forsyth County examples
+    def test_prev_next_wash_split_page(self):
+        """Does deedpage find correct prev/next images and deedpage records??
+        """
+
+        deed_page_1 = DeedPage.objects.get(
+            s3_lookup='deedhold/t/0833/08330290.002'
+        )
+
+        deed_page_2 = DeedPage.objects.get(
+            s3_lookup='deedhold/t/0833/08330291.002'
+        )
+
+        # Should not really match with anything
+        deed_page_3 = DeedPage.objects.get(
+            s3_lookup='otherdoctype/t/0833/08330291.002'
+        )
+
+        self.assertEqual(deed_page_1.prev_page_image_web.__str__(), '')
+        self.assertEqual(deed_page_1.next_page_image_web.__str__(), 'web/fake/deedhold/t/0833/08330291.002.jpg')
+        self.assertEqual(deed_page_1.next_next_page_image_web.__str__(), '')
+
+        self.assertEqual(deed_page_2.prev_page_image_web.__str__(), 'web/fake/deedhold/t/0833/08330290.002.jpg')
+        self.assertEqual(deed_page_2.next_page_image_web.__str__(), '')
+        self.assertEqual(deed_page_2.next_next_page_image_web.__str__(), '')
+
+        self.assertEqual(deed_page_1.prev_deedpage, None)
+        self.assertEqual(deed_page_1.next_deedpage, deed_page_2)
+        self.assertEqual(deed_page_1.next_next_deedpage, None)
+
+        self.assertEqual(deed_page_2.prev_deedpage, deed_page_1)
+        self.assertEqual(deed_page_2.next_deedpage, None)
+        self.assertEqual(deed_page_2.next_next_deedpage, None)
+
+        # Make sure a doc with same book and page but different doctype doesn't get matched
+        self.assertEqual(deed_page_3.prev_deedpage, None)
+        self.assertEqual(deed_page_1.doc_page_count, 1)
+        self.assertEqual(deed_page_2.doc_page_count, 1)
+        self.assertEqual(deed_page_3.doc_page_count, 1)

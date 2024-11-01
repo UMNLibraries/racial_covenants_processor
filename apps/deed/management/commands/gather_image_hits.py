@@ -92,7 +92,7 @@ class Command(BaseCommand):
             # non-racial terms, for example as requested by CC County. If this is only term found, set as exception so it can be exported separately
             nonracial_terms = ['disorderly persons', 'less than 18 years', 'no children', 'no minor', 'occupy said real property', 'poverty', 'under the age of', 'years of age or older']
 
-            for term in workflow_special_terms:
+            for term in nonracial_terms:
                 if term in report_df.columns:
                     report_df.loc[~report_df[term].isna(), 'nonracial_term_count'] = report_df[term].apply(lambda x: self.split_or_1(x))
                 else:
