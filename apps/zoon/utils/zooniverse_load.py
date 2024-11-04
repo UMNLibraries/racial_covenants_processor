@@ -4,7 +4,7 @@ import random
 import numpy as np
 import pandas as pd
 
-from django.db.models import F, Case, When, Value
+from django.db.models import F, Case, When, Value, Q
 from django.contrib.postgres.aggregates import StringAgg
 
 from racial_covenants_processor.storage_backends import PrivateMediaStorage
@@ -67,7 +67,8 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
             ),
             image1=Case(
                 When(
-                    prev_page_image_web__in=[None, ''], then=F('page_image_web')
+                    Q(prev_page_image_web__in=[None, '']) & Q(page_image_web_highlighted__in=[None, '']),
+                    then=F('page_image_web')
                 ),
                 default=F('prev_page_image_web')
             ),
@@ -75,7 +76,12 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
                 When(
                     prev_page_image_web__in=[None, ''], then=F('next_page_image_web')
                 ),
-                default=F('page_image_web')
+                # Otherwise use main image, which may be either page_image_web or page_image_highlighted
+                When(
+                    page_image_web_highlighted__in=[None, ''], then=F('page_image_web')
+                ),
+                # default=F('page_image_web')
+                default=F('page_image_web_highlighted')
             ),
             image3=Case(
                 When(

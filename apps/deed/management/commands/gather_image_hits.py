@@ -39,10 +39,13 @@ class Command(BaseCommand):
 
         my_bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
-        key_filter = re.compile(f"ocr/hits/{workflow.slug}/.+\.json")
+        hits_dir = f"ocr/hits_fuzzy/{workflow.slug}/"
+        # key_filter = re.compile(f"ocr/hits/{workflow.slug}/.+\.json")
+        key_filter = re.compile(f"{hits_dir}.+\.json")
 
         matching_keys = [obj.key for obj in my_bucket.objects.filter(
-            Prefix=f'ocr/hits/{workflow.slug}/'
+            # Prefix=f'ocr/hits/{workflow.slug}/'
+            Prefix=hits_dir
         ) if re.match(key_filter, obj.key)]
 
         print(f"Found {len(matching_keys)} matching hit objects.")
@@ -81,36 +84,20 @@ class Command(BaseCommand):
             report_df['num_terms'] = report_df['matched_terms'].apply(lambda x: len(x.split(',')))
 
             # create special flag for exceptions when they occur as the only term hit like "occupied by any" and "death certificate"
-            bad_solo_terms = ['any person of', 'any person other', 'citizen', 'decent', 'descent', 'occupied by any', 'person not of', 'persons not of', 'persons other than', 'used or occupied']
+            bad_solo_terms = ['any person of', 'any person other', 'citizen', 'decent', 'descent', 'occupied by any', 'person not of', 'persons not of', 'persons other than', 'used or occupied', 'servant']
 
+            report_df['bad_solo_count'] = 0
             for term in bad_solo_terms:
                 if term in report_df.columns:
-                    report_df.loc[~report_df[term].isna(), 'bad_solo_count'] = report_df[term].apply(lambda x: self.split_or_1(x))
-                else:
-                    report_df['bad_solo_count'] = 0
+                    report_df.loc[~report_df[term].isna(), 'bad_solo_count'] += report_df[term].apply(lambda x: self.split_or_1(x))
 
             # non-racial terms, for example as requested by CC County. If this is only term found, set as exception so it can be exported separately
             nonracial_terms = ['disorderly persons', 'less than 18 years', 'no children', 'no minor', 'occupy said real property', 'poverty', 'under the age of', 'years of age or older']
 
+            report_df['nonracial_term_count'] = 0
             for term in nonracial_terms:
                 if term in report_df.columns:
-                    report_df.loc[~report_df[term].isna(), 'nonracial_term_count'] = report_df[term].apply(lambda x: self.split_or_1(x))
-                else:
-                    report_df['nonracial_term_count'] = 0
-
-            # if 'occupied by any' in report_df.columns:
-            #     print(report_df['occupied by any'].apply(lambda x: self.split_or_1(x)))
-
-            #     report_df.loc[~report_df['occupied by any'].isna(), 'occupied_count'] = report_df['occupied by any'].apply(lambda x: self.split_or_1(x))
-            # else:
-            #     report_df['occupied_count'] = 0
-
-            # if 'citizen' in report_df.columns:
-            #     print(report_df['citizen'].apply(lambda x: self.split_or_1(x)))
-
-            #     report_df.loc[~report_df['citizen'].isna(), 'citizen_count'] = report_df['citizen'].apply(lambda x: self.split_or_1(x))
-            # else:
-            #     report_df['citizen_count'] = 0
+                    report_df.loc[~report_df[term].isna(), 'nonracial_term_count'] += report_df[term].apply(lambda x: self.split_or_1(x))
 
             report_df['deathcert_count'] = 0
             death_certs = ['death certificate', 'certificate of death', 'date of death', 'name of deceased']
@@ -118,7 +105,7 @@ class Command(BaseCommand):
                 if term in report_df.columns:
                     print(report_df[term].apply(lambda x: self.split_or_1(x)))
 
-                    report_df.loc[~report_df[term].isna(), 'deathcert_count'] = report_df[term].apply(lambda x: self.split_or_1(x))
+                    report_df.loc[~report_df[term].isna(), 'deathcert_count'] += report_df[term].apply(lambda x: self.split_or_1(x))
 
             report_df['military_count'] = 0
             military_terms = ['report of transfer', 'report of separation', 'transfer or discharge', 'blood group']
@@ -126,20 +113,16 @@ class Command(BaseCommand):
                 if term in report_df.columns:
                     print(report_df[term].apply(lambda x: self.split_or_1(x)))
 
-                    report_df.loc[~report_df[term].isna(), 'military_count'] = report_df[term].apply(lambda x: self.split_or_1(x))
-                   
+                    report_df.loc[~report_df[term].isna(), 'military_count'] += report_df[term].apply(lambda x: self.split_or_1(x))               
 
             # Set bool_match to True, unless there's a suspect value or combination
             report_df['bool_match'] = True
             report_df['bool_exception'] = False
-            report_df.loc[(report_df['num_terms'] == 1) & (report_df['bad_solo_count'] > 0), 'bool_match'] = False
-            report_df.loc[(report_df['num_terms'] == 1) & (report_df['bad_solo_count'] > 0), 'bool_exception'] = True
+            report_df.loc[(report_df['num_terms'] == 1) & ((report_df['bad_solo_count'] > 0) | (report_df['nonracial_term_count'] > 0)), 'bool_match'] = False
+            report_df.loc[(report_df['num_terms'] == 1) & ((report_df['bad_solo_count'] > 0) | (report_df['nonracial_term_count'] > 0)), 'bool_exception'] = True
 
             report_df.loc[(report_df['num_terms'] == 1) & (report_df['nonracial_term_count'] > 0), 'bool_match'] = False
             report_df.loc[(report_df['num_terms'] == 1) & (report_df['nonracial_term_count'] > 0), 'bool_exception'] = True
-
-            # report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_match'] = False
-            # report_df.loc[(report_df['num_terms'] == 1) & (report_df['citizen_count'] > 0), 'bool_exception'] = True
 
             # Death cert is an exception no matter how many other terms found
             report_df.loc[report_df['deathcert_count'] > 0, 'bool_match'] = False
@@ -151,6 +134,8 @@ class Command(BaseCommand):
 
             report_df.drop(columns=term_columns.columns, inplace=True)
             print(report_df)
+
+            print(report_df[report_df['bool_match'] == True][['num_terms', 'bad_solo_count', 'matched_terms', 'bool_match', 'bool_exception']])    
 
             return report_df
 
@@ -178,19 +163,25 @@ class Command(BaseCommand):
 
     def update_matches(self, workflow, matching_keys, hits_df):
         print('Looking for corresponding DeedPage objects ...')
+
+        true_match_df = hits_df.loc[hits_df['bool_match'] == True]
+        print(f"True match count: {len(true_match_df['lookup'].to_list())}")
+        
         deed_hits = DeedPage.objects.filter(
             workflow=workflow,
-            s3_lookup__in=hits_df[hits_df['bool_match'] == True]['lookup'].to_list()
+            s3_lookup__in=true_match_df['lookup'].to_list()
         ).only('pk', 'page_image_web')
 
         num_deedpage_matches = deed_hits.count()
         if num_deedpage_matches > 0:
+            # TODO: This is still getting the wrong number
             print(f'Found {num_deedpage_matches} matching DeedPage records. Setting bool_match to True...')
             deed_hits.update(bool_match=True)
         else:
             print("Couldn't find any matching DeedPage objects to set bool_match to True.")
 
-        deed_exceptions = DeedPage.objects.filter(workflow=workflow, s3_lookup__in=hits_df[hits_df['bool_exception'] == True]['lookup'].to_list()).only('pk', 'page_image_web')
+        exceptions_df = hits_df.loc[hits_df['bool_exception'] == True]
+        deed_exceptions = DeedPage.objects.filter(workflow=workflow, s3_lookup__in=exceptions_df['lookup'].to_list()).only('pk', 'page_image_web')
 
         print('Looking for corresponding DeedPage objects for exceptions...')
         num_deedpage_exceptions = deed_exceptions.count()
@@ -210,15 +201,28 @@ class Command(BaseCommand):
         ]].groupby('matched_terms')['lookup'].apply(list).reset_index(name='lookups')
 
         for index, row in terms_grouped.iterrows():
-            print(row)
+            print(f"{row['matched_terms']}: {len(row['lookups'])} pages")
             term, created = MatchTerm.objects.get_or_create(
                 term=row['matched_terms']
             )
             objs = deed_objs_with_hits.filter(s3_lookup__in=row['lookups'])
             term.deedpage_set.add(*objs)
 
+    def populate_highlight_images(self, workflow):
+        print("Adding extrapolated highlight image paths to DeedPage...")
+        pages_to_update = []
+        for dp in DeedPage.objects.filter(workflow=workflow, bool_match=True).only('pk', 'page_image_web'):
+            orig_img_file_name, orig_img_file_extension = os.path.splitext(dp.page_image_web.name)
+            dp.page_image_web_highlighted = dp.page_image_web.name.replace('web/', 'web_highlighted/').replace(orig_img_file_extension, '__highlight.jpg')
+
+            pages_to_update.append(dp)
+
+        print(f'Adding highlight images for {len(pages_to_update)} hits ...')
+        DeedPage.objects.bulk_update(
+            pages_to_update, [f'page_image_web_highlighted'])
+
     def exempt_exceptions(self, workflow):
-        print('Handling exceptions to racial term matches...')
+        print('Handling localized exceptions to racial term matches...')
         s3 = self.session.client('s3')
         bucket = settings.AWS_STORAGE_BUCKET_NAME
 
@@ -251,25 +255,26 @@ class Command(BaseCommand):
 
             workflow = get_workflow_obj(workflow_name)
 
-            matching_keys = self.find_matching_keys(workflow)
+            # matching_keys = self.find_matching_keys(workflow)
 
-            match_report = self.build_match_report(workflow, matching_keys)
+            # match_report = self.build_match_report(workflow, matching_keys)
 
-            now = datetime.datetime.now()
-            timestamp = now.strftime('%Y%m%d_%H%M')
-            version_slug = f"{workflow.slug}_hits_{timestamp}"
+            # now = datetime.datetime.now()
+            # timestamp = now.strftime('%Y%m%d_%H%M')
+            # version_slug = f"{workflow.slug}_hits_{timestamp}"
 
-            if kwargs['local']:
-                match_report_local = self.save_report_local(match_report, version_slug)
-            else:
-                # Save to csv in Django storages/model
-                match_report_obj = self.save_report_model(match_report, version_slug, workflow, now)
+            # if kwargs['local']:
+            #     match_report_local = self.save_report_local(match_report, version_slug)
+            # else:
+            #     # Save to csv in Django storages/model
+            #     match_report_obj = self.save_report_model(match_report, version_slug, workflow, now)
 
-            print('Clearing previous bool_match and bool_exception values...')
-            DeedPage.objects.filter(workflow=workflow, bool_match=True).update(bool_match=False)
-            DeedPage.objects.filter(workflow=workflow, bool_exception=True).update(bool_exception=False)
+            # print('Clearing previous bool_match and bool_exception values...')
+            # DeedPage.objects.filter(workflow=workflow, bool_match=True).update(bool_match=False)
+            # DeedPage.objects.filter(workflow=workflow, bool_exception=True).update(bool_exception=False)
 
-            deed_objs_with_hits = self.update_matches(workflow, matching_keys, match_report)
+            # deed_objs_with_hits = self.update_matches(workflow, matching_keys, match_report)
 
-            self.add_matched_terms(workflow, deed_objs_with_hits, match_report)
+            # self.add_matched_terms(workflow, deed_objs_with_hits, match_report)
+            self.populate_highlight_images(workflow)
             self.exempt_exceptions(workflow)
