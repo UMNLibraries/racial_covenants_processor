@@ -1,6 +1,6 @@
 import pandas as pd
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from apps.deed.models import DeedPage
 from apps.zoon.models import ZooniverseWorkflow
@@ -45,14 +45,9 @@ class DeedPagePaginationTests(TestCase):
         self.assertEqual(df[df['doc_num'] == '17']['doc_page_count'].iloc[0], 1)
 
 
+# @override_settings(AWS_S3_CUSTOM_DOMAIN='https://fake.s3.amazon.aws.com/')
 class DeedPagePrevNextTests(TestCase):
     fixtures = ['deed', 'zoon']
-
-    # def setUp(self):
-    #     # Set up database first time
-    #     workflow = ZooniverseWorkflow.objects.get(pk=1)
-    #     tag_prev_next_image_sql(workflow, True)
-    #     # tag_prev_next_records(workflow, True)
 
     @classmethod
     def setUpTestData(cls):
@@ -60,6 +55,13 @@ class DeedPagePrevNextTests(TestCase):
         workflow = ZooniverseWorkflow.objects.get(pk=1)
         tag_prev_next_image_sql(workflow, True)
 
+    # def test_highlight_web_img(self):
+    #     deed_page = DeedPage.objects.get(
+    #         s3_lookup='mydoctype/myself/1234/p7'
+    #     )
+    #     print(deed_page.page_image_web_highlighted)
+    #     assert deed_page.page_image_web_highlighted == 'https://covenants-deed-images.s3.amazonaws.com/web_highlighted/fake/otherdoctype/mydoctype/myself/1234/wwfwwe123__highlight.jpg'
+    
     def test_prev_next_doc_num_page_2(self):
 
         deed_page = DeedPage.objects.get(

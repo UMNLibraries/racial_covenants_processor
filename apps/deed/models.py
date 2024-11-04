@@ -1,4 +1,5 @@
 import re
+import os
 from django.db import models
 from django.utils.html import mark_safe
 from postgres_copy import CopyManager
@@ -80,6 +81,10 @@ class DeedPage(models.Model):
     next_next_page_image_web = models.ImageField(
         storage=PublicDeedStorage(), max_length=203, null=True, db_index=True)
     """ImageField link to web-friendly image of following page of the following page (e.g. this page + 2) (by Deed Machine's calculation). Used to show following page of the following page in Zooniverse if this is a potential covenant needing transcription."""
+
+    page_image_web_highlighted = models.ImageField(
+        storage=PublicDeedStorage(), max_length=201, null=True, db_index=True)
+    """ImageField that stores a link to web-friendly, watermarked, and highlighted JPEG used for transcription"""
 
     prev_page_image_lookup = models.CharField(
         blank=True, max_length=201, null=True)

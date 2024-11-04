@@ -3,7 +3,7 @@ from django.core.management import call_command
 
 from .models import Plat, SubdivisionAlternateName
 from apps.parcel.models import Parcel
-from apps.zoon.models import ZooniverseSubject
+from apps.zoon.models import ZooniverseSubject, ZooniverseWorkflow
 
 from apps.parcel.utils.parcel_utils import standardize_addition
 
@@ -34,17 +34,20 @@ class PlatTests(TestCase):
     def test_subdivision_parcel_match(self):
         """Does an addition-wide covenant match all parcels in a subdivision"""
 
+        workflow = ZooniverseWorkflow.objects.get(pk=1)
+
         # Set up database first time
         TEST_ZOON_SETTINGS = {
-            'Ramsey County': {
-                'zoon_workflow_id': 13143,
-                'zoon_workflow_version': '4.1',
+            workflow.workflow_name: {
+                'zoon_workflow_id': workflow.zoon_id,
+                'zoon_workflow_version': workflow.version,
             }
         }
+
         with self.settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS):
-            call_command("rebuild_parcel_spatial_lookups", workflow='Ramsey County')
-            call_command("rebuild_covenant_spatial_lookups", workflow='Ramsey County')
-            call_command("match_parcels", '--test', workflow='Ramsey County')
+            call_command("rebuild_parcel_spatial_lookups", workflow='MN Test County')
+            call_command("rebuild_covenant_spatial_lookups", workflow='MN Test County')
+            call_command("match_parcels", '--test', workflow='MN Test County')
 
         parcels_to_match = Parcel.objects.filter(workflow=1, plat_name='LYNDALE BEACH 2ND ADDN')
         parcels_count = parcels_to_match.count()

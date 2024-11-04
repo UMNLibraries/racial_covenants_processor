@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.core import management
 
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ManualCovenant
@@ -220,6 +220,14 @@ class ZooniverseUploadTests(TestCase):
         self.assertIn('web/fake/30000102/02720303_NOTINDEX_0003.jpg', test_image_row['#image3'].iloc[0])
 
 
+TEST_ZOON_SETTINGS = {
+    'MN Test County': {
+        'zoon_workflow_id': 13143,
+        'zoon_workflow_version': 4.1,
+    }
+}
+
+@override_settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS)
 class ParcelMatchTests(TestCase):
     fixtures = ['parcel', 'zoon', 'plat']
 
@@ -228,7 +236,15 @@ class ParcelMatchTests(TestCase):
     # def setUp(self):
         # Set up database first time
         workflow = ZooniverseWorkflow.objects.get(pk=1)
+
+        # TEST_ZOON_SETTINGS = {
+        #     workflow.workflow_name: {
+        #         'zoon_workflow_id': workflow.zoon_id,
+        #         'zoon_workflow_version': workflow.version,
+        #     }
+        # }
         
+        # with cls.settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS):
         # Rebuild spatial lookups and run parcel auto-match before running these tests
         management.call_command('rebuild_parcel_spatial_lookups', workflow=workflow.workflow_name)
         management.call_command('rebuild_covenant_spatial_lookups', workflow=workflow.workflow_name)

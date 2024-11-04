@@ -1110,3 +1110,27 @@
         bool_exception: false
         matched_terms: []
         doc_page_count: null
+# highlight img tester
+-   model: deed.deedpage
+    pk: 45
+    fields:
+        workflow: 1
+        s3_lookup: 'mydoctype/myself/1234/p7'
+        doc_num: ''
+        book_id: '1234'
+        page_num: 7
+        split_page_num: null
+        doc_date: null
+        doc_type: 'mydoctype'
+        public_uuid: 'wwfwwe123'
+        page_image_web: 'web/fake/otherdoctype/mydoctype/myself/1234/wwfwwe123.jpg'
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
