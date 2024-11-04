@@ -6,6 +6,7 @@ import datetime
 from multiprocessing.pool import ThreadPool
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.conf import settings
 
 from apps.deed.models import DeedPage
@@ -31,6 +32,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
+        
+        parser.add_argument('-t', '--term', type=str,
+                            help='Only reprocess DeedPage objects which previously matched a specific term.')
 
         parser.add_argument('-n', '--num_results', type=int,
                             help='Against how many pages do you want the test to run (Default is 100)?')
@@ -45,14 +49,14 @@ class Command(BaseCommand):
             print("Workflow variable required.")
             raise
 
-        kwargs = {'workflow': workflow}
+        # kwargs = {'workflow': workflow}
         
-        if not bool_full:
-            kwargs['bool_match'] = True
-
         out_values = ['workflow__slug', 's3_lookup', 'page_ocr_json', 'page_ocr_text', 'page_image_web', 'page_stats', 'public_uuid', 'bool_match']
 
-        dps = DeedPage.objects.filter(**kwargs).values(*out_values)
+        if not bool_full:
+            dps = DeedPage.objects.filter(workflow=workflow).filter(Q(bool_match=True) | Q(bool_exception=True)).values(*out_values)
+        else:
+            dps = DeedPage.objects.filter(workflow=workflow).values(*out_values)
 
         return dps
     
@@ -61,6 +65,7 @@ class Command(BaseCommand):
             yield input_list[i:i + chunk_size]
     
     def delete_previous_hits(self, workflow):
+
         delete_confirmation = input(f'WARNING: ABOUT TO DELETE ALL EXISTING FUZZY HITS JSONS IN WORKFLOW {workflow.slug}... Confirm? [Y/N] ')
 
         # input validation
@@ -211,6 +216,9 @@ class Command(BaseCommand):
             print('Workflow not specified.')
             workflow = None
             return False
+        
+        # TODO: need to figure out how to filter delete results
+        # target_term = kwargs['term']
 
         self.delete_previous_hits(workflow)
 
