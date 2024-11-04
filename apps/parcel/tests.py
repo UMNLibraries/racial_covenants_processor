@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.core import management
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
 from apps.parcel.models import Parcel, ManualParcelCandidate
@@ -195,7 +195,14 @@ class JoinStringTests(TestCase):
         self.assertEquals(write_join_strings(
             addition, block, lot)[0]['join_string'], 'arden hills 2 block 7 lot 1')
 
+TEST_ZOON_SETTINGS = {
+    'MN Test County': {
+        'zoon_workflow_id': 13143,
+        'zoon_workflow_version': 4.1,
+    }
+}
 
+@override_settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS)
 class ParcelCandidateTests(TestCase):
     fixtures = ['zoon', 'plat', 'parcel']
 

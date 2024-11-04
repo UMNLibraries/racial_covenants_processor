@@ -84,7 +84,7 @@ class Command(BaseCommand):
             report_df['num_terms'] = report_df['matched_terms'].apply(lambda x: len(x.split(',')))
 
             # create special flag for exceptions when they occur as the only term hit like "occupied by any" and "death certificate"
-            bad_solo_terms = ['any person of', 'any person other', 'citizen', 'decent', 'descent', 'occupied by any', 'person not of', 'persons not of', 'persons other than', 'used or occupied', 'servant']
+            bad_solo_terms = ['any person of', 'any person other', 'citizen', 'descent', 'extraction', 'occupied by any', 'person not of', 'persons not of', 'persons other than', 'racial', 'used or occupied', 'servant', 'white or']
 
             report_df['bad_solo_count'] = 0
             for term in bad_solo_terms:
@@ -255,26 +255,26 @@ class Command(BaseCommand):
 
             workflow = get_workflow_obj(workflow_name)
 
-            # matching_keys = self.find_matching_keys(workflow)
+            matching_keys = self.find_matching_keys(workflow)
 
-            # match_report = self.build_match_report(workflow, matching_keys)
+            match_report = self.build_match_report(workflow, matching_keys)
 
-            # now = datetime.datetime.now()
-            # timestamp = now.strftime('%Y%m%d_%H%M')
-            # version_slug = f"{workflow.slug}_hits_{timestamp}"
+            now = datetime.datetime.now()
+            timestamp = now.strftime('%Y%m%d_%H%M')
+            version_slug = f"{workflow.slug}_hits_{timestamp}"
 
-            # if kwargs['local']:
-            #     match_report_local = self.save_report_local(match_report, version_slug)
-            # else:
-            #     # Save to csv in Django storages/model
-            #     match_report_obj = self.save_report_model(match_report, version_slug, workflow, now)
+            if kwargs['local']:
+                match_report_local = self.save_report_local(match_report, version_slug)
+            else:
+                # Save to csv in Django storages/model
+                match_report_obj = self.save_report_model(match_report, version_slug, workflow, now)
 
-            # print('Clearing previous bool_match and bool_exception values...')
-            # DeedPage.objects.filter(workflow=workflow, bool_match=True).update(bool_match=False)
-            # DeedPage.objects.filter(workflow=workflow, bool_exception=True).update(bool_exception=False)
+            print('Clearing previous bool_match and bool_exception values...')
+            DeedPage.objects.filter(workflow=workflow, bool_match=True).update(bool_match=False)
+            DeedPage.objects.filter(workflow=workflow, bool_exception=True).update(bool_exception=False)
 
-            # deed_objs_with_hits = self.update_matches(workflow, matching_keys, match_report)
+            deed_objs_with_hits = self.update_matches(workflow, matching_keys, match_report)
 
-            # self.add_matched_terms(workflow, deed_objs_with_hits, match_report)
+            self.add_matched_terms(workflow, deed_objs_with_hits, match_report)
             self.populate_highlight_images(workflow)
             self.exempt_exceptions(workflow)
