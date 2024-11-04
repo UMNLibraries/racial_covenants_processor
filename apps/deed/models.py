@@ -122,7 +122,9 @@ class DeedPage(models.Model):
     @property
     def thumbnail_preview(self):
         """Used to display thumbnail of DeedPage in admin view."""
-        if self.page_image_web:
+        if self.page_image_web_highlighted:
+            return mark_safe(f'<a href="{self.page_image_web_highlighted.url}" target="_blank"><img src="{self.page_image_web_highlighted.url}" width="100" /></a>')
+        elif self.page_image_web:
             return mark_safe(f'<a href="{self.page_image_web.url}" target="_blank"><img src="{self.page_image_web.url}" width="100" /></a>')
         return ""
 
