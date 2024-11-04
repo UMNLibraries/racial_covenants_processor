@@ -70,6 +70,10 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
                     Q(prev_page_image_web__in=[None, '']) & Q(page_image_web_highlighted__in=[None, '']),
                     then=F('page_image_web')
                 ),
+                When(
+                    prev_page_image_web__in=[None, ''],
+                    then=F('page_image_web_highlighted')
+                ),
                 default=F('prev_page_image_web')
             ),
             image2=Case(
