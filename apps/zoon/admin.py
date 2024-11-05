@@ -17,7 +17,7 @@ class WorkflowAdmin(admin.ModelAdmin):
     pass
 
 
-deed_page_exclude_fields = ['workflow', 'page_image_web', 'page_ocr_json', 's3_lookup', 'doc_alt_id', 'batch_id', 'doc_type', 'page_stats', 'public_uuid', 'bool_exception', 'bool_manual', 'doc_page_count', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web', 'prev_page_image_lookup', 'next_page_image_lookup', 'next_next_page_image_lookup', 'zooniverse_subject']
+deed_page_exclude_fields = ['workflow', 'page_image_web', 'page_image_web_highlighted', 'page_ocr_json', 's3_lookup', 'doc_alt_id', 'batch_id', 'doc_type', 'page_stats', 'public_uuid', 'bool_exception', 'bool_manual', 'doc_page_count', 'prev_page_image_web', 'next_page_image_web', 'next_next_page_image_web', 'prev_page_image_lookup', 'next_page_image_lookup', 'next_next_page_image_lookup', 'zooniverse_subject']
 
 
 class DeedImageInline1st(admin.TabularInline):
