@@ -70,6 +70,10 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
                     Q(prev_page_image_web__in=[None, '']) & Q(page_image_web_highlighted__in=[None, '']),
                     then=F('page_image_web')
                 ),
+                When(  # Almost the same as the previous when but for null vs. blank issues
+                    Q(prev_page_image_web__in=[None, '']) & Q(page_image_web_highlighted__isnull=True),
+                    then=F('page_image_web')
+                ),
                 When(
                     prev_page_image_web__in=[None, ''],
                     then=F('page_image_web_highlighted')
@@ -83,6 +87,9 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
                 # Otherwise use main image, which may be either page_image_web or page_image_highlighted
                 When(
                     page_image_web_highlighted__in=[None, ''], then=F('page_image_web')
+                ),
+                When(  # Almost the same as the previous when but for null vs. blank issues
+                    page_image_web_highlighted__isnull=True, then=F('page_image_web')
                 ),
                 # default=F('page_image_web')
                 default=F('page_image_web_highlighted')
