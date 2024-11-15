@@ -84,7 +84,7 @@ class Command(BaseCommand):
             report_df['num_terms'] = report_df['matched_terms'].apply(lambda x: len(x.split(',')))
 
             # create special flag for exceptions when they occur as the only term hit like "occupied by any" and "death certificate"
-            bad_solo_terms = ['any person of', 'any person other', 'citizen', 'descent', 'extraction', 'occupied by any', 'person not of', 'persons not of', 'persons other than', 'racial', 'used or occupied', 'servant', 'white or']
+            bad_solo_terms = ['african', 'any person of', 'any person other', 'citizen', 'descent', 'extraction', 'nationality', 'occupied by any', 'person not of', 'persons not of', 'persons other than', 'racial', 'used or occupied', 'servant', 'white or']
 
             report_df['bad_solo_count'] = 0
             for term in bad_solo_terms:
@@ -210,6 +210,7 @@ class Command(BaseCommand):
 
     def populate_highlight_images(self, workflow):
         print("Adding extrapolated highlight image paths to DeedPage...")
+        # TODO: How to efficiently test if these actually exist
         pages_to_update = []
         for dp in DeedPage.objects.filter(workflow=workflow, bool_match=True).only('pk', 'page_image_web'):
             orig_img_file_name, orig_img_file_extension = os.path.splitext(dp.page_image_web.name)

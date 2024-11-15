@@ -35,25 +35,25 @@ class Command(BaseCommand):
         
         parser.add_argument('-t', '--term', type=str,
                             help='Only reprocess DeedPage objects which previously matched a specific term.')
-
-        parser.add_argument('-n', '--num_results', type=int,
-                            help='Against how many pages do you want the test to run (Default is 100)?')
         
         parser.add_argument('-f', '--full', action='store_true',
                     help='Test all DeedPages in workflow, not just previous hits.')
 
-    def get_existing_deedpages(self, workflow, bool_full=False):
+    def get_existing_deedpages(self, workflow, bool_full=False, target_term=None):
         """Get DeedPage results to clear and overwrite. By default, only hits, but can be set to get all in workflow"""
 
         if not workflow:
             print("Workflow variable required.")
             raise
-
-        # kwargs = {'workflow': workflow}
-        
+    
         out_values = ['workflow__slug', 's3_lookup', 'page_ocr_json', 'page_ocr_text', 'page_image_web', 'page_stats', 'public_uuid', 'bool_match']
 
-        if not bool_full:
+        if target_term:
+            dps = DeedPage.objects.filter(
+                workflow=workflow,
+                matched_terms__term__iexact=target_term
+            ).filter(Q(bool_match=True) | Q(bool_exception=True)).values(*out_values)
+        elif not bool_full:
             dps = DeedPage.objects.filter(workflow=workflow).filter(Q(bool_match=True) | Q(bool_exception=True)).values(*out_values)
         else:
             dps = DeedPage.objects.filter(workflow=workflow).values(*out_values)
@@ -64,16 +64,31 @@ class Command(BaseCommand):
         for i in range(0, len(input_list), chunk_size):
             yield input_list[i:i + chunk_size]
     
-    def delete_previous_hits(self, workflow):
+    def delete_previous_hits(self, workflow, bool_full=False, target_term=None, existing_dps=[]):
 
-        delete_confirmation = input(f'WARNING: ABOUT TO DELETE ALL EXISTING FUZZY HITS JSONS IN WORKFLOW {workflow.slug}... Confirm? [Y/N] ')
+        if target_term:
+            full_msg = f"{len(existing_dps)}"
+            term_msg = f"WITH TERM '{target_term}' "
+        else:
+            full_msg = "ALL EXISTING"
+            term_msg = ""
+        delete_confirmation = input(f'WARNING: ABOUT TO DELETE {full_msg} FUZZY HITS JSONS {term_msg}IN WORKFLOW {workflow.slug}... Confirm? [Y/N] ')
 
         # input validation
         if delete_confirmation.lower() in ('y', 'yes'):
 
-            keys_to_delete = [{'Key': obj.key} for obj in self.bucket.objects.filter(
-                Prefix=f'ocr/hits_fuzzy/{workflow.slug}/'
-            )]
+            if target_term:
+                # Use existing DeedPage objects as reference
+                keys_to_delete = [{'Key': f"ocr/hits_fuzzy/{workflow.slug}/{dp['s3_lookup']}.json"} for dp in existing_dps]
+                # keys_to_delete = [{'Key': obj.key} for obj in self.bucket.objects.filter(
+                #     Prefix=f'ocr/hits_fuzzy/{workflow.slug}/'
+                # )]
+                print(keys_to_delete)
+            else:
+                # Don't use existing DeedPage objects as reference
+                keys_to_delete = [{'Key': obj.key} for obj in self.bucket.objects.filter(
+                    Prefix=f'ocr/hits_fuzzy/{workflow.slug}/'
+                )]
 
             delete_count = 0
             chunk_size = 1000
@@ -217,12 +232,14 @@ class Command(BaseCommand):
             workflow = None
             return False
         
-        # TODO: need to figure out how to filter delete results
-        # target_term = kwargs['term']
-
-        self.delete_previous_hits(workflow)
-
         bool_full = kwargs['full']
+
+        # TODO: need to figure out how to filter delete results
+        target_term = kwargs['term']
+
+        dps = self.get_existing_deedpages(workflow, bool_full, target_term)
+
+        self.delete_previous_hits(workflow, bool_full, target_term, dps)
 
         now = datetime.datetime.now().strftime('%Y%m%d_%H%M')
 
@@ -231,9 +248,6 @@ class Command(BaseCommand):
         
         with open(self.term_test_result_path, 'w') as done_manifest:
             done_manifest.write("workflow,s3_lookup,page_ocr_text,bool_basic_match,bool_fuzzy_match,fuzzy_match_json,test_status,match_context\n")
-
-        # Get random set of DeedPage objects to test against
-        dps = self.get_existing_deedpages(workflow, bool_full)
 
         # Trigger fuzzy term search update for each test page
         pool = ThreadPool(processes=12)
