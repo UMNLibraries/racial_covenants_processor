@@ -1175,6 +1175,32 @@
         doc_type: 'mydoctype'
         public_uuid: 'wwfwwe123'
         page_image_web: 'web/fake/otherdoctype/mydoctype/myself/1234/wwfwwe123.jpg'
+        page_image_web_highlighted: ''
+        prev_page_image_web: ''
+        next_page_image_web: ''
+        next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
+# washtenaw zooniverse pagination issue
+-   model: deed.deedpage
+    pk: 46
+    fields:
+        workflow: 1
+        s3_lookup: '1970/1970 images/1970-08-24/1026969'
+        doc_num: '1026969'
+        book_id: '1234'
+        page_num: 7
+        split_page_num: null
+        doc_date: null
+        doc_type: ''
+        public_uuid: 'justinsez'
+        page_image_web: 'web/fake/justinsez.jpg'
+        page_image_web_highlighted: ''
         prev_page_image_web: ''
         next_page_image_web: ''
         next_next_page_image_web: ''
