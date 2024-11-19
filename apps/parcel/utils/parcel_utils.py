@@ -78,6 +78,11 @@ def get_lots(input_str):
         simple_num = re.match(r'^\d+$', input_str)
         if simple_num:
             return strip_leading_0s_list([input_str]), 'simple_num'
+        
+        # Simple letter
+        simple_num = re.match(r'^[A-Za-z]{1}$', input_str)
+        if simple_num:
+            return [input_str], 'simple_letter'
 
         repeated_text_num = check_repeated_text_num(input_str)
         if repeated_text_num:

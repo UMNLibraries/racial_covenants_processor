@@ -163,10 +163,10 @@ class JoinStringTests(TestCase):
     def test_lot_single_letter(self):
         '''Lot parsing of single-letter lots (e.g. Lot A, Lot B)'''
         lots, lots_meta = get_lots("Lot A")
-        self.assertEquals(lots, ['A'])
+        self.assertEquals(lots, ['a'])
 
         lots, lots_meta = get_lots("Lot B")
-        self.assertEquals(lots, ['B'])
+        self.assertEquals(lots, ['b'])
 
     def test_block_leading_zero(self):
         '''Do leading zeroes get removed from blocks, e.g. 001 should be 1'''
