@@ -160,6 +160,14 @@ class JoinStringTests(TestCase):
         lots, lots_meta = get_lots("1001")
         self.assertEquals(lots, ['1001'])
 
+    def test_lot_single_letter(self):
+        '''Lot parsing of single-letter lots (e.g. Lot A, Lot B)'''
+        lots, lots_meta = get_lots("Lot A")
+        self.assertEquals(lots, ['A'])
+
+        lots, lots_meta = get_lots("Lot B")
+        self.assertEquals(lots, ['B'])
+
     def test_block_leading_zero(self):
         '''Do leading zeroes get removed from blocks, e.g. 001 should be 1'''
         blocks, blocks_meta = get_blocks("001")
