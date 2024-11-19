@@ -89,7 +89,7 @@ def get_lots(input_str):
             end = int(num_range.group(2))
             return strip_leading_0s_list(list(range(start, end+1))), 'num_range'
 
-        simple_multi_lot = [x.group() for x in re.finditer(r'(?:((?:(?<=^)|(?<=^LOTS )|(?<=& ))\d+(?= |$)))', input_str)]
+        simple_multi_lot = [x.group() for x in re.finditer(r'(?:((?:(?<=^)|(?<=^LOTS )|(?<=& ))\d+(?= |$)))', input_str.replace(' and ', ' & '))]
         if len(simple_multi_lot) > 0:
             return strip_leading_0s_list(simple_multi_lot), 'simple_multi_lot'
 
