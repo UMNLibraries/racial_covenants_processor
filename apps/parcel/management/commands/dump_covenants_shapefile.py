@@ -80,7 +80,7 @@ class Command(BaseCommand):
                 # Pyogrio doesn't allow schemas
             except:
                 # Shapefiles don't like datetime format, so if fiona, specify date in manual schema
-                schema = gpd.io.file.infer_schema(covenants_gdf)
+                schema = gpd.io.file.infer_schema(covenants_geo_df)
                 schema['properties']['deed_date'] = 'date'
                 schema['properties']['dt_updated'] = 'date'
                 schema['properties']['zn_dt_ret'] = 'date'

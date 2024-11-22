@@ -221,7 +221,7 @@ class Command(BaseCommand):
 
         workflow_pins_lookup = {parcel['pin_primary']: parcel['pk'] for parcel in Parcel.objects.filter(workflow=workflow).values('pk', 'pin_primary')}
 
-        print(workflow_pins_lookup)
+        # print(workflow_pins_lookup)
 
         mppls = ManualParcelPINLink.objects.filter(workflow=workflow)
 
