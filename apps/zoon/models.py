@@ -403,6 +403,15 @@ class ZooniverseSubject(models.Model):
                     except:
                         print(f"NO MATCH: {c['join_string']}")
 
+            # Parcel PIN matches
+            mppl_pins = ManualParcelPINLink.objects.filter(zooniverse_subject=self).values_list('parcel_pin', flat=True)
+            if len(mppl_pins) > 0:
+                parcel_pin_matches = Parcel.objects.filter(workflow=self.workflow, pin_primary__in=mppl_pins).values_list('pk', flat=True)
+                if len(parcel_pin_matches) > 0:
+                    self.bool_parcel_match = True
+                for parcel_id in parcel_pin_matches:
+                    self.parcel_matches.add(parcel_id)
+
             # Tag matched parcels with bool_covenant=True
             self.parcel_matches.all().update(bool_covenant=True)
 
@@ -594,6 +603,35 @@ class ExtraParcelCandidate(models.Model):
         self.zooniverse_subject.save()  # Does this really need to trigger every time? Seems so, but causes problems on large numbers of EPCs
 
 
+class ManualParcelPINLink(models.Model):
+    '''A way to link to a parcel not based on join strings -- a direct link to a manually entered modern Parcel PIN that matches a Parcel object'''
+    workflow = models.ForeignKey(
+        ZooniverseWorkflow, on_delete=models.SET_NULL, null=True)
+    zooniverse_subject = models.ForeignKey(
+        ZooniverseSubject, on_delete=models.SET_NULL, null=True)
+
+    # These are kept separate of the foreign key relationship in case this needs to be reconnected later
+    zoon_subject_id = models.IntegerField(db_index=True, null=True, blank=True)
+    zoon_workflow_id = models.IntegerField(
+        db_index=True, null=True, blank=True)
+
+    parcel_pin = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+
+    date_added = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    comments = models.TextField(null=True, blank=True)
+
+    objects = CopyManager()
+
+    def save(self, *args, **kwargs):
+        self.workflow = self.zooniverse_subject.workflow
+        self.zoon_workflow_id = self.zooniverse_subject.workflow.zoon_id
+        self.zoon_subject_id = self.zooniverse_subject.zoon_subject_id
+        super(ManualParcelPINLink, self).save(*args, **kwargs)
+        self.zooniverse_subject.save()  # Does this really need to trigger every time? Seems so.
+
+
 @receiver(models.signals.post_delete, sender=ManualCorrection)
 def model_delete(sender, instance, **kwargs):
     try:
@@ -604,6 +642,15 @@ def model_delete(sender, instance, **kwargs):
 
 
 @receiver(models.signals.post_delete, sender=ExtraParcelCandidate)
+def model_delete(sender, instance, **kwargs):
+    try:
+        instance.zooniverse_subject.get_final_values()
+        instance.zooniverse_subject.save()
+    except AttributeError:
+        pass
+
+
+@receiver(models.signals.post_delete, sender=ManualParcelPINLink)
 def model_delete(sender, instance, **kwargs):
     try:
         instance.zooniverse_subject.get_final_values()

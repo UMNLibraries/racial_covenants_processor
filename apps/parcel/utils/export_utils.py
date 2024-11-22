@@ -104,6 +104,7 @@ def build_gdf(workflow):
     covenants_df = pd.DataFrame(joined_covenants)
 
     covenants_df['deed_year'] = pd.DatetimeIndex(covenants_df['deed_date']).year
+    # covenants_df['dt_updated'] = covenants_df['dt_updated'].astype(str)
     covenants_df['join_strgs'] = covenants_df['join_candidates'].apply(lambda x: ';'.join([jc['join_string'] for jc in x]))
 
     MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
