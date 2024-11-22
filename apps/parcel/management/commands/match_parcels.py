@@ -8,7 +8,7 @@ from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from apps.zoon.models import ZooniverseSubject, ManualCovenant
+from apps.zoon.models import ZooniverseSubject, ManualCovenant, ManualParcelPINLink
 from apps.parcel.models import JoinReport, Parcel
 from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, addition_wide_parcel_match
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
@@ -215,6 +215,40 @@ class Command(BaseCommand):
             # Save method should pick up addition-wide covenants
             covenant.save()
 
+    def match_parcel_pin_links(self, workflow):
+        print("Attempting to join Parcel PIN matches on ZooniverseSubjects...")
+        # TODO: Do same for ManualCovenant
+
+        workflow_pins_lookup = {parcel['pin_primary']: parcel['pk'] for parcel in Parcel.objects.filter(workflow=workflow).values('pk', 'pin_primary')}
+
+        print(workflow_pins_lookup)
+
+        mppls = ManualParcelPINLink.objects.filter(workflow=workflow)
+
+        # matched_zooniverse_subject_ids = []
+        matched_parcel_ids = []
+        for m in mppls:
+            try:
+                parcel_id = workflow_pins_lookup[m.parcel_pin]
+            except:
+                parcel_id = None
+
+            if parcel_id:
+                m.zooniverse_subject.parcel_matches.add(parcel_id)
+                # matched_zooniverse_subject_ids.append(m.zooniverse_subject.pk)
+                matched_parcel_ids.append(workflow_pins_lookup[m.parcel_pin])
+
+        # Update geo union fields, addresses, and bool_parcel_match for final export
+        update_objs = []
+        for m in mppls:
+            m.zooniverse_subject.parcel_matches.add(parcel_id)
+            m.zooniverse_subject.bool_parcel_match = True
+            m.zooniverse_subject.set_geom_union()
+            set_addresses(m.zooniverse_subject)
+            update_objs.append(m.zooniverse_subject)
+        ZooniverseSubject.objects.bulk_update(
+            update_objs, ['geom_union_4326', 'parcel_addresses', 'parcel_city', 'bool_parcel_match'], batch_size=1000)
+
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -230,6 +264,9 @@ class Command(BaseCommand):
 
             # Join addition-wide covenants
             self.match_addition_wide_covenants(workflow, parcel_lookup)
+
+            # Join covenants by PIN
+            self.match_parcel_pin_links(workflow)
 
             self.tag_matched_parcels(workflow)
 

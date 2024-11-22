@@ -324,8 +324,8 @@ class Parcel(models.Model):
          "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
     feature_id = models.IntegerField()
     '''A unique identifier in the original shapefile.'''
-    pin_primary = models.CharField(max_length=50, null=True, blank=True)
-    '''The primary property identification number used by the records custodian to look up the parcel in modern systems.'''
+    pin_primary = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    '''The primary property identification number used by the records custodian to look up the parcel in modern systems. This should be unique for matching purposes.'''
     pin_secondary = models.CharField(max_length=50, null=True, blank=True)
     '''An optional secondary identification number used by the records custodian to look up the parcel in modern systems.'''
     street_address = models.CharField(max_length=255, null=True, blank=True)

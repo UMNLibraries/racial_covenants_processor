@@ -106,3 +106,29 @@
         bool_parcel_match: False
         date_added: '2024-07-18 00:00:00.123456+00:00'
         date_updated: '2024-07-18 00:00:00.123456+00:00'
+
+# For testing parcel matching/mapping with pin_primary
+-   model: zoon.zooniversesubject
+    pk: 6
+    fields:
+        workflow: 1
+        zoon_subject_id: 5
+        bool_covenant: True
+        bool_covenant_final: True
+        covenant_text_final: This is sample covenant text
+        addition_final: "No Man's Land But Make it Confusing"
+        image_ids: ''
+        lot_final: 300,700
+        block_final: 1
+        bool_parcel_match: False
+-   model: zoon.manualparcelpinlink
+    pk: 2
+    fields:
+        workflow: 1
+        zooniverse_subject: 6
+        zoon_subject_id: 6
+        zoon_workflow_id: 1
+        parcel_pin: mppl-test-pin-2
+        comments: "This should get linked to a Parcel"
+        date_added: '2024-07-18 00:00:00.123456+00:00'
+        date_updated: '2024-07-18 00:00:00.123456+00:00'
