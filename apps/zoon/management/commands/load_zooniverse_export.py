@@ -355,17 +355,22 @@ class Command(BaseCommand):
                     == "Mostly Typed", 'bool_handwritten'] = False
 
         # Parse match_type
-        final_df.loc[final_df['match_type']
-                    == "1 or more lots in a single block (or no block)", 'match_type'] = 'SL'
+        final_df.loc[final_df['match_type'].isin([
+            "1 or more lots in a single block (or no block)",
+            "1 or more lots in a single square (or no square)",
+        ]), 'match_type'] = 'SL'
         final_df.loc[final_df['match_type']
                     == "Only a Lengthy Property Description", 'match_type'] = 'PD'
-        final_df.loc[final_df['match_type']
-                    == "Lots located in more than one block", 'match_type'] = 'MB'
-        # typo handling
-        final_df.loc[final_df['match_type']
-                    == "Lots located in more than one block ", 'match_type'] = 'MB'
-        final_df.loc[final_df['match_type']
-                    == "Addition-Wide Covenant", 'match_type'] = 'AW'
+        final_df.loc[final_df['match_type'].isin([
+            "Lots located in more than one block",
+            "Lots located in more than one block ",  # typo handling
+            "Lots located in more than one square",
+            "Lots located in more than one square "  # typo handling
+        ]), 'match_type'] = 'MB'
+        final_df.loc[final_df['match_type'].isin([
+            "Addition-Wide Covenant",
+            "Subdivision-Wide Covenant"
+        ]), 'match_type'] = 'AW'
         final_df.loc[final_df['match_type']
                     == "Cemetery Plot / Graves", 'match_type'] = 'C'
         final_df.loc[final_df['match_type']
@@ -395,6 +400,7 @@ class Command(BaseCommand):
         print(final_df)
 
         print('Sending consolidated subject results to Django ...')
+
         final_df.to_sql('zoon_zooniversesubject',
                         if_exists='append', index=False, con=sa_engine)
 
