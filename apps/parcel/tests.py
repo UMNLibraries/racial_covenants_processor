@@ -133,16 +133,23 @@ class JoinStringTests(TestCase):
     def test_lot_simple_multi_3(self):
         """Does get_lots render '24 & 25 & 26 AND SOME OTHER STUFF' as None"""
         lots, lots_meta = get_lots("LOT 24 & 25 & 26 AND SOME OTHER STUFF")
-        self.assertEquals(lots, ['24', '25', '26'])
+        self.assertEquals(lots, None)
 
     def test_lot_simple_multi_4(self):
         """Does get_lots render 'East 20 feet of LOT 24 & 25 & 26' as None"""
         lots, lots_meta = get_lots("East 20 feet of LOT 24 & E 20 FT OF LOT 10")
         self.assertEquals(lots, None)
 
+    def test_lot_simple_multi_5(self):
+        """Does get_lots render '2768, 2769, 2770, 2771, and 2772' as ['2768', '2769', '2770', '2771', '2772']"""
+        lots, lots_meta = get_lots("2768, 2769, 2770, 2771, and 2772")
+        
+        self.assertEquals(lots, ['2768', '2769', '2770', '2771', '2772'])
+
     def test_lots_1_and_2(self):
         '''Do "lots 1 and 2" return 1 and 2'''
         lots, lots_meta = get_lots("lots 1 and 2")
+        print("test_lots_1_and_2: " + lots_meta)
         self.assertEquals(lots, ['1', '2'])
 
     def test_lot_leading_zero(self):
@@ -153,7 +160,7 @@ class JoinStringTests(TestCase):
     def test_lot_leading_zero_list(self):
         '''Do leading zeroes get removed from lots, e.g. 001 should be 1'''
         lots, lots_meta = get_lots("Lot 024 & 01")
-        self.assertEquals(lots, ['24', '1'])
+        self.assertEquals(lots, ['1', '24'])
 
     def test_lot_fake_leading_zero(self):
         '''Do leading zeroes after another digit get ignored, e.g. 1001 should be 1001'''
