@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'django.contrib.humanize',
 
+    'haystack',
     'rangefilter',
     'storages',
     'localflavor',
@@ -104,6 +105,17 @@ DATABASES = {
             'service': 'deeds_service'
         },
     }
+}
+
+# Example (Solr 6.X)
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+        'URL': 'http://127.0.0.1:8983/solr/tester',                 # Assuming you created a core named 'tester' as described in installing search engines.
+        'ADMIN_URL': 'http://127.0.0.1:8983/solr/admin/cores'
+        # ...or for multicore...
+        # 'URL': 'http://127.0.0.1:8983/solr/mysite',
+    },
 }
 
 if os.environ.get('GITHUB_WORKFLOW'):

@@ -39,6 +39,8 @@ jupyter = "*"
 notebook = "==6.5.5"
 traitlets = "==5.9.0"
 sphinxcontrib-django = "*"
+django-haystack = "*"
+pysolr = "*"
 
 [dev-packages]
 csvkit = "*"
