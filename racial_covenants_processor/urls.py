@@ -47,5 +47,6 @@ urlpatterns = [
 
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls')),
+    path('search/', include('haystack.urls')),
     # path('__debug__/', include('debug_toolbar.urls')),
 ]
