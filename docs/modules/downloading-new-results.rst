@@ -7,6 +7,7 @@ Downloading new batches of Zooniverse results
 
     python manage.py dump_manual_corrections --workflow "WI Milwaukee County"
     python manage.py dump_extra_parcels --workflow "WI Milwaukee County"
+    python manage.py dump_manual_pin_links --workflow "WI Milwaukee County"
 
 2. Create and download a fresh Zooniverse export from the Zooniverse Lab tab.  
     A. Click Lab > Data Exports > Request new workflow classification export  
@@ -50,6 +51,7 @@ Downloading new batches of Zooniverse results
     
     python manage.py connect_manual_corrections --workflow "WI Milwaukee County"
     python manage.py connect_extra_parcels --workflow "WI Milwaukee County"
+    python manage.py connect_manual_pin_links --workflow "WI Milwaukee County"
 
 7. Automated join of matches to modern parcel map
 
