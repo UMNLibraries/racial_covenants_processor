@@ -10,40 +10,40 @@ from apps.deed.utils.deed_pagination import tag_prev_next_image_sql, tag_doc_num
 from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest
 
 
-# class DeedPageSearchTermTestTests(TestCase):
-#     fixtures = ['deed', 'zoon']
+class DeedPageSearchTermTestTests(TestCase):
+    fixtures = ['deed', 'zoon']
 
-#     def test_page_count(self):
+    def test_page_count(self):
 
-#         random_deedpages = TermSearchTest.get_test_deedpages(None, None, 5)
+        random_deedpages = TermSearchTest.get_test_deedpages(None, None, 5)
 
-#         print(random_deedpages)
+        print(random_deedpages)
 
-#         self.assertAlmostEqual(random_deedpages.count(), 5)
+        self.assertAlmostEqual(random_deedpages.count(), 5)
 
 
-# class DeedPagePaginationTests(TestCase):
-#     fixtures = ['deed', 'zoon']
+class DeedPagePaginationTests(TestCase):
+    fixtures = ['deed', 'zoon']
 
-#     def test_tag_doc_num_page_counts(self):
-#         df = pd.DataFrame([
-#             {'doc_num': '1', 'public_uuid': 'aasdf'},
-#             {'doc_num': '1', 'public_uuid': 'basdf'},
-#             {'doc_num': '2', 'public_uuid': 'casdf'},
-#             {'doc_num': '2', 'public_uuid': 'dasdf'},
-#             {'doc_num': '2', 'public_uuid': 'easdf'},
-#             {'doc_num': '4', 'public_uuid': 'fasdf'},
-#             {'doc_num': '6', 'public_uuid': 'gasdf'},
-#             {'doc_num': '10', 'public_uuid': 'hasdf'},
-#             {'doc_num': '17', 'public_uuid': 'iasdf'},
-#         ])
+    def test_tag_doc_num_page_counts(self):
+        df = pd.DataFrame([
+            {'doc_num': '1', 'public_uuid': 'aasdf'},
+            {'doc_num': '1', 'public_uuid': 'basdf'},
+            {'doc_num': '2', 'public_uuid': 'casdf'},
+            {'doc_num': '2', 'public_uuid': 'dasdf'},
+            {'doc_num': '2', 'public_uuid': 'easdf'},
+            {'doc_num': '4', 'public_uuid': 'fasdf'},
+            {'doc_num': '6', 'public_uuid': 'gasdf'},
+            {'doc_num': '10', 'public_uuid': 'hasdf'},
+            {'doc_num': '17', 'public_uuid': 'iasdf'},
+        ])
 
-#         df = tag_doc_num_page_counts(df)
-#         # print(df[df['doc_num'] == '1']['doc_page_count'].iloc[0])
+        df = tag_doc_num_page_counts(df)
+        # print(df[df['doc_num'] == '1']['doc_page_count'].iloc[0])
 
-#         self.assertEqual(df[df['doc_num'] == '1']['doc_page_count'].iloc[0], 2)
-#         self.assertEqual(df[df['doc_num'] == '2']['doc_page_count'].iloc[0], 3)
-#         self.assertEqual(df[df['doc_num'] == '17']['doc_page_count'].iloc[0], 1)
+        self.assertEqual(df[df['doc_num'] == '1']['doc_page_count'].iloc[0], 2)
+        self.assertEqual(df[df['doc_num'] == '2']['doc_page_count'].iloc[0], 3)
+        self.assertEqual(df[df['doc_num'] == '17']['doc_page_count'].iloc[0], 1)
 
 
 # @override_settings(AWS_S3_CUSTOM_DOMAIN='https://fake.s3.amazon.aws.com/')

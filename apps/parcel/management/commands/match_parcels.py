@@ -8,7 +8,7 @@ from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from apps.zoon.models import ZooniverseSubject, ManualCovenant, ManualParcelPINLink
+from apps.zoon.models import ZooniverseSubject, ManualCovenant, ManualParcelPINLink, ManualCovenantParcelPINLink
 from apps.parcel.models import JoinReport, Parcel
 from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, addition_wide_parcel_match
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
@@ -215,12 +215,10 @@ class Command(BaseCommand):
             # Save method should pick up addition-wide covenants
             covenant.save()
 
-    def match_parcel_pin_links(self, workflow):
+    def match_parcel_pin_links_zooniverse(self, workflow, workflow_pins_lookup):
         print("Attempting to join Parcel PIN matches on ZooniverseSubjects...")
-        # TODO: Do same for ManualCovenant
 
-        workflow_pins_lookup = {parcel['pin_primary']: parcel['pk'] for parcel in Parcel.objects.filter(workflow=workflow).values('pk', 'pin_primary')}
-
+        # workflow_pins_lookup = {parcel['pin_primary']: parcel['pk'] for parcel in Parcel.objects.filter(workflow=workflow).values('pk', 'pin_primary')}
         # print(workflow_pins_lookup)
 
         mppls = ManualParcelPINLink.objects.filter(workflow=workflow)
@@ -248,6 +246,36 @@ class Command(BaseCommand):
             update_objs.append(m.zooniverse_subject)
         ZooniverseSubject.objects.bulk_update(
             update_objs, ['geom_union_4326', 'parcel_addresses', 'parcel_city', 'bool_parcel_match'], batch_size=1000)
+    
+    def match_parcel_pin_links_manual(self, workflow, workflow_pins_lookup):
+        print("Attempting to join Parcel PIN matches on ManualCovenants...")
+        # TODO: Do same for ManualCovenant
+
+        # workflow_pins_lookup = {parcel['pin_primary']: parcel['pk'] for parcel in Parcel.objects.filter(workflow=workflow).values('pk', 'pin_primary')}
+
+        mppls = ManualCovenantParcelPINLink.objects.filter(workflow=workflow)
+
+        # matched_zooniverse_subject_ids = []
+        matched_parcel_ids = []
+        for m in mppls:
+            try:
+                parcel_id = workflow_pins_lookup[m.parcel_pin]
+            except:
+                parcel_id = None
+
+            if parcel_id:
+                m.manual_covenant.parcel_matches.add(parcel_id)
+                matched_parcel_ids.append(workflow_pins_lookup[m.parcel_pin])
+
+        # Update geo union fields, addresses, and bool_parcel_match for final export
+        update_objs = []
+        for m in mppls:
+            m.manual_covenant.parcel_matches.add(parcel_id)
+            m.manual_covenant.bool_parcel_match = True
+            set_addresses(m.manual_covenant)
+            update_objs.append(m.manual_covenant)
+        ManualCovenant.objects.bulk_update(
+            update_objs, ['parcel_addresses', 'parcel_city', 'bool_parcel_match'], batch_size=1000)
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -266,7 +294,9 @@ class Command(BaseCommand):
             self.match_addition_wide_covenants(workflow, parcel_lookup)
 
             # Join covenants by PIN
-            self.match_parcel_pin_links(workflow)
+            workflow_pins_lookup = {parcel['pin_primary']: parcel['pk'] for parcel in Parcel.objects.filter(workflow=workflow).values('pk', 'pin_primary')}
+            self.match_parcel_pin_links_zooniverse(workflow, workflow_pins_lookup)
+            self.match_parcel_pin_links_manual(workflow, workflow_pins_lookup)
 
             self.tag_matched_parcels(workflow)
 

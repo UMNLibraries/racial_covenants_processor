@@ -313,7 +313,7 @@ class ZooniverseSubject(models.Model):
             self.geom_union_4326 = None
 
     def check_bool_manual_update(self):
-        if self.manualcorrection_set.count() > 0 or self.extraparcelcandidate_set.count() > 0:
+        if self.manualcorrection_set.count() > 0 or self.extraparcelcandidate_set.count() > 0 or self.manualparcelpinlink_set.count() > 0:
             self.bool_manual_correction = True
         else:
             self.bool_manual_correction = False
@@ -710,6 +710,7 @@ class ManualCovenant(models.Model):
     addition = models.CharField(max_length=500, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
+    # parcel_pin_link = models.CharField(max_length=50, null=True, blank=True)
     seller = models.CharField(max_length=500, blank=True)
     buyer = models.CharField(max_length=500, blank=True)
     deed_date = models.DateField(null=True, blank=True)
@@ -788,6 +789,15 @@ class ManualCovenant(models.Model):
                         self.bool_parcel_match = True
                     except:
                         print(f"NO MATCH: {c['join_string']}")
+            
+            # Parcel PIN matches
+            mppl_pins = ManualCovenantParcelPINLink.objects.filter(manual_covenant=self).values_list('parcel_pin', flat=True)
+            if len(mppl_pins) > 0:
+                parcel_pin_matches = Parcel.objects.filter(workflow=self.workflow, pin_primary__in=mppl_pins).values_list('pk', flat=True)
+                if len(parcel_pin_matches) > 0:
+                    self.bool_parcel_match = True
+                for parcel_id in parcel_pin_matches:
+                    self.parcel_matches.add(parcel_id)
 
             # Tag matched parcels with bool_covenant=True
             self.parcel_matches.all().update(bool_covenant=True)
@@ -820,6 +830,44 @@ def manual_cov_post_save(sender, instance=None, created=False, **kwargs):
         instance.save()
     finally:
         del instance._dirty
+
+
+class ManualCovenantParcelPINLink(models.Model):
+    '''A way to link to a parcel not based on join strings -- a direct link to a manually entered modern Parcel PIN that matches a Parcel object. Note that this one is for ManualCovenant records, while the other one is for attaching to ZooniverseSubject objects'''
+    workflow = models.ForeignKey(
+        ZooniverseWorkflow, on_delete=models.SET_NULL, null=True)
+    manual_covenant = models.ForeignKey(
+        ManualCovenant, on_delete=models.SET_NULL, null=True)
+
+    # # These are kept separate of the foreign key relationship in case this needs to be reconnected later
+    # zoon_subject_id = models.IntegerField(db_index=True, null=True, blank=True)
+    # zoon_workflow_id = models.IntegerField(
+    #     db_index=True, null=True, blank=True)
+
+    parcel_pin = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+
+    date_added = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    comments = models.TextField(null=True, blank=True)
+
+    # objects = CopyManager()
+
+    def save(self, *args, **kwargs):
+        self.workflow = self.manual_covenant.workflow
+        # self.zoon_workflow_id = self.zooniverse_subject.workflow.zoon_id
+        # self.zoon_subject_id = self.zooniverse_subject.zoon_subject_id
+        super(ManualCovenantParcelPINLink, self).save(*args, **kwargs)
+        self.manual_covenant.save()  # Does this really need to trigger every time? Seems so.
+
+
+@receiver(models.signals.post_delete, sender=ManualCovenantParcelPINLink)
+def model_delete(sender, instance, **kwargs):
+    try:
+        # instance.zooniverse_subject.get_final_values()
+        instance.manual_covenant.save()
+    except AttributeError:
+        pass
 
 
 SUPPORTING_DOC_TYPES = (

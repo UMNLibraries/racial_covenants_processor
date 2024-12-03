@@ -1,7 +1,7 @@
 from django.test import TestCase, override_settings
 from django.core import management
 
-from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ManualCovenant, ManualParcelPINLink
+from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ManualCovenant, ManualParcelPINLink, ManualCovenantParcelPINLink
 from apps.parcel.models import Parcel
 from apps.deed.utils.deed_pagination import tag_prev_next_image_sql
 from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest
@@ -250,36 +250,36 @@ class ParcelMatchTests(TestCase):
         management.call_command('rebuild_covenant_spatial_lookups', workflow=workflow.workflow_name)
         management.call_command('match_parcels', workflow=workflow.workflow_name)
 
-    # def test_parcel_match_zoon_1(self):
-    #     parcel_lot_2 = Parcel.objects.get(workflow_id=1, plat_standardized='janes', block=1, lot=2)
-    #     parcel_lot_3 = Parcel.objects.get(workflow_id=1, plat_standardized='janes', block=1, lot=3)
+    def test_parcel_match_zoon_1(self):
+        parcel_lot_2 = Parcel.objects.get(workflow_id=1, plat_standardized='janes', block=1, lot=2)
+        parcel_lot_3 = Parcel.objects.get(workflow_id=1, plat_standardized='janes', block=1, lot=3)
 
-    #     zoon_lot_2_and_3 = ZooniverseSubject.objects.get(pk=5)
+        zoon_lot_2_and_3 = ZooniverseSubject.objects.get(pk=5)
 
-    #     self.assertEqual(parcel_lot_2.bool_covenant, True)
-    #     self.assertEqual(parcel_lot_3.bool_covenant, True)
-    #     self.assertIn(parcel_lot_2, zoon_lot_2_and_3.parcel_matches.all())
-    #     self.assertIn(parcel_lot_3, zoon_lot_2_and_3.parcel_matches.all())
+        self.assertEqual(parcel_lot_2.bool_covenant, True)
+        self.assertEqual(parcel_lot_3.bool_covenant, True)
+        self.assertIn(parcel_lot_2, zoon_lot_2_and_3.parcel_matches.all())
+        self.assertIn(parcel_lot_3, zoon_lot_2_and_3.parcel_matches.all())
 
-    # def test_parcel_match_manual_1(self):
-    #     parcel_lot_4 = Parcel.objects.get(workflow_id=1, plat_standardized='janes', block=1, lot=4)
+    def test_parcel_match_manual_1(self):
+        parcel_lot_4 = Parcel.objects.get(workflow_id=1, plat_standardized='janes', block=1, lot=4)
 
-    #     manual_lot_4 = ManualCovenant.objects.get(pk=1)
+        manual_lot_4 = ManualCovenant.objects.get(pk=1)
 
-    #     self.assertEqual(parcel_lot_4.bool_covenant, True)
-    #     self.assertIn(parcel_lot_4, manual_lot_4.parcel_matches.all())
+        self.assertEqual(parcel_lot_4.bool_covenant, True)
+        self.assertIn(parcel_lot_4, manual_lot_4.parcel_matches.all())
 
-    # def test_parcel_match_manual_addition_wide_1(self):
-    #     parcel_lot_6 = Parcel.objects.get(workflow_id=1, plat_standardized='many covenants 1st', block=1, lot=1)
-    #     parcel_lot_7 = Parcel.objects.get(workflow_id=1, plat_standardized='many covenants 1st', block=2, lot=1)
+    def test_parcel_match_manual_addition_wide_1(self):
+        parcel_lot_6 = Parcel.objects.get(workflow_id=1, plat_standardized='many covenants 1st', block=1, lot=1)
+        parcel_lot_7 = Parcel.objects.get(workflow_id=1, plat_standardized='many covenants 1st', block=2, lot=1)
 
-    #     manual_add_wide = ManualCovenant.objects.get(pk=2)
+        manual_add_wide = ManualCovenant.objects.get(pk=2)
 
-    #     self.assertEqual(manual_add_wide.bool_parcel_match, True)
-    #     self.assertEqual(parcel_lot_6.bool_covenant, True)
-    #     self.assertEqual(parcel_lot_7.bool_covenant, True)
-    #     self.assertIn(parcel_lot_6, manual_add_wide.parcel_matches.all())
-    #     self.assertIn(parcel_lot_7, manual_add_wide.parcel_matches.all())
+        self.assertEqual(manual_add_wide.bool_parcel_match, True)
+        self.assertEqual(parcel_lot_6.bool_covenant, True)
+        self.assertEqual(parcel_lot_7.bool_covenant, True)
+        self.assertIn(parcel_lot_6, manual_add_wide.parcel_matches.all())
+        self.assertIn(parcel_lot_7, manual_add_wide.parcel_matches.all())
 
     def test_parcel_match_manual_parcel_pin_1(self):
         parcel_lot_10 = Parcel.objects.get(workflow_id=1, pin_primary='mppl-test-pin-1')
@@ -304,20 +304,35 @@ class ParcelMatchTests(TestCase):
     def test_parcel_match_manual_parcel_pin_1(self):
         parcel_lot_11 = Parcel.objects.get(workflow_id=1, pin_primary='mppl-test-pin-2')
         zoon_subject_6 = ZooniverseSubject.objects.get(workflow_id=1, pk=6)
-
-        # new_pin_link = ManualParcelPINLink(
-        #     workflow_id=1,
-        #     zooniverse_subject_id=6,
-        #     zoon_subject_id=6,
-        #     zoon_workflow_id=1,
-        #     parcel_pin='mppl-test-pin-1',
-        #     comments="This should get linked to a Parcel"
-        # )
-        # new_pin_link.save()
-
-        # # Do I need to retrieve it again? Looks like it.
-        # parcel_lot_10 = Parcel.objects.get(workflow_id=1, pin_primary='mppl-test-pin-1')
-        
+      
         self.assertEqual(zoon_subject_6.bool_parcel_match, True)
         self.assertIn(parcel_lot_11, zoon_subject_6.parcel_matches.all())
+        self.assertEqual(parcel_lot_11.bool_covenant, True)
+
+    def test_parcel_match_manual_covenant_parcel_pin_1(self):
+        ''' Create a new ManualCovenantParcelPINLink manually, re-check parcel match '''
+        parcel_lot_10 = Parcel.objects.get(workflow_id=1, pin_primary='mppl-test-pin-1')
+
+        new_pin_link = ManualCovenantParcelPINLink(
+            workflow_id=1,
+            manual_covenant_id=3,
+            parcel_pin='mppl-test-pin-1',
+            comments="This should get linked to a Parcel"
+        )
+        new_pin_link.save()
+
+        # Do I need to retrieve it again? Looks like it.
+        parcel_lot_10 = Parcel.objects.get(workflow_id=1, pin_primary='mppl-test-pin-1')
+        
+        self.assertEqual(new_pin_link.manual_covenant.bool_parcel_match, True)
+        self.assertIn(parcel_lot_10, new_pin_link.manual_covenant.parcel_matches.all())
+        self.assertEqual(parcel_lot_10.bool_covenant, True)
+
+    def test_parcel_match_manual_covenant_parcel_pin_2(self):
+        ''' Does match_parcels correctly perform on a ManualCovenantParcelPINLink that is already in the database? '''
+        parcel_lot_11 = Parcel.objects.get(workflow_id=1, pin_primary='mppl-test-pin-2')
+        man_cov_4 = ManualCovenant.objects.get(workflow_id=1, pk=4)
+        
+        self.assertEqual(man_cov_4.bool_parcel_match, True)
+        self.assertIn(parcel_lot_11, man_cov_4.parcel_matches.all())
         self.assertEqual(parcel_lot_11.bool_covenant, True)

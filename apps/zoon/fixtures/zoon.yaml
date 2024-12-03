@@ -132,3 +132,36 @@
         comments: "This should get linked to a Parcel"
         date_added: '2024-07-18 00:00:00.123456+00:00'
         date_updated: '2024-07-18 00:00:00.123456+00:00'
+
+-   model: zoon.manualcovenant
+    pk: 3
+    fields:
+        workflow: 1
+        bool_confirmed: True
+        covenant_text: This is sample covenant manual text
+        addition: MYSTERIOUS ADDITION
+        cov_type: SE
+        bool_parcel_match: False
+        date_added: '2024-07-18 00:00:00.123456+00:00'
+        date_updated: '2024-07-18 00:00:00.123456+00:00'
+
+-   model: zoon.manualcovenant
+    pk: 4
+    fields:
+        workflow: 1
+        bool_confirmed: True
+        covenant_text: This is sample covenant manual text
+        addition: MYSTERIOUS ADDITION 2
+        cov_type: SE
+        bool_parcel_match: False
+        date_added: '2024-07-18 00:00:00.123456+00:00'
+        date_updated: '2024-07-18 00:00:00.123456+00:00'
+-   model: zoon.manualcovenantparcelpinlink
+    pk: 1
+    fields:
+        workflow: 1
+        manual_covenant: 4
+        parcel_pin: mppl-test-pin-2
+        comments: "This should get linked to a Parcel"
+        date_added: '2024-07-18 00:00:00.123456+00:00'
+        date_updated: '2024-07-18 00:00:00.123456+00:00'

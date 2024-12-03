@@ -223,6 +223,7 @@ class SubjectAdmin(admin.ModelAdmin):
     inlines = [
         ManualCorrectionInline,
         ExtraParcelCandidateInline,
+        ManualParcelPINLinkInline,
         # DeedImageInline,
         DeedImageInline1st,
         DeedImageInline2nd,
