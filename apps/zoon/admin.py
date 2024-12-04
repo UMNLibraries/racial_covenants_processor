@@ -9,7 +9,7 @@ from rangefilter.filters import DateRangeFilter
 
 from apps.deed.models import DeedPage
 from apps.parcel.models import Parcel
-from apps.zoon.models import ZooniverseWorkflow, ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection, ExtraParcelCandidate, ManualParcelPINLink, ManualCovenant, ManualSupportingDocument
+from apps.zoon.models import ZooniverseWorkflow, ZooniverseResponseProcessed, ZooniverseSubject, ManualCorrection, ExtraParcelCandidate, ManualParcelPINLink, ManualCovenantParcelPINLink, ManualCovenant, ManualSupportingDocument
 
 
 @admin.register(ZooniverseWorkflow)
@@ -80,6 +80,12 @@ class ManualParcelPINLinkInline(admin.StackedInline):
     model = ManualParcelPINLink
     extra = 0
     exclude = ['workflow', 'zoon_subject_id', 'zoon_workflow_id']
+
+
+class ManualCovenantParcelPINLinkInline(admin.StackedInline):
+    model = ManualCovenantParcelPINLink
+    extra = 0
+    exclude = ['workflow']
 
 
 class ResponseInline(admin.TabularInline):
@@ -188,6 +194,7 @@ class ManualCovenantAdmin(admin.ModelAdmin):
     )
 
     inlines = [
+        ManualCovenantParcelPINLinkInline,
         ManualSupportingDocumentInline
     ]
 
