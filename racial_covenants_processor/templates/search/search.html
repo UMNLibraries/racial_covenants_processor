@@ -14,22 +14,31 @@
             </tr>
         </table>
 
+        {{ page_obj }}
         {% if query %}
             <h3>Results</h3>
 
-            {% for result in page.object_list %}
+            {% if page_obj.has_previous or page_obj.has_next %}
+                <div>
+                    {% if page_obj.has_previous %}<a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}">{% endif %}&laquo; Previous{% if page_obj.has_previous %}</a>{% endif %}
+                    |
+                    {% if page_obj.has_next %}<a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}">{% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
+                </div>
+            {% endif %}
+
+            {% for result in page_obj.object_list %}
                 <p>
-                    <a href="{{ result.object.get_absolute_url }}">{{ result.object.title }}</a>
+                    {{ result.object.workflow }} <a href="/admin/deed/deedpage/{{ result.object.pk }}/change/" target="_blank">{{ result.object.doc_num }}</a>
                 </p>
             {% empty %}
                 <p>No results found.</p>
             {% endfor %}
 
-            {% if page.has_previous or page.has_next %}
+            {% if page_obj.has_previous or page_obj.has_next %}
                 <div>
-                    {% if page.has_previous %}<a href="?q={{ query }}&amp;page={{ page.previous_page_number }}">{% endif %}&laquo; Previous{% if page.has_previous %}</a>{% endif %}
+                    {% if page_obj.has_previous %}<a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}">{% endif %}&laquo; Previous{% if page_obj.has_previous %}</a>{% endif %}
                     |
-                    {% if page.has_next %}<a href="?q={{ query }}&amp;page={{ page.next_page_number }}">{% endif %}Next &raquo;{% if page.has_next %}</a>{% endif %}
+                    {% if page_obj.has_next %}<a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}">{% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
                 </div>
             {% endif %}
         {% else %}
