@@ -2,7 +2,7 @@ import datetime
 
 from haystack import indexes
 
-from .models import DeedPage
+from apps.deed.models import DeedPage
 
 
 class DeedPageIndex(indexes.SearchIndex, indexes.Indexable):
