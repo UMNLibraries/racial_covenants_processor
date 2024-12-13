@@ -1,0 +1,97 @@
+{% load static %}
+{% load compress %}
+
+<!DOCTYPE HTML>
+<!--
+	Editorial by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>The Deed Machine - By Mapping Prejudice</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+        <link rel="stylesheet" href="{% static 'css/fontawesome-all.min.css' %}" media="screen">
+        {% compress css %}
+            <link type="text/x-scss" href="{% static 'html5up-editorial/assets/sass/main.scss' %}" rel="stylesheet" media="screen">
+            
+            <link type="text/x-scss" href="{% static 'deed-machine/sass/deed-machine.scss' %}" rel="stylesheet" media="screen">
+        {% endcompress %}
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+        <div id="wrapper">
+
+            <!-- Main -->
+            <div id="main">
+                <div class="inner">
+
+                    <!-- Header -->
+                    <header id="header">
+                        <a href="{% url 'index' %}" class="logo"><strong>The Deed Machine</strong> by Mapping Prejudice</a>
+                    </header>
+
+                    <!-- Content -->
+                    <section>
+                        {% block content %}{% endblock %}
+                    </section>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div id="sidebar">
+            <div class="inner">
+
+                <!-- Menu -->
+                <nav id="menu">
+                    <header class="major">
+                        <h2>Menu</h2>
+                    </header>
+                    <ul>
+                        <li><a href="{% url 'index' %}">Homepage</a></li>
+                        <li><a href="{% url 'admin:index' %}">Admin home</a></li>
+                        <li>
+                            <span class="opener">Workflows</span>
+                            <ul>
+                            {% for workflow in all_workflows %}
+                                <li><a href="{% url 'workflow' workflow.id %}">{{ workflow }}</a></li>
+                            {% endfor %}
+                            </ul>
+                        </li>
+                        <li><a href="{% url 'deed_search_view' %}">DeedPage search</a></li>
+                        <li><a href="https://the-deed-machine.readthedocs.io/en/latest/index.html" target="_blank">Documentation</a></li>
+                        <li><a href="https://github.com/UMNLibraries/racial_covenants_processor" target="_blank">Deed Machine code</a></li>
+                        <li><a href="https://github.com/UMNLibraries/mp-us-racial-covenants" target="_blank">Public data</a></li>
+                        <li><a href="https://github.com/UMNLibraries/mp-deed-machine-dailies" target="_blank">Hourly data</a></li>
+                    </ul>
+
+                    <hr class="major"/>
+
+                    <span class="image"><a href="https://mappingprejudice.umn.edu/" target="_blank"><img src="{% static 'images/MappingPrejudice_C_600.png' %}" width="150" /></a></span>
+                </nav>
+
+                <!-- Footer -->
+                <footer id="footer">
+                    <p class="copyright">Copyright &copy; <a href="https://the-deed-machine.readthedocs.io/en/latest/modules/license.html">2024 Regents of the University of Minnesota</a>. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+                </footer>
+
+            </div>
+            </div>
+
+            </div>
+
+            <!-- Scripts -->
+            {% compress js %}
+            <link type="text/x-scss" href="{% static 'html5up-editorial/assets/sass/main.scss' %}" rel="stylesheet" media="screen">
+
+            <script src="{% static 'html5up-editorial/assets/js/jquery.min.js' %}"></script>
+            <script src="{% static 'html5up-editorial/assets/js/browser.min.js' %}"></script>
+            <script src="{% static 'html5up-editorial/assets/js/breakpoints.min.js' %}"></script>
+            <script src="{% static 'html5up-editorial/assets/js/util.js' %}"></script>
+            <script src="{% static 'html5up-editorial/assets/js/main.js' %}"></script>
+            {% endcompress %}
+
+</body>
+</html>

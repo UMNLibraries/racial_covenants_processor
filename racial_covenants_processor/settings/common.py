@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 
     'haystack',
+    'compressor',
     'rangefilter',
     'storages',
     'localflavor',
@@ -174,9 +175,28 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = '/staticfiles/'
+STATICFILES_FINDERS = [
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder"
+]
+
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+COMPRESS_ROOT = STATIC_ROOT
+
+# STATICFILES_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
+# COMPRESS_STORAGE = STATICFILES_STORAGE
+# COMPRESS_OFFLINE_MANIFEST_STORAGE = STATICFILES_STORAGE
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]  # put truly static files not handled by compressor, like images, in 'static'
+
+COMPRESS_PRECOMPILERS = (
+    ('text/x-scss', 'django_libsass.SassCompiler'),
+)
+# COMPRESS_OFFLINE = True
 
 MEDIA_URL = '/mediafiles/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')

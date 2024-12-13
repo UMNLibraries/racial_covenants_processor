@@ -1,48 +1,109 @@
 {% extends 'base.html' %}
 
+{% load humanize %}
+
 {% block content %}
-    <h2>Search</h2>
+    <style>
+
+        .font-tester:before {
+            font-family: 'Font Awesome 5 Free';
+            /* content: '\f078'; */
+            content: '\f0c9';
+            color: #9fa3a6;
+            font-weight: 900;
+            display: inline-block;
+        }
+    </style>
+
+    <header class="main">
+        <h2>DeedPage search</h2>
+    </header>
+
+    <!-- <div class="font-tester">Hello</div> -->
 
     <form method="get" action=".">
-        <table>
-            {{ form.as_table }}
-            <tr>
-                <td>&nbsp;</td>
-                <td>
-                    <input type="submit" value="Search">
-                </td>
-            </tr>
-        </table>
+        <div class="row gtr-uniform">
 
-        {{ page_obj }}
-        {% if query %}
-            <h3>Results</h3>
+            {{ form.non_field_errors }}
+            <div class="col-6">
+                {{ form.q.errors }}
+                <label for="{{ form.q.id_for_label }}">Search</label>
+                {{ form.q }}
+            </div>
 
-            {% if page_obj.has_previous or page_obj.has_next %}
-                <div>
-                    {% if page_obj.has_previous %}<a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}">{% endif %}&laquo; Previous{% if page_obj.has_previous %}</a>{% endif %}
-                    |
-                    {% if page_obj.has_next %}<a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}">{% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
-                </div>
-            {% endif %}
+            <div class="col-6">
+                {{ form.workflow.errors }}
+                <label for="{{ form.workflow.id_for_label }}">Workflow filter</label>
+                {{ form.workflow }}
+            </div>
 
-            {% for result in page_obj.object_list %}
-                <p>
-                    {{ result.object.workflow }} <a href="/admin/deed/deedpage/{{ result.object.pk }}/change/" target="_blank">{{ result.object.doc_num }}</a>
-                </p>
-            {% empty %}
-                <p>No results found.</p>
-            {% endfor %}
+            <div class="col-6">
+                <ul class="actions">
+                    <li><input type="submit" value="Search" class="primary"></li>
+                </ul>
+            </div>
 
-            {% if page_obj.has_previous or page_obj.has_next %}
-                <div>
-                    {% if page_obj.has_previous %}<a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}">{% endif %}&laquo; Previous{% if page_obj.has_previous %}</a>{% endif %}
-                    |
-                    {% if page_obj.has_next %}<a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}">{% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
-                </div>
-            {% endif %}
-        {% else %}
-            {# Show some example queries to run, maybe query syntax, something else? #}
-        {% endif %}
+            <div class="col-3">
+                {{ form.bool_match.errors }}
+                {{ form.bool_match }}
+                <label for="{{ form.bool_match.id_for_label }}">Matches only?</label>
+            </div>   
+        </div>
     </form>
+
+    {% if page_obj.has_previous or page_obj.has_next %}
+    <div class="row">
+        <h3>Results: Page {{ page_obj.number|intcomma }} of {{ page_obj.paginator.num_pages|intcomma }}</h3>
+    </div>
+
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+        <li><a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}" class="button{% if not page_obj.has_previous %} disabled{% endif %}">Previous</a>
+        {% else %}
+        <li><span class="button disabled">Previous</li>
+        {% endif %}
+
+        {% if page_obj.has_next %}
+        <li><a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}" class="button{% if not page_obj.has_next %} disabled{% endif %}">Next</a>
+        {% else %}
+        <li><span class="button disabled">Previous</li>
+        {% endif %}
+    </ul>
+
+    {% endif %}
+
+    <div class="box alt">
+        <div class="row gtr-50 gtr-uniform">
+        {% for result in page_obj.object_list %}
+            <div class="col-3 deedpage-result">
+                <div class="box">
+                    <span class="image">{{ result.object.thumbnail_preview }}</span>
+                    <div class="record-link">{{ result.object.workflow }}</div>
+                    <div class="record-link"><strong>Full record:</strong></div>
+                    <div class="record-link">{{ result.object.record_link }}</div>
+                </div>
+            </div>
+        {% empty %}
+            <p>No results found.</p>
+        {% endfor %}
+        </div>
+    </div>
+
+    {% if page_obj.has_previous or page_obj.has_next %}
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+        <li><a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}" class="button{% if not page_obj.has_previous %} disabled{% endif %}">Previous</a>
+        {% else %}
+        <li><span class="button disabled">Previous</li>
+        {% endif %}
+
+        {% if page_obj.has_next %}
+        <li><a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}" class="button{% if not page_obj.has_next %} disabled{% endif %}">Next</a>
+        {% else %}
+        <li><span class="button disabled">Previous</li>
+        {% endif %}
+    </ul>
+
+    {% endif %}
+
 {% endblock %}
