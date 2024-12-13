@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from apps.zoon import views
 from apps.zoon.serializers import SubjectNoGeoViewSet, SubjectGeoViewSet
@@ -54,3 +55,5 @@ urlpatterns = [
     path('deed_search/', DeedSearchView.as_view(), name='deed_search_view'),
     # path('__debug__/', include('debug_toolbar.urls')),
 ]
+
+urlpatterns += staticfiles_urlpatterns()
