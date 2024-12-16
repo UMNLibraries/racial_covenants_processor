@@ -186,8 +186,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 COMPRESS_ROOT = STATIC_ROOT
 
 # STATICFILES_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
-# COMPRESS_STORAGE = STATICFILES_STORAGE
-# COMPRESS_OFFLINE_MANIFEST_STORAGE = STATICFILES_STORAGE
+COMPRESS_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
+COMPRESS_OFFLINE_MANIFEST_STORAGE = COMPRESS_STORAGE
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
