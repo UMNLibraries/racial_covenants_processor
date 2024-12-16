@@ -12,10 +12,9 @@
 		<title>The Deed Machine - By Mapping Prejudice</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-        <link rel="stylesheet" href="{% static 'css/fontawesome-all.min.css' %}" media="screen">
+        <link rel="stylesheet" href="{% static 'html5up-editorial/assets/css/fontawesome-all.min.css' %}" media="screen">
+        <link href="{% static 'html5up-editorial/assets/css/main.css' %}" rel="stylesheet" media="screen">
         {% compress css %}
-            <link type="text/x-scss" href="{% static 'html5up-editorial/assets/sass/main.scss' %}" rel="stylesheet" media="screen">
-            
             <link type="text/x-scss" href="{% static 'deed-machine/sass/deed-machine.scss' %}" rel="stylesheet" media="screen">
         {% endcompress %}
 	</head>
@@ -83,15 +82,11 @@
             </div>
 
             <!-- Scripts -->
-            {% compress js %}
-            <link type="text/x-scss" href="{% static 'html5up-editorial/assets/sass/main.scss' %}" rel="stylesheet" media="screen">
-
             <script src="{% static 'html5up-editorial/assets/js/jquery.min.js' %}"></script>
             <script src="{% static 'html5up-editorial/assets/js/browser.min.js' %}"></script>
             <script src="{% static 'html5up-editorial/assets/js/breakpoints.min.js' %}"></script>
             <script src="{% static 'html5up-editorial/assets/js/util.js' %}"></script>
             <script src="{% static 'html5up-editorial/assets/js/main.js' %}"></script>
-            {% endcompress %}
 
 </body>
 </html>
