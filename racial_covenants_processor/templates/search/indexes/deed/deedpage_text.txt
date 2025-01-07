@@ -1,0 +1,9 @@
+{{ object.workflow }}
+{{ object.s3_lookup }}
+{{ object.doc_num }}
+{{ object.doc_alt_id }}
+{{ object.book_id }}
+{{ object.page_num }}
+{{ object.doc_type }}
+{{ object.public_uuid }}
+{% for term in object.matched_terms.all %}{{ term.term }} {% endfor %}

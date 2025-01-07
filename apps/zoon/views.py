@@ -12,7 +12,7 @@ from apps.parcel.models import GeoJSONExport, ShpExport, CSVExport, AllCovenante
 def index(request):
     workflows = ZooniverseWorkflow.objects.all()
     context = {
-        'workflows': workflows
+        'all_workflows': workflows,
     }
     return render(request, 'index.html', context)
 
@@ -44,6 +44,8 @@ def generate_workflow_summary_context(request, workflow):
     join_reports = JoinReport.objects.filter(workflow=workflow).order_by('-created_at')
     hit_reports = SearchHitReport.objects.filter(workflow=workflow).order_by('-created_at')
 
+    all_workflows = ZooniverseWorkflow.objects.all()
+
     context = {
         'workflow': workflow,
         'geojson_exports': geojson_exports,
@@ -58,7 +60,8 @@ def generate_workflow_summary_context(request, workflow):
         'subject_count': subjects.count(),
         'covenants_count': subjects.filter(bool_covenant=True).count(),
         'covenants_maybe_count': subjects.filter(bool_covenant=None).count(),
-        'mapped_count': mapped_count
+        'mapped_count': mapped_count,
+        'all_workflows': all_workflows
     }
     return context
 
@@ -91,7 +94,8 @@ def covenant_matches(request, workflow_id):
 
     context = {
         'workflow': workflow,
-        'covenants': covenants
+        'covenants': covenants,
+        'all_workflows': ZooniverseWorkflow.objects.all()
     }
 
     return render(request, 'covenant_matches.html', context)

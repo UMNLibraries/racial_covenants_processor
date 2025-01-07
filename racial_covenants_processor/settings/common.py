@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'django.contrib.humanize',
 
+    'haystack',
+    'compressor',
     'rangefilter',
     'storages',
     'localflavor',
@@ -106,6 +108,17 @@ DATABASES = {
     }
 }
 
+# Example (Solr 6.X)
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+        'URL': 'http://127.0.0.1:8983/solr/tester',                 # Assuming you created a core named 'tester' as described in installing search engines.
+        'ADMIN_URL': 'http://127.0.0.1:8983/solr/admin/cores'
+        # ...or for multicore...
+        # 'URL': 'http://127.0.0.1:8983/solr/mysite',
+    },
+}
+
 if os.environ.get('GITHUB_WORKFLOW'):
     DATABASES = {
         'default': {
@@ -162,9 +175,28 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = '/staticfiles/'
+STATICFILES_FINDERS = [
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder"
+]
+
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+COMPRESS_ROOT = STATIC_ROOT
+
+# STATICFILES_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
+COMPRESS_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
+COMPRESS_OFFLINE_MANIFEST_STORAGE = COMPRESS_STORAGE
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]  # put truly static files not handled by compressor, like images, in 'static'
+
+COMPRESS_PRECOMPILERS = (
+    ('text/x-scss', 'django_libsass.SassCompiler'),
+)
+# COMPRESS_OFFLINE = True
 
 MEDIA_URL = '/mediafiles/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')

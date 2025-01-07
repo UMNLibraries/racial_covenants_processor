@@ -1,18 +1,13 @@
+{% extends 'base.html' %}
+
 {% load humanize %}
 
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{workflow.workflow_name}} summary</title>
-  <meta name="description" content="Placeholder for {{workflow.workflow_name}} summary">
-  <meta name="author" content="Mapping Prejudice">
+
+
+  {% block content %}
 
   <style>
-    body {
-      font-family : Walfork,Walsheim,"Helvetica Neue";
-    }
+
     .workflow-stats td {
       text-align: right;
     }
@@ -21,10 +16,12 @@
       text-align: left;
     }
   </style>
-</head>
-<body>
-  <h1>{{workflow.workflow_name}} summary</h1>
-  <i>Last updated: {{last_update}}</i>
+
+  <header class="main">
+    <h2>{{workflow.workflow_name}} summary</h2>
+    <i>Last updated: {{last_update}}</i>
+  </header>
+
   <p><a href="{% url 'workflow_matches' workflow.id %}">Workflow current match status</a></p>
   <table class="workflow-stats">
     <tr>
@@ -88,5 +85,5 @@
   {% for csv in hit_reports %}
     <p><a href="{{ csv.report_csv.url }}">{{ csv.created_at }}</a> {{ csv.num_hits|intcomma }} OCR hits</p>
   {% endfor %}
-</body>
-</html>
+
+{% endblock %}
