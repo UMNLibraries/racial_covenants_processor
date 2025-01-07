@@ -4,17 +4,6 @@
 {{ object.doc_alt_id }}
 {{ object.book_id }}
 {{ object.page_num }}
-{{ object.split_page_num }}
 {{ object.doc_type }}
 {{ object.public_uuid }}
-{{ object.page_image_web }}
-{{ object.page_stats }}
-{{ object.page_ocr_text }}
-{{ object.bool_match }}
-{{ object.bool_exception }}
-{{ object.bool_manual }}
-{{ object.matched_terms }}
-{{ object.prev_page_image_web }}
-{{ object.next_page_image_web }}
-{{ object.next_next_page_image_web }}
-{{ object.page_image_web_highlighted }}
+{% for term in object.matched_terms.all %}{{ term.term }} {% endfor %}
