@@ -1,6 +1,10 @@
 from django.contrib import admin
 from rangefilter.filters import DateRangeFilter
 
+# from haystack.query import SearchQuerySet
+from haystack.admin import SearchModelAdmin
+from haystack.admin import SearchModelAdminMixin
+
 from .models import DeedPage, SearchHitReport
 
 @admin.register(SearchHitReport)
@@ -76,3 +80,38 @@ class DeedPageAdmin(admin.ModelAdmin):
         return ''
 
     get_matched_terms.short_description = 'Matched terms'
+
+
+
+
+# class HaystackTestFilter(admin.SimpleListFilter):
+#     title = 'Haystack has cov'
+#     parameter_name = 's'
+
+#     def lookups(self, request, model_admin):
+#         return (
+#             ('all', 'All'),
+#         )
+
+#     def queryset(self, request, queryset):
+#         if self.value() == 'all':
+#             return queryset
+#         else:
+#             sqs = SearchQuerySet().filter(content=self.value())
+#             pks = [result.pk for result in sqs]
+#             return queryset.filter(pk__in=pks)
+
+
+# class DeedPageSearchAdmin(SearchModelAdmin):
+# class DeedPageSearchAdmin(SearchModelAdminMixin, DeedPageAdmin):
+#     haystack_connection = 'default'
+#     # show_full_result_count = False
+#     list_filter = ['workflow', 'workflow__workflow_name', 'bool_match', 'bool_exception',]
+#     search_fields = ('s3_lookup', 'bool_match')
+#     # date_hierarchy = 'doc_date'
+#     # list_display = ('author', 'pub_date')
+#     # list_display = ['doc_num', 'bool_match', 'bool_exception', 'get_matched_terms', 'book_id', 'page_num', 'split_page_num', 's3_lookup', 'zooniverse_subject']
+#     list_display = ['doc_num', 'bool_match', 'bool_exception', 's3_lookup']
+
+
+# admin.site.register(DeedPage, DeedPageSearchAdmin)

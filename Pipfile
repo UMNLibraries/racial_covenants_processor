@@ -39,6 +39,8 @@ jupyter = "*"
 notebook = "==6.5.5"
 traitlets = "==5.9.0"
 sphinxcontrib-django = "*"
+django-haystack = "*"
+pysolr = "*"
 
 [dev-packages]
 csvkit = "*"
@@ -47,6 +49,8 @@ ipython = "*"
 altair = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
+django-compressor = "*"
+django-libsass = "*"
 
 [requires]
 python_version = "3.9"
