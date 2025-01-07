@@ -19,7 +19,8 @@ AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
 # s3 static settings
 AWS_LOCATION = 'racial-covenants-processor/static'
 STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+STATICFILES_STORAGE = 'racial_covenants_processor.storage_backends.StaticStorage'
 # s3 public media settings
 PUBLIC_MEDIA_LOCATION = 'media'
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
@@ -52,3 +53,11 @@ else:
         }
     }
     SQL_ALCHEMY_DB_CONNECTION_URL = 'postgresql+psycopg2://racial_covenants_processor:racial_covenants_processor@localhost:5432/racial_covenants_processor'
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+        'URL': os.environ['SOLR_URL'],
+        'ADMIN_URL': os.environ['SOLR_ADMIN_URL']
+    },
+}
