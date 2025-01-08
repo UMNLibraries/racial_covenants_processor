@@ -41,6 +41,7 @@ traitlets = "==5.9.0"
 sphinxcontrib-django = "*"
 django-haystack = "*"
 pysolr = "*"
+django-compressor = "*"
 
 [dev-packages]
 csvkit = "*"
