@@ -37,6 +37,8 @@ class Command(BaseCommand):
                 'addition': 'addition',
                 'lot': 'lot',
                 'block': 'block',
+                'map_book': 'map_book',
+                'map_book_page': 'map_book_page',
                 'date_added': 'date_added',
                 'date_updated': 'date_updated',
                 'comments': 'comments',

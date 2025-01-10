@@ -38,6 +38,8 @@ class Command(BaseCommand):
                 'addition': 'addition',
                 'lot': 'lot',
                 'block': 'block',
+                'map_book': 'map_book',
+                'map_book_page': 'map_book_page',
                 'seller': 'seller',
                 'buyer': 'buyer',
                 'deed_date': 'deed_date',

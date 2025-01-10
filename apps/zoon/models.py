@@ -66,6 +66,8 @@ class UnmappedZooniverseManager(models.Manager):
             add_cov=F('addition_final'),
             block_cov=F('block_final'),
             lot_cov=F('lot_final'),
+            map_book=F('map_book_final'),
+            map_page=F('map_book_page_final'),
             city_cov=F('city_final'),
             # seller=F('seller_final'),  # Need to rename with pd
             # buyer=F('buyer_final'),  # Need to rename with pd
@@ -100,6 +102,8 @@ class AllCovenantedDocsZooniverseManager(models.Manager):
             add_cov=F('addition_final'),
             block_cov=F('block_final'),
             lot_cov=F('lot_final'),
+            map_book=F('map_book_final'),
+            map_page=F('map_book_page_final'),
             join_strgs=F('join_candidates'),
             # city_cov=F('city_final'),
             # seller=F('seller_final'),  # Need to rename with pd
@@ -147,6 +151,8 @@ class ValidationZooniverseManager(models.Manager):
             add_cov=F('addition_final'),
             block_cov=F('block_final'),
             lot_cov=F('lot_final'),
+            map_book=F('map_book_final'),
+            map_page=F('map_book_page_final'),
             city_cov=F('city_final'),
             # seller=F('seller_final'),  # Need to rename with pd
             # buyer=F('buyer_final'),  # Need to rename with pd
@@ -174,6 +180,10 @@ class ZooniverseSubject(models.Model):
     addition = models.CharField(max_length=501, blank=True)
     lot = models.TextField(blank=True)
     block = models.CharField(max_length=502, blank=True)
+
+    map_book = models.CharField(max_length=100, blank=True)
+    map_book_page = models.CharField(max_length=100, blank=True)
+
     city = models.CharField(max_length=503, blank=True)
     seller = models.CharField(max_length=1200, blank=True)
     buyer = models.CharField(max_length=1200, blank=True)
@@ -196,6 +206,8 @@ class ZooniverseSubject(models.Model):
     addition_score = models.FloatField(null=True)
     lot_score = models.FloatField(null=True)
     block_score = models.FloatField(null=True)
+    map_book_score = models.FloatField(null=True)
+    map_book_page_score = models.FloatField(null=True)
     city_score = models.FloatField(null=True)
     seller_score = models.FloatField(null=True)
     buyer_score = models.FloatField(null=True)
@@ -220,6 +232,10 @@ class ZooniverseSubject(models.Model):
     lot_final = models.TextField(null=True, blank=True, verbose_name="Lot")
     block_final = models.CharField(
         max_length=500, null=True, blank=True, verbose_name="Block")
+    map_book_final = models.CharField(
+        max_length=100, blank=True, verbose_name="Map Book")
+    map_book_page_final = models.CharField(
+        max_length=100, blank=True, verbose_name="Map Book Page")
     seller_final = models.CharField(
         max_length=1200, null=True, blank=True, verbose_name="Seller name")
     buyer_final = models.CharField(
@@ -354,6 +370,8 @@ class ZooniverseSubject(models.Model):
         self.addition_final = self.get_final_value('addition')
         self.lot_final = self.get_final_value('lot')
         self.block_final = self.get_final_value('block')
+        self.map_book = self.get_final_value('map_book')
+        self.map_book_page = self.get_final_value('map_book_page')
         self.seller_final = self.get_final_value('seller')
         self.buyer_final = self.get_final_value('buyer')
         self.match_type_final = self.get_final_value('match_type')
@@ -468,6 +486,8 @@ class ZooniverseResponseProcessed(models.Model):
     addition = models.CharField(max_length=500, null=True, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
+    map_book = models.CharField(max_length=100, blank=True)
+    map_book_page = models.CharField(max_length=100, blank=True)
     city = models.CharField(max_length=500, null=True, blank=True)  # When addition/block/lot not available in workflow
     seller = models.CharField(max_length=1200, null=True, blank=True)
     buyer = models.CharField(max_length=1200, null=True, blank=True)
@@ -538,6 +558,8 @@ class ManualCorrection(models.Model):
     addition = models.CharField(max_length=500, null=True, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
+    map_book = models.CharField(max_length=100, blank=True)
+    map_book_page = models.CharField(max_length=100, blank=True)
     seller = models.CharField(max_length=500, null=True, blank=True)
     buyer = models.CharField(max_length=500, null=True, blank=True)
     deed_date = models.DateField(null=True, blank=True)
@@ -685,6 +707,8 @@ class AllCovenantedDocsManualCovenantManager(models.Manager):
             add_cov=F('addition'),
             block_cov=F('block'),
             lot_cov=F('lot'),
+            map_book=F('map_book'),
+            map_page=F('map_book'),
             join_strgs=F('join_candidates'),
             dt_updated=F('date_updated'),
             # cov_type_manual=Value('manual'),
@@ -710,7 +734,8 @@ class ManualCovenant(models.Model):
     addition = models.CharField(max_length=500, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
-    # parcel_pin_link = models.CharField(max_length=50, null=True, blank=True)
+    map_book = models.CharField(max_length=100, blank=True)
+    map_book_page = models.CharField(max_length=100, blank=True)
     seller = models.CharField(max_length=500, blank=True)
     buyer = models.CharField(max_length=500, blank=True)
     deed_date = models.DateField(null=True, blank=True)
