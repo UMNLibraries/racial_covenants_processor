@@ -250,6 +250,10 @@ class Command(BaseCommand):
             sa_engine, 'lot', question_lookup, workflow=workflow)
         block_df = self.sql_df_writer_text(
             sa_engine, 'block', question_lookup, workflow=workflow)
+        map_book_df = self.sql_df_writer_text(
+            sa_engine, 'map_book', question_lookup, workflow=workflow)
+        map_book_page_df = self.sql_df_writer_text(
+            sa_engine, 'map_book_page', question_lookup, workflow=workflow)
         city_df = self.sql_df_writer_text(
             sa_engine, 'city', question_lookup, workflow=workflow)
         seller_df = self.sql_df_writer_text(
@@ -279,6 +283,10 @@ class Command(BaseCommand):
             lot_df, how="left", on="zoon_subject_id"
         ).merge(
             block_df, how="left", on="zoon_subject_id"
+        ).merge(
+            map_book_df, how="left", on="zoon_subject_id"
+        ).merge(
+            map_book_page_df, how="left", on="zoon_subject_id"
         ).merge(
             city_df, how="left", on="zoon_subject_id"
         ).merge(
@@ -311,6 +319,8 @@ class Command(BaseCommand):
             'addition_score',
             'lot_score',
             'block_score',
+            'map_book_score',
+            'map_book_page_score',
             'city_score',
             'seller_score',
             'buyer_score',
@@ -380,7 +390,7 @@ class Command(BaseCommand):
 
         # Fill NAs in text fields with empty strings
         string_fields = ['covenant_text', 'addition',
-                         'lot', 'block', 'city', 'seller', 'buyer']
+                         'lot', 'block', 'map_book', 'map_book_page', 'city', 'seller', 'buyer']
         final_df[string_fields] = final_df[string_fields].fillna('')
 
         final_df.drop(columns=['year', 'month', 'day'], inplace=True)
@@ -394,7 +404,7 @@ class Command(BaseCommand):
         final_df['bool_parcel_match'] = False
 
         # Set initial "final" values
-        for field in ['bool_covenant', 'covenant_text', 'addition', 'lot', 'block', 'city', 'seller', 'buyer', 'match_type', 'bool_handwritten', 'deed_date']:
+        for field in ['bool_covenant', 'covenant_text', 'addition', 'lot', 'block', 'map_book', 'map_book_page', 'city', 'seller', 'buyer', 'match_type', 'bool_handwritten', 'deed_date']:
             final_df[f'{field}_final'] = final_df[field]
 
         print(final_df)
@@ -462,9 +472,6 @@ class Command(BaseCommand):
             'id': 'response_raw_id'
         })
 
-        # TEMP TEMP TEMP
-        print(question_lookup)
-
         for attr in [
             'bool_covenant',
             'bool_handwritten',
@@ -473,6 +480,8 @@ class Command(BaseCommand):
             'block',
             'city',
             'lot',
+            'map_book',
+            'map_book_page',
             'seller',
             'buyer',
             'match_type'
@@ -480,27 +489,6 @@ class Command(BaseCommand):
             if attr in question_lookup:
                 df[attr] = df['annotations'].apply(
                     lambda x: self.anno_accessor(x, question_lookup[attr]))
-
-        # df['bool_covenant'] = df['annotations'].apply(
-        #     lambda x: self.anno_accessor(x, question_lookup['bool_covenant']))
-        # df['bool_handwritten'] = df['annotations'].apply(
-        #     lambda x: self.anno_accessor(x, question_lookup['bool_handwritten']))
-        # df['covenant_text'] = df['annotations'].apply(
-        #     lambda x: self.anno_accessor(x, question_lookup['covenant_text']))
-        # df['addition'] = df['annotations'].apply(
-        #     lambda x: self.anno_accessor(x, question_lookup['addition']))
-        # df['block'] = df['annotations'].apply(
-        #     lambda x: self.anno_accessor(x, question_lookup['block']))
-        # df['city'] = df['annotations'].apply(
-        #     lambda x: self.anno_accessor(x, question_lookup['city']))
-        # df['lot'] = df['annotations'].apply(
-        #     lambda x: self.anno_accessor(x, question_lookup['lot']))
-        # df['seller'] = df['annotations'].apply(
-        #     lambda x: self.anno_accessor(x, question_lookup['seller']))
-        # df['buyer'] = df['annotations'].apply(
-        #     lambda x: self.anno_accessor(x, question_lookup['buyer']))
-        # df['match_type'] = df['annotations'].apply(
-        #     lambda x: self.anno_accessor(x, question_lookup['match_type']))
 
         df['deed_date_year'] = df['annotations'].apply(
             lambda x: self.anno_accessor(x, question_lookup['deed_date']['year']))
@@ -511,7 +499,6 @@ class Command(BaseCommand):
         df['deed_date_day'] = df['annotations'].apply(
             lambda x: self.anno_accessor(x, question_lookup['deed_date']['day']))
     
-
         # Clear invalid values in date fields caused by weird input
         df.loc[df['deed_date_year'].apply(lambda x: type(x)) == dict, 'deed_date_year'] = 'Bad value'
         df.loc[df['deed_date_month'].apply(lambda x: type(x)) == dict, 'deed_date_month'] = 'Bad value'

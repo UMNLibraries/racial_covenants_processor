@@ -39,6 +39,8 @@ class Command(BaseCommand):
                 'addition',
                 'lot',
                 'block',
+                'map_book',
+                'map_book_page',
                 'seller',
                 'buyer',
                 'deed_date',
@@ -59,28 +61,3 @@ class Command(BaseCommand):
             insert_count = ManualCovenant.objects.from_csv(
                 infile, mapping=mapping, static_mapping=static_mapping)
             print("{} records inserted".format(insert_count))
-
-# class ManualCovenant(models.Model):
-#     workflow = models.ForeignKey(
-#         ZooniverseWorkflow, on_delete=models.CASCADE, null=True)
-#     bool_confirmed = models.BooleanField(default=False)
-#     covenant_text = models.TextField(blank=True)
-#     addition = models.CharField(max_length=500, blank=True)
-#     lot = models.TextField(blank=True)
-#     block = models.CharField(max_length=500, blank=True)
-#     seller = models.CharField(max_length=500, blank=True)
-#     buyer = models.CharField(max_length=500, blank=True)
-#     deed_date = models.DateField(null=True, blank=True)
-#     doc_num = models.CharField(blank=True, max_length=100, db_index=True)
-
-#     city = models.CharField(max_length=500, null=True, blank=True, verbose_name="City")
-
-#     cov_type = models.CharField(choices=MANUAL_COV_OPTIONS, max_length=4, null=True, blank=True)
-#     comments = models.TextField(null=True, blank=True)
-
-#     join_candidates = models.JSONField(null=True, blank=True)
-#     parcel_matches = models.ManyToManyField('parcel.Parcel')
-#     bool_parcel_match = models.BooleanField(default=False, verbose_name="Parcel match?")
-
-#     date_added = models.DateTimeField(auto_now_add=True)
-#     date_updated = models.DateTimeField(auto_now=True)

@@ -36,6 +36,8 @@ class CovenantsParcelManager(models.Manager):
             'addition_final',
             'lot_final',
             'block_final',
+            'map_book_final',
+            'map_book_page_final',
             'seller_final',
             'buyer_final',
             'deed_date_final',
@@ -233,6 +235,32 @@ class CovenantsParcelManager(models.Manager):
                 When(
                     Exists(oldest_deed_manual),
                     then=Subquery(oldest_deed_manual.values('lot'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
+        ).annotate(
+            map_book=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('map_book_final'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('map_book'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
+        ).annotate(
+            map_page=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('map_book_page_final'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('map_book_page'))
                 ),
                 default=Value(''),
                 output_field=CharField()
