@@ -242,6 +242,7 @@ class SubjectAdmin(admin.ModelAdmin):
         ('Final values', {
             'fields': (
                 'get_permalink',
+                'deedpage_s3_lookup',
                 'bool_covenant_final',
                 'bool_parcel_match',
                 'bool_handwritten_final',
@@ -332,6 +333,7 @@ class SubjectAdmin(admin.ModelAdmin):
         'deed_date_year_score',
         'deed_date_month_score',
         'deed_date_day_score',
+        'deedpage_s3_lookup',
     ]
 
     def get_parcel_match_count(self, obj):
