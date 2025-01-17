@@ -195,7 +195,7 @@ class ZooniverseSubject(models.Model):
 
     # Data used to join back to deedpage
     deedpage_pk = models.IntegerField(null=True, blank=True)
-    deedpage_doc_num = models.CharField(max_length=25, null=True, blank=True)
+    deedpage_doc_num = models.CharField(max_length=50, null=True, blank=True)
     deedpage_s3_lookup = models.CharField(max_length=255, null=True, blank=True)
 
     # Scores, also from the reducers
@@ -486,8 +486,8 @@ class ZooniverseResponseProcessed(models.Model):
     addition = models.CharField(max_length=500, null=True, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
-    map_book = models.CharField(max_length=100, blank=True)
-    map_book_page = models.CharField(max_length=100, blank=True)
+    map_book = models.CharField(max_length=100, null=True, blank=True)
+    map_book_page = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=500, null=True, blank=True)  # When addition/block/lot not available in workflow
     seller = models.CharField(max_length=1200, null=True, blank=True)
     buyer = models.CharField(max_length=1200, null=True, blank=True)
