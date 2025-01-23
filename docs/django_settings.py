@@ -19,9 +19,17 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'haystack',
     # custom apps:
     "apps.deed",
     "apps.parcel",
     "apps.plat",
     "apps.zoon",
 ]
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+        'URL': 'http://127.0.0.1:8983/solr/tester',
+    }
+}
