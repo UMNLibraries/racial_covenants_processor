@@ -15,6 +15,35 @@ Often deed images are stored on a local machine or network drive, and it's not f
 
 - `mp-upload-deed-images-standalone <https://github.com/UMNLibraries/mp-upload-deed-images-standalone>`_
 
+S3 bucket folders
+------------------
+
+Results of initial processing are stored in an S3 bucket with a specific folder structure
+
+.. list-table:: S3 folder structure
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Folder name
+     - Description
+   * - /raw
+     - Original images, may be in multiple image formats
+   * - /ocr/txt
+     - A text blob of each line of words extracted from Textract OCR JSON
+   * - /ocr/json
+     - Original OCR JSON object created by Textract
+   * - /ocr/stats
+     - JSON file with basic info about document, including handwriting percentage and web UUID in filename, which is needed to identify corresponding web image
+   * - /ocr/hits
+     - NDJSON object containing info about what terms found and on what line number. Only exists if a term is found. Basic literal search (no fuzziness)
+   * - /ocr/hits_fuzzy
+     - NDJSON object containing info about what terms found and on what line number. Only exists if a term is found. Fuzzy search with variable fuzziness allowed by term
+   * - /web
+     - Web-optimized JPEG with watermark, uses UUID instead of s3_lookup to prevent scraping, since these files are publicly readable
+   * - /web_highlighted
+     - Web-optimized JPEG with watermark, uses UUID instead of s3_lookup to prevent scraping, since these files are publicly readable
+
+
 DeedPageProcessor step function components
 ------------------------------------------
 

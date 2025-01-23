@@ -99,6 +99,7 @@ class ResponseInline(admin.TabularInline):
     readonly_fields = [
         'bool_covenant', 'covenant_text', 'addition',
         'lot', 'block', 'city', 'seller',
+        'map_book', 'map_book_page',
         'buyer', 'deed_date_year', 'deed_date_month', 'deed_date_day', 'user_name', 'created_at', 'match_type', 'bool_handwritten'
     ]
 
