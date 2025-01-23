@@ -8,5 +8,6 @@ django-localflavor
 django-admin-rangefilter
 djangorestframework
 djangorestframework-gis
+django-haystack
 sphinx_rtd_theme
 sphinxcontrib_django
