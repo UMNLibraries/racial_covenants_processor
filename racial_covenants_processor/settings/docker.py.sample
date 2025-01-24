@@ -2,6 +2,9 @@ import os
 
 DEBUG = False
 
+PUBLIC_URL_ROOT = 'https://www.yourdomainhere.com/'
+CSRF_TRUSTED_ORIGINS = [PUBLIC_URL_ROOT]
+
 GDAL_LIBRARY_PATH = None
 GEOS_LIBRARY_PATH = None
 
