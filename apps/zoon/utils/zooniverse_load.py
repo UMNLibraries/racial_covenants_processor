@@ -27,7 +27,6 @@ def get_full_url(url_prefix, file_name):
     except:
         return ''
 
-
 def int_str_or_blank(value):
     try:
         return str(int(value))
