@@ -102,8 +102,8 @@ class AllCovenantedDocsZooniverseManager(models.Manager):
             add_cov=F('addition_final'),
             block_cov=F('block_final'),
             lot_cov=F('lot_final'),
-            map_book=F('map_book_final'),
-            map_page=F('map_book_page_final'),
+            # map_book=F('map_book_final'),  # Need to rename with pd
+            # map_page=F('map_book_page_final'),  # Need to rename with pd
             join_strgs=F('join_candidates'),
             # city_cov=F('city_final'),
             # seller=F('seller_final'),  # Need to rename with pd
@@ -707,8 +707,8 @@ class AllCovenantedDocsManualCovenantManager(models.Manager):
             add_cov=F('addition'),
             block_cov=F('block'),
             lot_cov=F('lot'),
-            map_book=F('map_book'),
-            map_page=F('map_book'),
+            # map_book=F('map_book'),
+            # map_page=F('map_page'),
             join_strgs=F('join_candidates'),
             dt_updated=F('date_updated'),
             # cov_type_manual=Value('manual'),

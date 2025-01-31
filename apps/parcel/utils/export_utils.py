@@ -309,8 +309,8 @@ def build_all_covenanted_docs_df(workflow):
         'add_cov',
         'block_cov',
         'lot_cov',
-        'map_book',
-        'map_page',
+        'map_book_final',  # Need to rename with pd
+        'map_book_page_final',  # Need to rename with pd
         'join_strgs',
         'mapped_address',
         'mapped_city',
@@ -342,7 +342,7 @@ def build_all_covenanted_docs_df(workflow):
         'block_cov',
         'lot_cov',
         'map_book',
-        'map_page',
+        'map_book_page',
         'join_strgs',
         'mapped_address',
         'mapped_city',
@@ -364,6 +364,8 @@ def build_all_covenanted_docs_df(workflow):
     zoon_covenanted_docs_expanded_df = pd.DataFrame(zoon_covenanted_subjects)
     zoon_covenanted_docs_expanded_df.rename(columns={
         'deed_date_final': 'deed_date',
+        'map_book_final': 'map_book',
+        'map_book_page_final': 'map_page',
         'seller_final': 'seller',
         'buyer_final': 'buyer',
         'city_final': 'city',
@@ -373,7 +375,10 @@ def build_all_covenanted_docs_df(workflow):
     manual_covenanted_docs_expanded_df = pd.DataFrame(all_manual_covenants)
     
     manual_covenanted_docs_expanded_df.rename(
-        columns={'cov_type': 'match_type'}, inplace=True
+        columns={
+            'cov_type': 'match_type',
+            'map_book_page': 'map_page',
+        }, inplace=True
     )
     manual_covenanted_docs_expanded_df['image_ids'] = ''
     manual_covenanted_docs_expanded_df['cov_type'] = 'manual'
