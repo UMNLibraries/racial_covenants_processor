@@ -181,8 +181,8 @@ class ZooniverseSubject(models.Model):
     lot = models.TextField(blank=True)
     block = models.CharField(max_length=502, blank=True)
 
-    map_book = models.CharField(max_length=100, blank=True)
-    map_book_page = models.CharField(max_length=100, blank=True)
+    map_book = models.CharField(max_length=255, blank=True)
+    map_book_page = models.CharField(max_length=255, blank=True)
 
     city = models.CharField(max_length=503, blank=True)
     seller = models.CharField(max_length=1200, blank=True)
@@ -233,9 +233,9 @@ class ZooniverseSubject(models.Model):
     block_final = models.CharField(
         max_length=500, null=True, blank=True, verbose_name="Block")
     map_book_final = models.CharField(
-        max_length=100, blank=True, verbose_name="Map Book")
+        max_length=255, blank=True, verbose_name="Map Book")
     map_book_page_final = models.CharField(
-        max_length=100, blank=True, verbose_name="Map Book Page")
+        max_length=255, blank=True, verbose_name="Map Book Page")
     seller_final = models.CharField(
         max_length=1200, null=True, blank=True, verbose_name="Seller name")
     buyer_final = models.CharField(
@@ -486,8 +486,8 @@ class ZooniverseResponseProcessed(models.Model):
     addition = models.CharField(max_length=500, null=True, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
-    map_book = models.CharField(max_length=100, null=True, blank=True)
-    map_book_page = models.CharField(max_length=100, null=True, blank=True)
+    map_book = models.CharField(max_length=255, null=True, blank=True)
+    map_book_page = models.CharField(max_length=255, null=True, blank=True)
     city = models.CharField(max_length=500, null=True, blank=True)  # When addition/block/lot not available in workflow
     seller = models.CharField(max_length=1200, null=True, blank=True)
     buyer = models.CharField(max_length=1200, null=True, blank=True)
@@ -558,8 +558,8 @@ class ManualCorrection(models.Model):
     addition = models.CharField(max_length=500, null=True, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
-    map_book = models.CharField(max_length=100, blank=True)
-    map_book_page = models.CharField(max_length=100, blank=True)
+    map_book = models.CharField(max_length=255, blank=True)
+    map_book_page = models.CharField(max_length=255, blank=True)
     seller = models.CharField(max_length=500, null=True, blank=True)
     buyer = models.CharField(max_length=500, null=True, blank=True)
     deed_date = models.DateField(null=True, blank=True)
@@ -734,8 +734,8 @@ class ManualCovenant(models.Model):
     addition = models.CharField(max_length=500, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
-    map_book = models.CharField(max_length=100, blank=True)
-    map_book_page = models.CharField(max_length=100, blank=True)
+    map_book = models.CharField(max_length=255, blank=True)
+    map_book_page = models.CharField(max_length=255, blank=True)
     seller = models.CharField(max_length=500, blank=True)
     buyer = models.CharField(max_length=500, blank=True)
     deed_date = models.DateField(null=True, blank=True)

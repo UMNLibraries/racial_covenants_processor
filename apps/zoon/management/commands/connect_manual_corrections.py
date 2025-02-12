@@ -103,6 +103,8 @@ class Command(BaseCommand):
         self.set_string_final(workflow, 'addition')
         self.set_string_final(workflow, 'lot')
         self.set_string_final(workflow, 'block')
+        self.set_string_final(workflow, 'map_book')
+        self.set_string_final(workflow, 'map_book_page')
         self.set_string_final(workflow, 'seller')
         self.set_string_final(workflow, 'buyer')
         self.set_string_final(workflow, 'match_type')
@@ -118,6 +120,8 @@ class Command(BaseCommand):
             addition_final=F('addition'),
             lot_final=F('lot'),
             block_final=F('block'),
+            map_book_final=F('map_book'),
+            map_book_page_final=F('map_book_page'),
             seller_final=F('seller'),
             buyer_final=F('buyer'),
             deed_date_final=F('deed_date'),

@@ -2,6 +2,7 @@ import os
 import boto3
 
 from django.core.management.base import BaseCommand
+from django.db.models.functions import Coalesce
 from django.conf import settings
 
 from racial_covenants_processor.storage_backends import PrivateMediaStorage
@@ -91,6 +92,7 @@ class Command(BaseCommand):
             if image not in ['', None]:
                 expanded_subject_image_set[os.path.basename(image.replace(
                     '.png', '.jpg'))] = subject['id']
+                # TODO: Alternate option for highlighted?
 
         return expanded_subject_image_set
 
@@ -105,8 +107,15 @@ class Command(BaseCommand):
         '''
 
         # Build a lookup dict for the DeedImage objects for comparison to subject_image_lookup so we only loop through necessary DeedPage objects
+
+        # TODO: Need to figure out option for highlight image. coalesce between page_image_web and page_image_web_highlighted before building looking
+
+        dp_values = deed_pages.annotate(
+            page_image_web_coalesced=Coalesce('page_image_web_highlighted', 'page_image_web')
+        ).values('id', 'page_image_web_coalesced')
+
         deed_pages_lookup = {os.path.basename(
-            page['page_image_web']): page['id'] for page in deed_pages.values('id', 'page_image_web')}
+            page['page_image_web_coalesced']): page['id'] for page in dp_values}
 
         common_keys = [key for key in deed_pages_lookup.keys()
                        & subject_image_lookup.keys()]
@@ -115,11 +124,13 @@ class Command(BaseCommand):
             key: deed_pages_lookup[key] for key in common_keys}
 
         pages_to_update = []
-        for dp in deed_pages.filter(id__in=deed_pages_lookup_filtered.values()):
+        for dp in deed_pages.annotate(
+            page_image_web_coalesced=Coalesce('page_image_web_highlighted', 'page_image_web')
+        ).filter(id__in=deed_pages_lookup_filtered.values()):
             setattr(
                 dp,
                 f'zooniverse_subject_{page}_page_id',
-                subject_image_lookup[os.path.basename(str(dp.page_image_web))]
+                subject_image_lookup[os.path.basename(str(dp.page_image_web_coalesced))]
             )
             pages_to_update.append(dp)
 

@@ -247,6 +247,8 @@ class Command(BaseCommand):
         ]]
         df['total_votes'] = self.batch_config['zooniverse_config']['num_to_retire']
 
+        print(df['task_id'].value_counts())
+
         print('Sending reducer TEXT results to Django ...')
         sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
         df.to_sql('zoon_reducedresponse_text',
@@ -279,3 +281,4 @@ class Command(BaseCommand):
                 self.batch_dir, workflow_slug, master_config)
             self.load_texts_reduced(
                 self.batch_dir, workflow_slug, master_config)
+            
