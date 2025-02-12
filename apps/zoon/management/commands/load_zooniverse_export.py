@@ -334,6 +334,8 @@ class Command(BaseCommand):
         month_lookup = question_lookup['month_lookup']
         final_df['deed_date'] = final_df.apply(
             lambda row: self.parse_deed_date(row, month_lookup), axis=1)
+        
+        print(final_df['bool_covenant'].value_counts(dropna=False))
 
         # Parse bool_covenant and "I can't figure this out"
         final_df['bool_problem'] = False
@@ -408,6 +410,8 @@ class Command(BaseCommand):
             final_df[f'{field}_final'] = final_df[field]
 
         print(final_df)
+
+        print(final_df['bool_covenant'].value_counts(dropna=False))
 
         print('Sending consolidated subject results to Django ...')
 
