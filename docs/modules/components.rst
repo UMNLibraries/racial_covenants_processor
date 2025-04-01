@@ -57,6 +57,7 @@ The individual lambda functions that make up the OCR, term search and web image 
 - :ref:`mp-covenants-split-pages`
 - :ref:`mp-covenants-ocr-page`
 - :ref:`mp-covenants-term-search-basic`
+- :ref:`mp-covenants-term-search-fuzzy`
 - :ref:`mp-covenants-resize-image`
 
 
@@ -74,6 +75,7 @@ TermSearchRefresh step function components
 This step function is triggered by the Django management command `trigger_term_search_refresh`. Lambda function for term search is stored in a separate repository and is identical to above:
 
 - :ref:`mp-covenants-term-search-basic`
+- :ref:`mp-covenants-term-search-fuzzy`
 
 
 DeedPageProcessorFAKEOCR step function components
@@ -89,5 +91,6 @@ This step function is triggered by the Django management command `trigger_lambda
 
 - :ref:`mp-covenants-fake-ocr`
 - :ref:`mp-covenants-term-search-basic`
+- :ref:`mp-covenants-term-search-fuzzy`
 - :ref:`mp-covenants-resize-image`
 
