@@ -100,17 +100,17 @@ class Command(BaseCommand):
             for s_info_lookup in s_info_lookups:
                 s_df = pd.read_csv(s_info_lookup['data_csv'], dtype='object')
 
-                join_field_supp = s_info_lookup['join_field_supp']
+                join_fields_supp = s_info_lookup['join_fields_supp']
 
                 # choose columns to keep
-                cols_to_keep = list(s_info_lookup['mapping'].values()) + [join_field_supp]
+                cols_to_keep = list(set(list(s_info_lookup['mapping'].values()) + join_fields_supp))
                 # drop unneeded columns
                 s_df = s_df[cols_to_keep].drop_duplicates()
 
                 # Avoid dropping join fields with the same name by renaming now
-                if s_info_lookup['join_field_deed'] == join_field_supp:
-                    s_df.rename(columns={join_field_supp: join_field_supp + '_right'}, inplace=True)
-                    join_field_supp = join_field_supp + '_right'
+                if s_info_lookup['join_fields_deed'] == join_fields_supp:
+                    s_df.rename(columns={field: field + '_right' for field in join_fields_supp}, inplace=True)
+                    join_fields_supp = [field + '_right' for field in join_fields_supp]
 
                 # rename to django col names, reverse keys and items for this step, but keep mapping in this order for consistency with other values being set in local_settings
                 inv_map = {v: k for k, v in s_info_lookup['mapping'].items()}
@@ -118,19 +118,17 @@ class Command(BaseCommand):
                 page_data_df = page_data_df.merge(
                     s_df,
                     how="left",
-                    left_on=s_info_lookup['join_field_deed'],
-                    right_on=join_field_supp
+                    left_on=s_info_lookup['join_fields_deed'],
+                    right_on=join_fields_supp
                 )
 
-                page_data_df.drop(columns=[join_field_supp], inplace=True)
+                page_data_df.drop(columns=join_fields_supp, inplace=True)
 
                 # coalesce
                 for field in list(s_info_lookup['mapping'].keys()):
                     if f'{field}_x' in page_data_df.columns:
                         page_data_df[field] = page_data_df[f'{field}_x'].combine_first(page_data_df[f'{field}_y'])
                         page_data_df.drop(columns=[f'{field}_x', f'{field}_y'], inplace=True)
-
-            print(page_data_df)
 
             return page_data_df
         else:
@@ -223,10 +221,6 @@ class Command(BaseCommand):
 
         deed_pages_df = self.add_merge_fields(deed_pages_df, workflow)
         deed_pages_df = self.add_supplemental_info(deed_pages_df, workflow)
-
-        # Fill na on optional fields
-        if 'batch_id' in deed_pages_df.columns:
-            deed_pages_df[['batch_id']] = deed_pages_df[['batch_id']].fillna('')
 
         # Drop duplicates again just in case
         deed_pages_df = deed_pages_df.drop_duplicates(subset=['s3_lookup'])

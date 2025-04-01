@@ -46,14 +46,15 @@ def pagination_merge(match_df, doc_list_df, doc_or_book_selector='doc_num', offs
     match_df = match_df.merge(
         doc_list_df[[
             'doc_type',
+            'batch_id',
             doc_or_book_selector,
             f'{split_str}page_num_right',
             new_image_field,
             new_image_lookup_field
         ]],
         how="left",
-        left_on=["doc_type", doc_or_book_selector, f"{split_str}page_num_{offset}"],
-        right_on=["doc_type", doc_or_book_selector, f"{split_str}page_num_right"]
+        left_on=["doc_type", "batch_id", doc_or_book_selector, f"{split_str}page_num_{offset}"],
+        right_on=["doc_type", "batch_id", doc_or_book_selector, f"{split_str}page_num_right"]
     ).drop(columns=[f"{split_str}page_num_right"]).drop_duplicates(subset=['s3_lookup'])
 
     return match_df
@@ -82,6 +83,11 @@ def paginate_deedpage_df(df, matches_only=False):
     if "doc_type" not in df.columns:
         df["doc_type"] = ''
 
+    if 'batch_id' in df.columns:
+        df['batch_id'].fillna('', inplace=True)
+    else:
+        df['batch_id'] = ''
+
     # If doc_num is null, use doc_type/book/page as doc_num
     if "doc_num" not in df.columns:
         df["doc_num"] = ''
@@ -98,7 +104,7 @@ def paginate_deedpage_df(df, matches_only=False):
 
     # Drop duplicates for non-unique doc_num, book_id, page_num, split_page combos
     print("Dropping duplicate doc/page/split page combos...")
-    df = df.drop_duplicates(subset=['doc_type', 'doc_num', 'book_id', 'page_num', 'split_page_num'])
+    df = df.drop_duplicates(subset=['doc_type', 'batch_id', 'doc_num', 'book_id', 'page_num', 'split_page_num'])
 
     # Tag docs with page count by doc_num
     print('Tagging doc num page counts...')
@@ -115,6 +121,7 @@ def paginate_deedpage_df(df, matches_only=False):
         # 'pk',
         's3_lookup',
         'doc_type',
+        'batch_id',
         'doc_num',
         'book_id',
         'page_num',
