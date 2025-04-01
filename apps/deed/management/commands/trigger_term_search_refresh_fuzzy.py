@@ -246,6 +246,8 @@ class Command(BaseCommand):
         self.term_test_result_path = os.path.join(
             settings.BASE_DIR, 'data', 'main_exports', f"{workflow_slug}_fuzzy_term_search_update_{now}.csv")
         
+        os.makedirs(os.path.join(settings.BASE_DIR, 'data', 'main_exports'), exist_ok=True)
+        
         with open(self.term_test_result_path, 'w') as done_manifest:
             done_manifest.write("workflow,s3_lookup,page_ocr_text,bool_basic_match,bool_fuzzy_match,fuzzy_match_json,test_status,match_context\n")
 

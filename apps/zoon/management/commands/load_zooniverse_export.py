@@ -353,7 +353,8 @@ class Command(BaseCommand):
             "I can't figure this out.",
             "I can't figure this out. ",
             "There are multiple covenants on this page.",
-            "There are multiple racial covenants on this page."
+            "There are multiple racial covenants on this page.",
+            "There are multiple documents with racial covenants on this page."
         ]), 'bool_covenant'] = None
         final_df.loc[final_df['bool_covenant']
                      == "Yes", 'bool_covenant'] = True
