@@ -1,0 +1,7 @@
+workflow_slug,doc_alt_id,batch_id,public_uuid,s3_lookup,page_image_web
+mn-test-county,197196554556,img1971a,uuid1,mn-test-county/img1971a/197196554556,foo1.jpg
+mn-test-county,197196554557,img1971a,uuid2,mn-test-county/img1971a/197196554557,foo2.jpg
+mn-test-county,197196554558,img1971a,uuid3,mn-test-county/img1971a/197196554558,foo3.jpg
+mn-test-county,197196554556,img1971b,uuid4,mn-test-county/img1971b/197196554556,foo4.jpg
+mn-test-county,197196554557,img1971b,uuid5,mn-test-county/img1971b/197196554557,foo5.jpg
+mn-test-county,197196554558,img1971b,uuid6,mn-test-county/img1971b/197196554558,foo6.jpg

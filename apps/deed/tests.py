@@ -1,13 +1,79 @@
+import os
 import pandas as pd
 
 from django.test import TestCase, override_settings
+from django.core import management
+from django.conf import settings
 
 from apps.deed.models import DeedPage
 from apps.zoon.models import ZooniverseWorkflow
 
 from apps.deed.management.commands.run_term_search_test import Command as TermSearchTest
-from apps.deed.utils.deed_pagination import tag_prev_next_image_sql, tag_doc_num_page_counts
+from apps.deed.utils.deed_pagination import tag_prev_next_image_sql, tag_doc_num_page_counts, paginate_deedpage_df
 from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest
+
+
+TEST_SUPPLEMENTAL_DATA_SETTINGS = {
+    'MN Test County': {
+        'zoon_workflow_id': 13143,
+        'zoon_workflow_version': 4.1,
+        'deed_supplemental_info': [
+            {
+                'data_csv': os.path.join(settings.BASE_DIR, '../apps/deed/fixtures/supplement_test_supplemental.csv'),
+                'join_fields_deed': ['doc_alt_id', 'batch_id'],
+                'join_fields_supp': ['doc_alt_id', 'batch_id'],
+                'mapping': {
+                    'doc_num': 'doc_num',
+                    'batch_id': 'batch_id',
+                    'book_id': 'book_id',
+                    'page_num': 'page_num',
+                    'doc_date': 'doc_date',
+                }
+            }
+        ]
+    }
+}
+
+@override_settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_SUPPLEMENTAL_DATA_SETTINGS)
+class SupplementalJoinTests(TestCase):
+    fixtures = ['deed', 'zoon']
+    
+    def test_supplemental_method(self):
+        workflow = ZooniverseWorkflow.objects.get(pk=1)
+        from apps.deed.management.commands.gather_deed_images import Command
+        test_command = Command()
+
+        page_data_df = pd.read_csv(os.path.join(settings.BASE_DIR, '../apps/deed/fixtures/supplement_test_dps.csv'), dtype=str)
+        
+        merged_df = test_command.add_supplemental_info(page_data_df, workflow)
+
+        assert merged_df.shape[0] == page_data_df.shape[0]
+        assert merged_df[
+            (merged_df['doc_alt_id'] == '197196554556') & (merged_df['batch_id'] == 'img1971a')
+        ].iloc[0].doc_num == 'img1971a Book 6554 Page 556'
+        assert merged_df[
+            (merged_df['doc_alt_id'] == '197196554556') & (merged_df['batch_id'] == 'img1971b')
+        ].iloc[0].doc_num == 'img1971b Book 6554 Page 556'
+
+        paginated_df = paginate_deedpage_df(merged_df)
+
+        print(paginated_df)
+
+        assert paginated_df[
+            paginated_df['s3_lookup'] == 'mn-test-county/img1971a/197196554556'
+        ].iloc[0].next_page_image_lookup == 'mn-test-county/img1971a/197196554557'
+
+        assert paginated_df[
+            paginated_df['s3_lookup'] == 'mn-test-county/img1971b/197196554556'
+        ].iloc[0].next_page_image_lookup == 'mn-test-county/img1971b/197196554557'
+
+        assert paginated_df[
+            paginated_df['s3_lookup'] == 'mn-test-county/img1971a/197196554557'
+        ].iloc[0].prev_page_image_lookup == 'mn-test-county/img1971a/197196554556'
+
+        assert paginated_df[
+            paginated_df['s3_lookup'] == 'mn-test-county/img1971b/197196554557'
+        ].iloc[0].prev_page_image_lookup == 'mn-test-county/img1971b/197196554556'
 
 
 class DeedPageSearchTermTestTests(TestCase):
