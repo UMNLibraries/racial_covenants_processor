@@ -1,4 +1,4 @@
-# import os
+import os
 import re
 import boto3
 import datetime
@@ -230,6 +230,33 @@ class Command(BaseCommand):
         deed_pages_df = paginate_deedpage_df(deed_pages_df)
 
         return deed_pages_df
+    
+    def save_unprocessed_deed_pages(self, workflow, df):
+        now = datetime.datetime.now()
+        timestamp = now.strftime('%Y%m%d_%H%M')
+        version_slug = f"{workflow.slug}_deedpages_{timestamp}"
+        out_deed_page_csv = os.path.join(
+            settings.BASE_DIR, 'data', 'main_exports', f"{version_slug}.csv")
+
+        df.to_csv(out_deed_page_csv, index=False)
+
+        return out_deed_page_csv
+    
+    def import_to_django_csv_copy(self, csv_path, workflow):
+
+        DeedPage.objects.from_csv(
+            csv_path,
+            static_mapping={
+                'bool_exception': False,
+                'bool_manual': False
+            }
+        )
+
+        image_obj_count = DeedPage.objects.filter(workflow=workflow).count()
+        print(f'Successfully created {image_obj_count} DeedPage objects.')
+
+        return image_obj_count
+
 
     def import_to_django(self, deed_pages_df, workflow):
 
@@ -254,5 +281,9 @@ class Command(BaseCommand):
 
             deed_page_df = self.build_django_objects(matching_keys, workflow)
 
-            image_objs = self.import_to_django(
-                deed_page_df, workflow)
+            out_csv_path = self.save_unprocessed_deed_pages(workflow, deed_page_df)
+
+            image_obj_count = self.import_to_django_csv_copy(out_csv_path, workflow)
+
+            # image_objs = self.import_to_django(
+            #     deed_page_df, workflow)

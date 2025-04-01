@@ -100,7 +100,7 @@ class Command(BaseCommand):
                     report_df.loc[~report_df[term].isna(), 'nonracial_term_count'] += report_df[term].apply(lambda x: self.split_or_1(x))
 
             report_df['deathcert_count'] = 0
-            death_certs = ['death certificate', 'certificate of death', 'date of death', 'name of deceased']
+            death_certs = ['death certificate', 'certificate of death', 'date of death', 'name of deceased', 'report of birth', 'certificate of hawaiian birth']
             for term in death_certs:
                 if term in report_df.columns:
                     print(report_df[term].apply(lambda x: self.split_or_1(x)))
@@ -108,12 +108,22 @@ class Command(BaseCommand):
                     report_df.loc[~report_df[term].isna(), 'deathcert_count'] += report_df[term].apply(lambda x: self.split_or_1(x))
 
             report_df['military_count'] = 0
-            military_terms = ['report of transfer', 'report of separation', 'transfer or discharge', 'blood group']
+            military_terms = ['report of transfer', 'report of separation', 'transfer or discharge', 'blood group', 'notice of separation', 'place of separation', 'rank and classification', 'service no', 'was discharged from', 'date enlisted', 'enlisted record', 'honorable discharge', 'warrant at time of discharge', 'special military qualifications']
+
             for term in military_terms:
                 if term in report_df.columns:
                     print(report_df[term].apply(lambda x: self.split_or_1(x)))
 
-                    report_df.loc[~report_df[term].isna(), 'military_count'] += report_df[term].apply(lambda x: self.split_or_1(x))               
+                    report_df.loc[~report_df[term].isna(), 'military_count'] += report_df[term].apply(lambda x: self.split_or_1(x))
+
+            report_df['misc_exception_count'] = 0
+            misc_exception_terms = ['minority business enterprise']
+
+            for term in misc_exception_terms:
+                if term in report_df.columns:
+                    print(report_df[term].apply(lambda x: self.split_or_1(x)))
+
+                    report_df.loc[~report_df[term].isna(), 'misc_exception_count'] += report_df[term].apply(lambda x: self.split_or_1(x))            
 
             # Set bool_match to True, unless there's a suspect value or combination
             report_df['bool_match'] = True
@@ -131,6 +141,10 @@ class Command(BaseCommand):
             # Military record is an exception no matter how many other terms found
             report_df.loc[report_df['military_count'] > 0, 'bool_match'] = False
             report_df.loc[report_df['military_count'] > 0, 'bool_exception'] = True
+
+            # Misc exceptions that are exception no matter how many other terms found
+            report_df.loc[report_df['misc_exception_count'] > 0, 'bool_match'] = False
+            report_df.loc[report_df['misc_exception_count'] > 0, 'bool_exception'] = True
 
             report_df.drop(columns=term_columns.columns, inplace=True)
             print(report_df)

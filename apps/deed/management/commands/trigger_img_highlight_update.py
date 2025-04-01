@@ -16,17 +16,28 @@ from apps.zoon.utils.zooniverse_config import get_workflow_obj
 class Command(BaseCommand):
     """ This command is used to test fuzzy search terms currently in use against a random sample of N OCR JSONS, and export a csv with pointers to the resulting files for easier checking"""
 
+    try:
+        profile_name = settings.AWS_PROFILE
+    except:
+        profile_name = 'default'
+
+    try:
+        region_name = settings.AWS_REGION_NAME
+    except:
+        region_name = 'us-east-2'
+
     session = boto3.Session(
              aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+             profile_name=profile_name,
+             region_name=region_name)
 
     s3 = session.resource('s3')
 
     bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
     s3_client = session.client('s3')
-    lambda_client = boto3.client('lambda')
-
+    lambda_client = session.client('lambda')
     term_test_result_path = None
 
     def add_arguments(self, parser):
