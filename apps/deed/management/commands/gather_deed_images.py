@@ -10,6 +10,7 @@ from pathlib import PurePath
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.db.models import Count
+from django.db import connection
 
 from apps.deed.models import DeedPage
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
@@ -25,6 +26,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
+        
+    def delete_existing_dps(self, workflow):
+        cursor = connection.cursor()
+        cursor.execute('''DELETE FROM app_recommendation WHERE workflow_id = %s''', [workflow.id])
+        cursor.close()
 
     def find_matching_keys(self, workflow):
         print("Finding matching s3 keys...")
@@ -275,7 +281,8 @@ class Command(BaseCommand):
             workflow = get_workflow_obj(workflow_name)
 
             print('Deleting old DeedPage records (but not their images)...')
-            DeedPage.objects.filter(workflow=workflow).delete()
+            # DeedPage.objects.filter(workflow=workflow).delete()
+            self.delete_existing_dps(workflow)
 
             matching_keys = self.find_matching_keys(workflow)
 
