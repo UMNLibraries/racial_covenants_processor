@@ -311,6 +311,7 @@ def tag_prev_next_image_sql(workflow, matches_only=False):
         'doc_type',
         'doc_num',
         'public_uuid',
+        'batch_id',
         'book_id',
         # 'doc_page_count',  # Generating duplicate at next stage. Could also drop in next stage before merging.
         'page_num',

@@ -1211,3 +1211,79 @@
         bool_exception: false
         matched_terms: []
         doc_page_count: null
+# contra costa pagination issue with duplicate book/page and different batch
+-   model: deed.deedpage
+    pk: 47
+    fields:
+        workflow: 1
+        s3_lookup: 'img1982a/19829B06098300.001'
+        doc_num: 'img1982a Book 11060 Page 983'
+        batch_id: 'img1982a'
+        book_id: 'B060'
+        page_num: 983
+        split_page_num: null
+        doc_date: null
+        doc_type: ''
+        public_uuid: 'justinsez'
+        page_image_web: 'web/img1982a/19829B06098300.001.jpg'
+        # page_image_web_highlighted: null
+        # prev_page_image_web: ''
+        # next_page_image_web: ''
+        # next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
+-   model: deed.deedpage
+    pk: 48
+    fields:
+        workflow: 1
+        s3_lookup: 'img1982g/19829B06098300.001'
+        doc_num: 'img1982g Book 11060 Page 983'
+        batch_id: 'img1982g'
+        book_id: 'B060'
+        page_num: 983
+        split_page_num: null
+        doc_date: null
+        doc_type: ''
+        public_uuid: 'justinsez'
+        page_image_web: 'web/img1982g/19829B06098300.001.jpg'
+        # page_image_web_highlighted: null
+        # prev_page_image_web: ''
+        # next_page_image_web: ''
+        # next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
+-   model: deed.deedpage
+    pk: 49
+    fields:
+        workflow: 1
+        s3_lookup: 'img1982g/19829B06098400.001'
+        doc_num: 'img1982g Book 11060 Page 984'
+        batch_id: 'img1982g'
+        book_id: 'B060'
+        page_num: 984
+        split_page_num: null
+        doc_date: null
+        doc_type: ''
+        public_uuid: 'justinsez'
+        page_image_web: 'web/img1982g/19829B06098400.001.jpg'
+        # page_image_web_highlighted: null
+        # prev_page_image_web: ''
+        # next_page_image_web: ''
+        # next_next_page_image_web: ''
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
