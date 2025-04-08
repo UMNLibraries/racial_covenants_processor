@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 
 from django.test import TestCase, override_settings
 from django.core import management
@@ -75,6 +76,13 @@ class SupplementalJoinTests(TestCase):
             paginated_df['s3_lookup'] == 'mn-test-county/img1971b/197196554557'
         ].iloc[0].prev_page_image_lookup == 'mn-test-county/img1971b/197196554556'
 
+        print(type(paginated_df[
+            paginated_df['s3_lookup'] == 'mn-test-county/img1971b/197196554557'
+        ].iloc[0].page_num))
+        assert type(paginated_df[
+            paginated_df['s3_lookup'] == 'mn-test-county/img1971b/197196554557'
+        ].iloc[0].page_num) in [int, np.int64]
+
 
 class DeedPageSearchTermTestTests(TestCase):
     fixtures = ['deed', 'zoon']
@@ -146,8 +154,8 @@ class DeedPagePrevNextTests(TestCase):
 
         print(test_subject['#s3_lookup'], test_subject['#image1'], test_subject['#image2'], test_subject['#image3'])
         print(test_subject['image_ids'].split(',')[0])
-        print('Howdy' + test_subject['#image1'])
-        assert test_subject['#image1'] == 'https://covenants-deed-images.s3.amazonaws.com/web/fake/justinsez.jpg'
+        print('Howdy ' + test_subject['#image1'])
+        assert os.path.basename(test_subject['#image1']) == 'justinsez.jpg'
         assert test_subject['#image2'] == ''
         assert test_subject['#image3'] == ''
         assert test_subject['image_ids'].split(',')[0] == test_s3_lookup

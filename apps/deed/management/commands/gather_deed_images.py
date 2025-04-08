@@ -6,15 +6,16 @@ import random
 import numpy as np
 import pandas as pd
 from pathlib import PurePath
+# from itertools import batched
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.db.models import Count
-from django.db import connection
 
 from apps.deed.models import DeedPage
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 from apps.deed.utils.deed_pagination import paginate_deedpage_df
+from apps.deed.utils.db_utils import queryset_iterator
 
 
 class Command(BaseCommand):
@@ -27,10 +28,19 @@ class Command(BaseCommand):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
         
+    def chunk_list(self, input_list, chunk_size):
+            return [input_list[i:i + chunk_size] for i in range(0, len(input_list), chunk_size)]
+        
     def delete_existing_dps(self, workflow):
-        cursor = connection.cursor()
-        cursor.execute('''DELETE FROM app_recommendation WHERE workflow_id = %s''', [workflow.id])
-        cursor.close()
+        print('Deleting old DeedPage records (but not their images)...')
+
+        dp_pks = DeedPage.objects.filter(workflow=workflow).values_list('pk', flat=True)
+        delete_count = 0
+        chunk_size = 10000
+        for chunk in self.chunk_list(dp_pks, chunk_size):
+            DeedPage.objects.filter(pk__in=chunk).delete()
+            delete_count += chunk_size
+            print(f"Deleted {delete_count} records...")
 
     def find_matching_keys(self, workflow):
         print("Finding matching s3 keys...")
@@ -250,6 +260,7 @@ class Command(BaseCommand):
     
     def import_to_django_csv_copy(self, csv_path, workflow):
 
+        print("Starting Django copy create...")
         DeedPage.objects.from_csv(
             csv_path,
             static_mapping={
@@ -264,14 +275,14 @@ class Command(BaseCommand):
         return image_obj_count
 
 
-    def import_to_django(self, deed_pages_df, workflow):
+    # def import_to_django(self, deed_pages_df, workflow):
 
-        print("Creating Django DeedPage objects...")
-        deed_pages = [DeedPage(**page_data) for page_data in deed_pages_df.to_dict('records')]
-        print("Starting Django bulk_create...")
-        DeedPage.objects.bulk_create(deed_pages, batch_size=10000)
+    #     print("Creating Django DeedPage objects...")
+    #     deed_pages = [DeedPage(**page_data) for page_data in deed_pages_df.to_dict('records')]
+    #     print("Starting Django bulk_create...")
+    #     DeedPage.objects.bulk_create(deed_pages, batch_size=10000)
 
-        return deed_pages
+    #     return deed_pages
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -280,8 +291,6 @@ class Command(BaseCommand):
         else:
             workflow = get_workflow_obj(workflow_name)
 
-            print('Deleting old DeedPage records (but not their images)...')
-            # DeedPage.objects.filter(workflow=workflow).delete()
             self.delete_existing_dps(workflow)
 
             matching_keys = self.find_matching_keys(workflow)
@@ -289,6 +298,9 @@ class Command(BaseCommand):
             deed_page_df = self.build_django_objects(matching_keys, workflow)
 
             out_csv_path = self.save_unprocessed_deed_pages(workflow, deed_page_df)
+
+            # out_csv_path = os.path.join(
+            # settings.BASE_DIR, 'data', 'main_exports', 'ca-contra-costa-county_deedpages_20250403_0605.csv')
 
             image_obj_count = self.import_to_django_csv_copy(out_csv_path, workflow)
 

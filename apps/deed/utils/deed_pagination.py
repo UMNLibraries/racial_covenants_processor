@@ -284,6 +284,8 @@ def paginate_deedpage_df(df, matches_only=False):
     out_df.reset_index(drop=True, inplace=True)  # Not sure this is necessary or helpful
 
     out_df = out_df.replace([np.nan], [None])
+    out_df["page_num"] = out_df["page_num"].astype(pd.Int64Dtype())
+    out_df["split_page_num"] = out_df["split_page_num"].astype(pd.Int64Dtype())
 
     out_df = out_df.drop(columns=[
         'page_num_-1',
