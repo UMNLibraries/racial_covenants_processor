@@ -30,7 +30,7 @@ class DeedPage(models.Model):
     """Foreign key to associated workflow"""
     s3_lookup = models.CharField(blank=True, max_length=500, db_index=True)
     """Unique identifier of this page's image on S3"""
-    doc_num = models.CharField(blank=True, max_length=101, db_index=True)
+    doc_num = models.CharField(blank=True, null=True, max_length=101, db_index=True)
     """County document number. Not unique as some documents will have several or many pages. Some county documents don't have document numbers, but rather are identifed by Book and Page. In those cases, a doc_num is constructed by a book and page combination. Doc num can come from S3 metadata extracted via regex or be manually created and linked by using a supplemental information file at the time of Django import after initial processing."""
     doc_alt_id = models.CharField(blank=True, max_length=102, db_index=True)
     """An optional alternate document ID."""
