@@ -15,7 +15,6 @@ from django.db.models import Count
 from apps.deed.models import DeedPage
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 from apps.deed.utils.deed_pagination import paginate_deedpage_df
-from apps.deed.utils.db_utils import queryset_iterator
 
 
 class Command(BaseCommand):
