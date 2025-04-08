@@ -13,8 +13,21 @@ def get_current_task_definition(client, cluster, service):
 @click.command()
 @click.option("--cluster", help="Name of the ECS cluster", required=True)
 @click.option("--service", help="Name of the ECS service", required=True)
-def deploy(cluster, service):
-    client = boto3.client("ecs")
+@click.option("--profile", help="Name of the aws profile", required=False)
+@click.option("--region", help="Name of the aws region", required=False)
+def deploy(cluster, service, profile, region):
+
+    if profile:
+
+        session = boto3.Session(
+            profile_name=profile,
+            region_name=region
+        )
+
+        # s3 = session.resource('s3')
+        client = session.client("ecs")
+    else:
+        client = boto3.client("ecs")
 
     response = get_current_task_definition(client, cluster, service)
     container_definition = response["taskDefinition"]["containerDefinitions"][0].copy(
