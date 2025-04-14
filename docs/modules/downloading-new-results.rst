@@ -70,3 +70,9 @@ Downloading new batches of Zooniverse results
     python manage.py dump_covenants_geojson --workflow "WI Milwaukee County"
     python manage.py dump_covenants_csv --workflow "WI Milwaukee County"
 
+10. These exports are slightly different. Each row in these exports represents a covenanted document, not a modern parcel. These may be useful for covenants discharge or for identifying covenants that could not (so far) be mapped. They are not used for our count of racial covenants.
+
+.. code-block:: bash
+    python manage.py dump_unmapped_csv --workflow "WI Milwaukee County"
+    python manage.py dump_all_covenanted_docs_csv --workflow "WI Milwaukee County"
+

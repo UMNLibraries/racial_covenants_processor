@@ -167,7 +167,7 @@ class DeedPage(models.Model):
                 kwargs['page_num'] = self.page_num + offset
 
                 # If the doc number includes the page number, then add offset to doc_num before attempting match
-                doc_num_regex = re.compile(f'(.+)((?<!\d){self.page_num}(?!\d))')
+                doc_num_regex = re.compile(fr'(.+)((?<!\d){self.page_num}(?!\d))')
                 doc_num_match = re.search(doc_num_regex, self.doc_num)
                 if doc_num_match:
                     kwargs['doc_num'] = re.sub(doc_num_regex, fr'\g<1>{self.page_num + offset}', self.doc_num)
