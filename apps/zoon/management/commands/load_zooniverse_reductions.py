@@ -135,7 +135,11 @@ class Command(BaseCommand):
         print('Sending reducer QUESTION results to Django ...')
         sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
         df.to_sql('zoon_reducedresponse_question',
-                  if_exists='append', index=False, con=sa_engine)
+                if_exists='append', index=False, con=sa_engine)
+        # sa_engine = create_engine(settings.SQL_ALCHEMY_DB_CONNECTION_URL)
+        # with sa_engine.connect() as conn:
+        #     df.to_sql('zoon_reducedresponse_question',
+        #             if_exists='append', index=False, con=conn.connection)
 
     def load_dropdowns_reduced(self, batch_dir: str, workflow_slug: str, master_config: dict):
         '''Process reduced responses from the dropdown reducer. In at least some versions, you need to look up hashes for fields.
