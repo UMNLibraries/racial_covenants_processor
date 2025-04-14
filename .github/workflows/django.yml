@@ -40,9 +40,11 @@ jobs:
         sudo apt install gdal-bin libgdal-dev
     - name: Install Dependencies with pipenv
       run: |
-        pip install pipenv==2022.10.12
+        pip install pipenv==2024.0.1
         pipenv install
     - name: Run Tests
       run: |
         pipenv run python manage.py test apps.plat
         pipenv run python manage.py test apps.parcel
+        # pipenv run python manage.py test apps.deed
+        # pipenv run python manage.py test apps.zoon
