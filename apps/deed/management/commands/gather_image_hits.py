@@ -84,7 +84,7 @@ class Command(BaseCommand):
             report_df['num_terms'] = report_df['matched_terms'].apply(lambda x: len(x.split(',')))
 
             # create special flag for exceptions when they occur as the only term hit like "occupied by any" and "death certificate"
-            bad_solo_terms = ['african', 'any person of', 'any person other', 'citizen', 'descent', 'extraction', 'nationality', 'occupied by any', 'person not of', 'persons not of', 'persons other than', 'racial', 'used or occupied', 'servant', 'white or']
+            bad_solo_terms = ["african", "any person of", "citizen", "descent", "extraction", "gentile", "hawaiian", "hindu", "indian", "irish", "italian", "malay", "malayan", "moorish", "mulatto", "mulato", "muslim", "nationality", "occupied by any", "oriental", "ottoman", "persian", "persons not of", "persons other than", "philippine", "polish", "racial", "said races", "servant", "syrian", "turkish", "used or occupied", "white or"]
 
             report_df['bad_solo_count'] = 0
             for term in bad_solo_terms:
@@ -117,7 +117,7 @@ class Command(BaseCommand):
                     report_df.loc[~report_df[term].isna(), 'military_count'] += report_df[term].apply(lambda x: self.split_or_1(x))
 
             report_df['misc_exception_count'] = 0
-            misc_exception_terms = ['minority business enterprise']
+            misc_exception_terms = ['minority business enterprise', 'nigger']
 
             for term in misc_exception_terms:
                 if term in report_df.columns:
