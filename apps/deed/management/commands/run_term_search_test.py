@@ -21,7 +21,7 @@ class Command(BaseCommand):
             region_name=settings.AWS_S3_REGION_NAME)
 
     s3 = session.client('s3')
-    lambda_client = boto3.client('lambda')
+    lambda_client = session.client('lambda')
 
     term_test_result_path = None
 
