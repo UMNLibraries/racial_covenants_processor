@@ -83,8 +83,7 @@ class SupplementalJoinTests(TestCase):
             paginated_df['s3_lookup'] == 'mn-test-county/img1971b/197196554557'
         ].iloc[0].page_num) in [int, np.int64]
 
-@override_settings(AWS_ACCESS_KEY_ID='')
-@override_settings(AWS_SECRET_ACCESS_KEY='')
+
 class DeedPageSearchTermTestTests(TestCase):
     fixtures = ['deed', 'zoon']
 
