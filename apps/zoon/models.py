@@ -66,8 +66,8 @@ class UnmappedZooniverseManager(models.Manager):
             add_cov=F('addition_final'),
             block_cov=F('block_final'),
             lot_cov=F('lot_final'),
-            map_book=F('map_book_final'),
-            map_page=F('map_book_page_final'),
+            # map_book=F('map_book_final'),
+            # map_page=F('map_book_page_final'),
             city_cov=F('city_final'),
             # seller=F('seller_final'),  # Need to rename with pd
             # buyer=F('buyer_final'),  # Need to rename with pd

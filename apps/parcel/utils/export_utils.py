@@ -178,11 +178,10 @@ def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
         'add_cov',
         'block_cov',
         'lot_cov',
-        'map_book',
-        'map_page',
+        'map_book_final',
+        'map_book_page_final',
         'city_cov',
         'dt_updated',
-
     )
 
     unmapped_df = pd.DataFrame(unmapped_covenants)
@@ -190,6 +189,8 @@ def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
         'deed_date_final': 'deed_date',
         'seller_final': 'seller',
         'buyer_final': 'buyer',
+        'map_book_final': 'map_book',
+        'map_book_page_final': 'map_page',
     }, inplace=True)
 
     # covenants_df['image_ids'] = covenants_df[[
