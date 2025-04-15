@@ -44,9 +44,9 @@ jobs:
         pipenv install
     - name: Run Tests
       env:
-          aws-access-key-id: foo
-          aws-secret-access-key: foo
-          aws-region: us-east-2
+          AWS_ACCESS_KEY_ID: foo
+          AWS_SECRET_ACCESS_KEY: foo
+          AWS_DEFAULT_REGION: us-east-2
       run: |
         pipenv run python manage.py test apps.plat
         pipenv run python manage.py test apps.parcel
