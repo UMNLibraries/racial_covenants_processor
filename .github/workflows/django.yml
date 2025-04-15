@@ -46,5 +46,5 @@ jobs:
       run: |
         pipenv run python manage.py test apps.plat
         pipenv run python manage.py test apps.parcel
-        # pipenv run python manage.py test apps.deed
-        # pipenv run python manage.py test apps.zoon
+        pipenv run python manage.py test apps.deed
+        pipenv run python manage.py test apps.zoon
