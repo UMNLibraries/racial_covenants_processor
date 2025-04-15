@@ -16,8 +16,9 @@ class Command(BaseCommand):
     """ This command is used to test fuzzy search terms currently in use against a random sample of N OCR JSONS, and export a csv with pointers to the resulting files for easier checking"""
 
     session = boto3.Session(
-             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_S3_REGION_NAME)
 
     s3 = session.client('s3')
     lambda_client = boto3.client('lambda')
