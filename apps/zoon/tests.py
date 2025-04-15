@@ -248,7 +248,7 @@ class ParcelMatchTests(TestCase):
         # Rebuild spatial lookups and run parcel auto-match before running these tests
         management.call_command('rebuild_parcel_spatial_lookups', workflow=workflow.workflow_name)
         management.call_command('rebuild_covenant_spatial_lookups', workflow=workflow.workflow_name)
-        management.call_command('match_parcels', '--local', workflow=workflow.workflow_name)
+        management.call_command('match_parcels', '--test', workflow=workflow.workflow_name)
 
     def test_parcel_match_zoon_1(self):
         parcel_lot_2 = Parcel.objects.get(workflow_id=1, plat_standardized='janes', block=1, lot=2)
