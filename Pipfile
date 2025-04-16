@@ -46,6 +46,7 @@ django-haystack = "*"
 pysolr = "*"
 django-compressor = "*"
 typing-extensions = "*"
+django-libsass = "*"
 
 [dev-packages]
 csvkit = "*"
