@@ -55,7 +55,7 @@ class Command(BaseCommand):
             print("Workflow variable required.")
             raise
     
-        out_values = ['workflow__slug', 's3_lookup', 'page_image_web', 'page_stats', 'public_uuid', 'bool_match']
+        out_values = ['workflow__slug', 's3_lookup', 'doc_type', 'page_image_web', 'page_stats', 'bool_match']
 
         if bool_full:
             dps = DeedPage.objects.filter(workflow=workflow).values(*out_values)
@@ -79,6 +79,8 @@ class Command(BaseCommand):
 
         # {"workflow": "mn-anoka-county", "remainder": "9/30641896", "public_uuid": "3fd32f9072e24cd9876ceea6631b6472", "num_lines": 120, "num_chars": 3637, "handwriting_pct": 0.26}
         if stats_json:
+            del stats_json['public_uuid']
+            stats_json['doc_type'] = deedpage_obj['doc_type']
             stats_json['page_image_web'] = deedpage_obj['page_image_web']
             stats_json['bool_match'] = deedpage_obj['bool_match']
 
@@ -109,7 +111,7 @@ class Command(BaseCommand):
             settings.BASE_DIR, 'data', 'main_exports', f"{workflow_slug}_doc_word_counts_{now}.csv")
         
         with open(self.term_test_result_path, 'w') as done_manifest:
-            done_manifest.write("workflow,s3_lookup,public_uuid,num_lines,num_chars,handwriting_pct,page_img_web,bool_match\n")
+            done_manifest.write("workflow,s3_lookup,num_lines,num_chars,handwriting_pct,doc_type,page_img_web,bool_match\n")
 
         # Trigger fuzzy term search update for each test page
         pool = ThreadPool(processes=24)
