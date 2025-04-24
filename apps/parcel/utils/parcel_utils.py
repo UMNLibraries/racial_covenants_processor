@@ -36,7 +36,7 @@ def get_blocks(input_str):
     if input_str:
         # First, strip "block" and make all lowercase
         # input_str = input_str.lower().lstrip('block ')
-        input_str = re.sub('Block ', '', input_str,
+        input_str = re.sub(r'^bl(?:oc)?k ', '', input_str,
                            flags=re.IGNORECASE).lower()
 
         # Simple number
