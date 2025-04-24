@@ -69,6 +69,12 @@ def get_lots(input_str):
 
         if re.search(r'partial', input_str, flags=re.IGNORECASE):
             return None, 'partial_lot'
+        
+        # Full lot followed by a partial lot
+        full_plus_por = re.search(r'^LOT (\d+[A-Z]?) POR \d+$', input_str,
+                    flags=re.IGNORECASE)
+        if full_plus_por:
+            return [full_plus_por.group(1)], 'full lot plus partial'
 
         # First, strip "lot" and make all lowercase
         input_str = re.sub('lot(?:s)? ', '', input_str,
