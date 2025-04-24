@@ -146,6 +146,12 @@ class JoinStringTests(TestCase):
         
         self.assertEqual(lots, ['2768', '2769', '2770', '2771', '2772'])
 
+    def test_lot_simple_multi_6(self):
+        """Does get_lots render 'LOTS 5001, 5002, 5003, 5004, 5005, & 5006' as ['5001', '5002', '5003', '5004', '5005', '5006']"""
+        lots, lots_meta = get_lots("LOTS 5001, 5002, 5003, 5004, 5005, & 5006")
+        
+        self.assertEqual(lots, ['5001', '5002', '5003', '5004', '5005', '5006'])
+
     def test_lots_1_and_2(self):
         '''Do "lots 1 and 2" return 1 and 2'''
         lots, lots_meta = get_lots("lots 1 and 2")
@@ -184,6 +190,12 @@ class JoinStringTests(TestCase):
         '''Do leading zeroes after another digit get ignored, e.g. 1001 should be 1001'''
         blocks, blocks_meta = get_blocks("1001")
         self.assertEqual(blocks, '1001')
+
+    def test_block_blk(self):
+        blocks, blocks_meta = get_blocks("BLK 55")
+        self.assertEqual(blocks, '55')
+        blocks, blocks_meta = get_blocks("BLOCK 55")
+        self.assertEqual(blocks, '55')
 
     def test_write_join_strings_basic(self):
         addition = "JANE'S ADDITION"
