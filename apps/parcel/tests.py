@@ -181,6 +181,11 @@ class JoinStringTests(TestCase):
         lots, lots_meta = get_lots("Lot B")
         self.assertEqual(lots, ['b'])
 
+    def test_lot_with_por(self):
+        '''Lot parsing of a full lot with a partial lot added on, e.g. Contra Costa County'''
+        lots, lots_meta = get_lots("LOT 13 POR 12")
+        self.assertEqual(lots, ['13'])
+
     def test_block_leading_zero(self):
         '''Do leading zeroes get removed from blocks, e.g. 001 should be 1'''
         blocks, blocks_meta = get_blocks("001")
