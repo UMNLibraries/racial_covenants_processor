@@ -1,8 +1,9 @@
 import pandas as pd
 import geopandas as gpd
 
-from shapely.geometry.polygon import Polygon
-from shapely.geometry.multipolygon import MultiPolygon
+# from shapely.geometry.polygon import Polygon
+# from shapely.geometry.multipolygon import MultiPolygon
+from django.contrib.gis.geos import MultiPolygon
 
 from django.core.management.base import BaseCommand
 from django.core import management
@@ -64,33 +65,34 @@ class Command(BaseCommand):
             ).values(
                 'plat_name'
             ).annotate(
-                geom_4326=AsWKT(MakeValid(Union('geom_4326')))
+                # geom_4326=AsWKT(MakeValid(Union('geom_4326')))
+                geom_4326=MakeValid(Union('geom_4326'))
             ).order_by(
                 'plat_name'
             )
 
             print(grouped_parcels.count())
 
-            grouped_df = pd.DataFrame(grouped_parcels)
-            gs = gpd.GeoSeries.from_wkt(grouped_df['geom_4326'])
-            grouped_gdf = gpd.GeoDataFrame(grouped_df.drop(columns=['geom_4326']), geometry=gs, crs="EPSG:4326")
-            grouped_gdf['concave_hull'] = grouped_gdf['geometry'].concave_hull()
-            grouped_gdf.set_geometry('concave_hull', drop=True)
+            # grouped_df = pd.DataFrame(grouped_parcels)
+            # gs = gpd.GeoSeries.from_wkt(grouped_df['geom_4326'])
+            # grouped_gdf = gpd.GeoDataFrame(grouped_df.drop(columns=['geom_4326']), geometry=gs, crs="EPSG:4326")
+            # grouped_gdf['concave_hull'] = grouped_gdf['geometry'].concave_hull()
+            # grouped_gdf.set_geometry('concave_hull', drop=True)
 
-            grouped_gdf["concave_hull"] = [MultiPolygon([feature]) if isinstance(feature, Polygon) else feature for feature in grouped_gdf["concave_hull"]]
+            # grouped_gdf["concave_hull"] = [MultiPolygon([feature]) if isinstance(feature, Polygon) else feature for feature in grouped_gdf["concave_hull"]]
 
-            print(grouped_gdf)
+            # print(grouped_gdf)
 
             objs = []
             obj_count = 0
 
-            for index, row in grouped_gdf.iterrows():
+            for row in grouped_parcels:
 
                 subdivision = Subdivision(
                     workflow=workflow,
                     name=row['plat_name'],
                     orig_filename="Generated from parcels",
-                    geom_4326 = row['concave_hull'].wkt
+                    geom_4326 = MultiPolygon(row['geom_4326'])
                 )
                 print(subdivision)
 
