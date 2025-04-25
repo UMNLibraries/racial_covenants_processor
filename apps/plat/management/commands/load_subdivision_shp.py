@@ -11,6 +11,7 @@ from apps.plat.models import Subdivision
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 from apps.parcel.utils.gis_utils import save_multipoly_instances
 from apps.parcel.utils.parcel_utils import standardize_addition
+from apps.plat.utils.plat_utils import standardize_subdivisions
 
 
 class Command(BaseCommand):
@@ -81,21 +82,21 @@ class Command(BaseCommand):
                    zip_obj.extractall(self.shp_dir)
                    return os.path.join(self.shp_dir, glob.glob('*.shp', recursive=True)[0])
 
-    def standardize_subdivisions(self, workflow):
-        ''' Standardize each unique addition name, and save back to Subdivision objects with that plat_name'''
-        print('Standardizing subdivision names...')
+    # def standardize_subdivisions(self, workflow):
+    #     ''' Standardize each unique addition name, and save back to Subdivision objects with that plat_name'''
+    #     print('Standardizing subdivision names...')
 
-        subdivisions = Subdivision.objects.filter(
-            workflow=workflow)
-        subs_to_update = []
-        for s in Subdivision.objects.filter(workflow=workflow).only('name', 'name_standardized'):
-            s.name_standardized = standardize_addition(s.name)
-            print(f'{s.name} --> {s.name_standardized}')
-            subs_to_update.append(s)
+    #     subdivisions = Subdivision.objects.filter(
+    #         workflow=workflow)
+    #     subs_to_update = []
+    #     for s in Subdivision.objects.filter(workflow=workflow).only('name', 'name_standardized'):
+    #         s.name_standardized = standardize_addition(s.name)
+    #         print(f'{s.name} --> {s.name_standardized}')
+    #         subs_to_update.append(s)
 
-        print(f'Updating {len(subs_to_update)} subdivisions ...')
-        Subdivision.objects.bulk_update(
-            subs_to_update, ['name_standardized'])
+    #     print(f'Updating {len(subs_to_update)} subdivisions ...')
+    #     Subdivision.objects.bulk_update(
+    #         subs_to_update, ['name_standardized'])
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
@@ -135,7 +136,7 @@ class Command(BaseCommand):
                     required_attrs
                 )
 
-            self.standardize_subdivisions(workflow)
+            standardize_subdivisions(workflow)
             management.call_command(
                 'join_subdivisions_to_parcels', workflow=workflow_name)
             management.call_command(
