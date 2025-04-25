@@ -42,7 +42,7 @@
         workflow: 1
         feature_id: 1
         name: 'LYNDALE BEACH 2ND ADDN'
-        name_standardized: 'lyndale beach 2nd'
+        # name_standardized: 'lyndale beach 2nd'
         doc_num: '1234'
         recorded_date: "1900-02-28"
         orig_data: '{"foo": "bar"}'

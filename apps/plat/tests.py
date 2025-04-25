@@ -1,12 +1,12 @@
 from django.test import TestCase
 from django.core.management import call_command
 
-from .models import Plat, SubdivisionAlternateName
+from .models import Plat, Subdivision, SubdivisionAlternateName
 from apps.parcel.models import Parcel
 from apps.zoon.models import ZooniverseSubject, ZooniverseWorkflow
 
 from apps.parcel.utils.parcel_utils import standardize_addition
-
+from apps.plat.utils.plat_utils import standardize_subdivisions
 
 class PlatTests(TestCase):
     fixtures = ['plat', 'zoon', 'parcel']
@@ -93,3 +93,16 @@ class PlatTests(TestCase):
                 parcels_count -= 1
 
         self.assertEqual(parcels_count, 0)
+
+    def test_standardize_subdivisions(self):
+        workflow = ZooniverseWorkflow.objects.get(pk=1)
+        sub_name = 'LYNDALE BEACH 2ND ADDN'
+        # Before...
+        subdivision = Subdivision.objects.get(name=sub_name)
+        self.assertEqual(subdivision.name_standardized, None)
+
+        standardize_subdivisions(workflow)
+
+        # After ...
+        subdivision = Subdivision.objects.get(name=sub_name)
+        self.assertEqual(subdivision.name_standardized, 'lyndale beach 2nd')
