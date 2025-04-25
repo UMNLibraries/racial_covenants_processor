@@ -3,7 +3,8 @@ import geopandas as gpd
 
 # from shapely.geometry.polygon import Polygon
 # from shapely.geometry.multipolygon import MultiPolygon
-from django.contrib.gis.geos import MultiPolygon
+from django.contrib.gis.geos import MultiPolygon, GEOSGeometry
+# from django.contrib.gis.gdal import OGRGeometry, OGRGeomType
 
 from django.core.management.base import BaseCommand
 from django.core import management
@@ -50,6 +51,12 @@ class Command(BaseCommand):
     #         return rows
     #     return False
 
+    def ensure_multi(self, input_geom):
+
+        # multipoly = OGRGeometry(OGRGeomType('MultiPolygon'), srs)
+        # multipoly.add(input_geom)
+        return MultiPolygon(GEOSGeometry(input_geom))
+
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         if not workflow_name:
@@ -88,11 +95,13 @@ class Command(BaseCommand):
 
             for row in grouped_parcels:
 
+                geom_multi = self.ensure_multi(row['geom_4326'])
+
                 subdivision = Subdivision(
                     workflow=workflow,
                     name=row['plat_name'],
                     orig_filename="Generated from parcels",
-                    geom_4326 = MultiPolygon(row['geom_4326'])
+                    geom_4326=geom_multi
                 )
                 print(subdivision)
 
