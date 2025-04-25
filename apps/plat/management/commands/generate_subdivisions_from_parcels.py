@@ -57,7 +57,10 @@ class Command(BaseCommand):
         # multipoly.add(input_geom)
         print(input_geom)
         print(type(input_geom))
-        return MultiPolygon(GEOSGeometry(input_geom))
+        try:
+            return MultiPolygon(GEOSGeometry(input_geom))
+        except TypeError:
+            return input_geom        
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
