@@ -55,6 +55,8 @@ class Command(BaseCommand):
 
         # multipoly = OGRGeometry(OGRGeomType('MultiPolygon'), srs)
         # multipoly.add(input_geom)
+        print(input_geom)
+        print(type(input_geom))
         return MultiPolygon(GEOSGeometry(input_geom))
 
     def handle(self, *args, **kwargs):
