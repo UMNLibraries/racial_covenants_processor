@@ -225,21 +225,23 @@ def get_all_parcel_options(parcel_obj):
     # Check for alternate addition spellings
     extra_additions = []
     if parcel_obj.plat:
-        if addition != parcel_obj.plat.plat_name_standardized:
-            extra_additions.append(parcel_obj.plat.plat_name_standardized)
-        if parcel_obj.plat.platalternatename_set.count() > 0:
-            for p in parcel_obj.plat.platalternatename_set.all():
-                extra_additions.append(p.alternate_name_standardized)
+        # if addition != parcel_obj.plat.plat_name_standardized:
+        extra_additions.append(parcel_obj.plat.plat_name_standardized)
+        # if parcel_obj.plat.platalternatename_set.count() > 0:
+        for p in parcel_obj.plat.platalternatename_set.all():
+            extra_additions.append(p.alternate_name_standardized)
 
     if parcel_obj.subdivision_spatial:
-        if addition != parcel_obj.subdivision_spatial.name_standardized:
-            extra_additions.append(parcel_obj.subdivision_spatial.name_standardized)
-        if parcel_obj.subdivision_spatial.subdivisionalternatename_set.count() > 0:
-            for p in parcel_obj.subdivision_spatial.subdivisionalternatename_set.all():
-                extra_additions.append(p.alternate_name_standardized)
+        # if addition != parcel_obj.subdivision_spatial.name_standardized:
+        extra_additions.append(parcel_obj.subdivision_spatial.name_standardized)
+        # if parcel_obj.subdivision_spatial.subdivisionalternatename_set.count() > 0:
+        for p in parcel_obj.subdivision_spatial.subdivisionalternatename_set.all():
+            extra_additions.append(p.alternate_name_standardized)
+    
+    addition_list = list(set([addition] + extra_additions))
 
     join_strings = []
-    for a in [addition] + extra_additions:
+    for a in addition_list:
         join_strings += write_join_strings(a, parcel_obj.block, parcel_obj.lot)
 
     # ManualParcelCandidates
