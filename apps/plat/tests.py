@@ -106,3 +106,17 @@ class PlatTests(TestCase):
         # After ...
         subdivision = Subdivision.objects.get(name=sub_name)
         self.assertEqual(subdivision.name_standardized, 'lyndale beach 2nd')
+
+    def test_generate_subdivisions_from_parcels(self):
+        workflow = ZooniverseWorkflow.objects.get(pk=1)
+
+        # Set up database first time
+        TEST_ZOON_SETTINGS = {
+            workflow.workflow_name: {
+                'zoon_workflow_id': workflow.zoon_id,
+                'zoon_workflow_version': workflow.version,
+            }
+        }
+
+        with self.settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS):
+            call_command("generate_subdivisions_from_parcels", workflow='MN Test County')
