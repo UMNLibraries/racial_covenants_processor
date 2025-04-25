@@ -52,11 +52,8 @@ class Command(BaseCommand):
     #     return False
 
     def ensure_multi(self, input_geom):
-
-        # multipoly = OGRGeometry(OGRGeomType('MultiPolygon'), srs)
-        # multipoly.add(input_geom)
-        print(input_geom)
-        print(type(input_geom))
+        # print(input_geom)
+        # print(type(input_geom))
         try:
             return MultiPolygon(GEOSGeometry(input_geom))
         except TypeError:
