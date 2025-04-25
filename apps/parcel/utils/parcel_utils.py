@@ -219,22 +219,17 @@ def get_all_parcel_options(parcel_obj):
 
     out_candidates = []
     metadata = {'orig_filename': parcel_obj.orig_filename}
-    # addition = standardize_addition(parcel_obj.plat_name)
     addition = parcel_obj.plat_standardized
 
     # Check for alternate addition spellings
     extra_additions = []
     if parcel_obj.plat:
-        # if addition != parcel_obj.plat.plat_name_standardized:
         extra_additions.append(parcel_obj.plat.plat_name_standardized)
-        # if parcel_obj.plat.platalternatename_set.count() > 0:
         for p in parcel_obj.plat.platalternatename_set.all():
             extra_additions.append(p.alternate_name_standardized)
 
     if parcel_obj.subdivision_spatial:
-        # if addition != parcel_obj.subdivision_spatial.name_standardized:
         extra_additions.append(parcel_obj.subdivision_spatial.name_standardized)
-        # if parcel_obj.subdivision_spatial.subdivisionalternatename_set.count() > 0:
         for p in parcel_obj.subdivision_spatial.subdivisionalternatename_set.all():
             extra_additions.append(p.alternate_name_standardized)
     
