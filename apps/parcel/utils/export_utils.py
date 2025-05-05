@@ -135,6 +135,11 @@ def build_gdf(workflow):
 
     covenants_df.drop(columns=['join_candidates', 'deed_page_1', 'deed_page_2', 'deed_page_3'], inplace=True)
 
+    # Convert datetime fields to true date
+    date_fields = ['exec_date', 'deed_date']
+    # print(covenants_df[date_fields])
+    covenants_df[date_fields] = covenants_df[date_fields].apply(lambda x: pd.to_datetime(x,errors = 'coerce', format = '%Y-%m-%d'))
+
     covenants_df.rename(columns={
         'id': 'db_id',
         'plat__pk': 'plat_dbid',
