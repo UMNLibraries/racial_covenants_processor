@@ -35,6 +35,25 @@ TEST_SUPPLEMENTAL_DATA_SETTINGS = {
     }
 }
 
+class ImageHitTests(TestCase):
+    fixtures = ['zoon']
+
+    def test_match_counts(self):
+        workflow = ZooniverseWorkflow.objects.get(pk=1)
+        from apps.deed.management.commands.gather_image_hits import Command
+        test_command = Command()
+
+        test_ndjson = os.path.join(settings.BASE_DIR, '../apps/deed/fixtures/hits_jsons/fuzzy_hits.ndjson')
+        match_report_df = test_command.build_match_report(workflow, None, test_file=test_ndjson)
+        print(match_report_df[
+            ['matched_terms', 'bool_match', 'bool_exception', 'bool_expected_match', 'expected_result']
+        ])
+
+        for index, row in match_report_df.iterrows():
+            self.assertEqual(row['bool_match'], row['bool_expected_match'])
+            self.assertNotEqual(row['bool_exception'], row['bool_expected_match'])
+
+
 @override_settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_SUPPLEMENTAL_DATA_SETTINGS)
 class SupplementalJoinTests(TestCase):
     fixtures = ['deed', 'zoon']

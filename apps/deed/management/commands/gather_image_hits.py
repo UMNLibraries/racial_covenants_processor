@@ -62,22 +62,28 @@ class Command(BaseCommand):
         file_content = content_object['Body'].read()  # Keeping it in binary, not decoding
         self.temp_ndjson.write(file_content + b'\n')
 
-    def build_match_report(self, workflow, matching_keys):
+    def build_match_report(self, workflow, matching_keys, test_file=None):
         '''Aggregate all the hits, their keys and terms into a single file'''
 
         with tempfile.TemporaryFile() as self.temp_ndjson:
 
-            pool = ThreadPool(processes=12)
-            pool.map(self.write_to_ndjson, matching_keys)
+            if not test_file:
+                pool = ThreadPool(processes=12)
+                pool.map(self.write_to_ndjson, matching_keys)
 
-            self.temp_ndjson.seek(0)
-            report_obj = ndjson.loads(self.temp_ndjson.read())
-            report_df = pd.DataFrame(report_obj)
+                self.temp_ndjson.seek(0)
+                report_obj = ndjson.loads(self.temp_ndjson.read())
+                report_df = pd.DataFrame(report_obj)
+            else:
+                # TEST
+                report_obj = ndjson.loads(open(test_file, 'r').read())
+                report_df = pd.DataFrame(report_obj)
 
             # Turn columns of terms into a list of terms found in each row
             # https://stackoverflow.com/questions/59487709/select-column-names-where-row-values-are-not-null-pandas-dataframe
             term_columns = report_df.drop(
-                columns=['workflow', 'lookup', 'uuid']
+                # 'expected_result' and 'bool_expected_match' are only present in test data
+                columns=['workflow', 'lookup', 'uuid', 'expected_result', 'bool_expected_match']
             )
             report_df['matched_terms'] = term_columns.notna().dot(term_columns.columns+',').str.rstrip(',')
 
@@ -123,7 +129,20 @@ class Command(BaseCommand):
                 if term in report_df.columns:
                     print(report_df[term].apply(lambda x: self.split_or_1(x)))
 
-                    report_df.loc[~report_df[term].isna(), 'misc_exception_count'] += report_df[term].apply(lambda x: self.split_or_1(x))            
+                    report_df.loc[~report_df[term].isna(), 'misc_exception_count'] += report_df[term].apply(lambda x: self.split_or_1(x))
+
+            # Confusion terms: Sometimes there are fuzzy variations that cannot be eliminated
+            # because you need the fuzziness, but are clearly not valid matches.
+            # For example, "caucasian" with a fuzziness of 3 matches "canadian"
+            # With confusion terms we'll attempt to let matches of "canadian" cancel out matches of "caucasian", and if no terms are left, then flag as an exception
+            confusion_terms = [{'match_term': 'caucasian', 'confusion_term': 'canadian'}]
+            for term in confusion_terms:
+                match_term = term['match_term']
+                confusion_term = term['confusion_term']
+                if match_term in report_df.columns and confusion_term in report_df.columns:
+                    report_df.loc[
+                        (~report_df[match_term].isna()) & (~report_df[confusion_term].isna()) & (report_df[match_term] == report_df[confusion_term]),
+                    'num_terms'] -= 2
 
             # Set bool_match to True, unless there's a suspect value or combination
             report_df['bool_match'] = True
@@ -145,6 +164,10 @@ class Command(BaseCommand):
             # Misc exceptions that are exception no matter how many other terms found
             report_df.loc[report_df['misc_exception_count'] > 0, 'bool_match'] = False
             report_df.loc[report_df['misc_exception_count'] > 0, 'bool_exception'] = True
+
+            # If all match terms have been eliminated by confusion, exception
+            report_df.loc[report_df['num_terms'] < 1, 'bool_match'] = False
+            report_df.loc[report_df['num_terms'] < 1, 'bool_exception'] = True
 
             report_df.drop(columns=term_columns.columns, inplace=True)
             print(report_df)
