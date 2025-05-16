@@ -203,7 +203,7 @@ class Command(BaseCommand):
             },
         }
 
-        print(f"Triggering Lambda on {deedpage_obj['workflow__slug']} {deedpage_obj['s3_lookup']}...")
+        # print(f"Triggering Lambda on {deedpage_obj['workflow__slug']} {deedpage_obj['s3_lookup']}...")
 
         response = self.lambda_client.invoke(
             FunctionName=settings.TERMSEARCHTEST_LAMBDA,

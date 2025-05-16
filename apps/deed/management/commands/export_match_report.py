@@ -71,6 +71,8 @@ class Command(BaseCommand):
                 on="pk"
             )
 
+            images_df['page_image_web_highlighted'] = settings.STATIC_URL + images_df['page_image_web_highlighted']
+
             print(images_df.shape[0])
 
             now = datetime.datetime.now()
