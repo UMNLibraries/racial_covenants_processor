@@ -83,7 +83,8 @@ class Command(BaseCommand):
             # https://stackoverflow.com/questions/59487709/select-column-names-where-row-values-are-not-null-pandas-dataframe
             term_columns = report_df.drop(
                 # 'expected_result' and 'bool_expected_match' are only present in test data
-                columns=['workflow', 'lookup', 'uuid', 'expected_result', 'bool_expected_match']
+                columns=['workflow', 'lookup', 'uuid', 'expected_result', 'bool_expected_match'],
+                errors='ignore'
             )
             report_df['matched_terms'] = term_columns.notna().dot(term_columns.columns+',').str.rstrip(',')
 
