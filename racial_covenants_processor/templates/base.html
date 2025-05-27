@@ -1,5 +1,4 @@
 {% load static %}
-{% load compress %}
 
 <!DOCTYPE HTML>
 <!--
@@ -14,9 +13,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
         <link rel="stylesheet" href="{% static 'html5up-editorial/assets/css/fontawesome-all.min.css' %}" media="screen">
         <link href="{% static 'html5up-editorial/assets/css/main.css' %}" rel="stylesheet" media="screen">
-        {% compress css %}
-            <link type="text/x-scss" href="{% static 'deed-machine/sass/deed-machine.scss' %}" rel="stylesheet" media="screen">
-        {% endcompress %}
+        <link href="{% static 'css/deed-machine.css' %}" rel="stylesheet" media="screen">
 	</head>
 	<body class="is-preload">
 

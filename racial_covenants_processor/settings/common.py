@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 
     'haystack',
-    'compressor',
+    # 'compressor',
     'rangefilter',
     'storages',
     'localflavor',
@@ -178,24 +178,35 @@ USE_TZ = True
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    "compressor.finders.CompressorFinder"
+    # "compressor.finders.CompressorFinder"
 ]
 
-STATIC_URL = '/static/'
+STATIC_URL = '/staticfiles/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-COMPRESS_ROOT = STATIC_ROOT
+# COMPRESS_ROOT = STATIC_ROOT
 
-# STATICFILES_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
-COMPRESS_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
-COMPRESS_OFFLINE_MANIFEST_STORAGE = COMPRESS_STORAGE
+# STATICFILES_STORAGE = 'racial_covenants_processor.storage_backends.StaticStorage'
+# COMPRESS_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
+# COMPRESS_OFFLINE_MANIFEST_STORAGE = COMPRESS_STORAGE
+STORAGES = {
+    "default": {
+        "BACKEND": "racial_covenants_processor.storage_backends.PublicMediaStorage",
+        # "OPTIONS": {
+        # ...your_options_here
+        # },
+    },
+    "staticfiles": {
+        "BACKEND": "racial_covenants_processor.storage_backends.StaticStorage",
+    }
+}
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]  # put truly static files not handled by compressor, like images, in 'static'
 
-COMPRESS_PRECOMPILERS = (
-    ('text/x-scss', 'django_libsass.SassCompiler'),
-)
+# COMPRESS_PRECOMPILERS = (
+#     ('text/x-scss', 'django_libsass.SassCompiler'),
+# )
 # COMPRESS_OFFLINE = True
 
 MEDIA_URL = '/mediafiles/'
