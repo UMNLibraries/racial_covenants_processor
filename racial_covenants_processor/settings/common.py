@@ -186,8 +186,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 COMPRESS_ROOT = STATIC_ROOT
 
 # STATICFILES_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
-COMPRESS_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
-COMPRESS_OFFLINE_MANIFEST_STORAGE = COMPRESS_STORAGE
+
+# 2025-05-27 temporarily disable
+# COMPRESS_STORAGE = 'racial_covenants_processor.storage_backends.CachedS3BotoStorage'
+# COMPRESS_OFFLINE_MANIFEST_STORAGE = COMPRESS_STORAGE
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
@@ -232,6 +234,7 @@ REST_FRAMEWORK = {
 
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
+AWS_SESSION_TOKEN = None
 AWS_S3_REGION_NAME = 'us-east-2'
 
 try:

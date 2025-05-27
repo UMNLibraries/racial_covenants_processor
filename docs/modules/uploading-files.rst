@@ -40,6 +40,8 @@ Often deed images are stored on a local machine or network drive, and it's not f
     AWS_ACCESS_KEY_ID = 'my-access-key'
     AWS_SECRET_ACCESS_KEY = 'my-secret-key'
     AWS_STORAGE_BUCKET_NAME = 'my-bucket-name'
+    # if you were given an AWS_SESSION_TOKEN along with your keys, add that too:
+    # AWS_SESSION_TOKEN = 'my-session-token'
 
     WORKFLOW_SETTINGS = {
         'WI Milwaukee County': {

@@ -11,6 +11,10 @@ GEOS_LIBRARY_PATH = None
 # aws settings
 AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
 AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
+if 'AWS_SESSION_TOKEN' in os.environ:
+    AWS_SESSION_TOKEN = os.environ['AWS_SESSION_TOKEN']
+else:
+    AWS_SESSION_TOKEN = None
 AWS_STORAGE_BUCKET_NAME = 'XXXX'
 AWS_S3_REGION_NAME = 'us-east-2'  # change to your region
 AWS_S3_SIGNATURE_VERSION = 's3v4'

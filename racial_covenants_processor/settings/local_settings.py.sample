@@ -76,6 +76,7 @@ ZOONIVERSE_QUESTION_LOOKUP = {
 # aws settings
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
+AWS_SESSION_TOKEN = None # set to your AWS session token string if your key came with one
 AWS_STORAGE_BUCKET_NAME = 'covenants-deed-images'
 # AWS_DEFAULT_ACL = 'public-read'
 AWS_DEFAULT_ACL = None
