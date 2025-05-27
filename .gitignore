@@ -133,4 +133,5 @@ dmypy.json
 .idea/
 
 racial_covenants_processor/data/*
+racial_covenants_processor/staticfiles/
 .DS_Store
