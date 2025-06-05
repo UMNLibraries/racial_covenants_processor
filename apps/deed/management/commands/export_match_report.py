@@ -47,9 +47,11 @@ class Command(BaseCommand):
             ).values(
                 'pk',
                 'doc_num',
+                'doc_alt_id',
                 'doc_type',
                 'book_id',
                 'page_num',
+                'split_page_num',
                 'batch_id',
                 'doc_date',
                 's3_lookup',
@@ -60,6 +62,7 @@ class Command(BaseCommand):
 
             image_terms_df = pd.DataFrame.from_dict(image_terms)
             image_terms_df.rename(columns={'matched_terms__term': 'terms'}, inplace=True)
+            image_terms_df['terms'].fillna('', inplace=True)
             image_terms_df = image_terms_df.groupby([
                 'pk'
             ]).agg({'terms': lambda x: ', '.join(x)}).reset_index()

@@ -3,6 +3,7 @@ import csv
 import json
 import boto3
 import datetime
+import pandas as pd
 from multiprocessing.pool import ThreadPool
 
 from django.core.management.base import BaseCommand
@@ -50,8 +51,14 @@ class Command(BaseCommand):
         
         parser.add_argument('-f', '--full', action='store_true',
                     help='Test all DeedPages in workflow, not just previous hits.')
+        
+        parser.add_argument('-k', '--skip_file', type=str,
+                    help='Path to csv of previously completed results. Will write contents of this file to new CSV and continue.')
+        
+        parser.add_argument('-p', '--pool', type=int, default=12,
+                    help='Number of threads. Default = 12')
 
-    def get_existing_deedpages(self, workflow, bool_full=False, target_term=None):
+    def get_existing_deedpages(self, workflow, bool_full=False, target_term=None, skip_pages=None):
         """Get DeedPage results to clear and overwrite. By default, only hits, but can be set to get all in workflow"""
 
         if not workflow:
@@ -70,7 +77,40 @@ class Command(BaseCommand):
         else:
             dps = DeedPage.objects.filter(workflow=workflow).values(*out_values)
 
+        if skip_pages:
+            skip_lookups = pd.DataFrame(skip_pages)[['s3_lookup']]
+            # skip_lookups = [page['s3_lookup'] for page in skip_pages]
+            print(f'Excluding {skip_lookups.shape[0]} pages from re-processing...')
+            # dps = [dp for dp in list(dps) if dp['s3_lookup'] not in skip_lookups]
+
+            dp_df = pd.DataFrame(list(dps))
+            print("Exclusion merge begun...")
+            dp_df = dp_df.merge(
+                skip_lookups,
+                how="outer",
+                on="s3_lookup",
+                indicator=True
+            )
+            dp_df = dp_df[dp_df['_merge'] == 'left_only']
+            dps = dp_df.to_dict('records')
+
+            # out_dps = []
+            # for dp in list(dps):
+            #     # Shrink comparison list as you go
+            #     if dp['s3_lookup'] in skip_lookups:
+            #         skip_lookups.remove(dp['s3_lookup'])
+            #     else:
+            #         out_dps.append(dp)
+            # dps = out_dps
+
+        print(f"Reprocessing {len(dps)} pages ...")
+
         return dps
+    
+    def get_skip_pages(self, skip_path):
+        with open(skip_path, 'r') as skip_file:
+            return list(csv.DictReader(skip_file))
+        return False
     
     def chunk_list(self, input_list, chunk_size):
         for i in range(0, len(input_list), chunk_size):
@@ -249,9 +289,14 @@ class Command(BaseCommand):
         # TODO: need to figure out how to filter delete results
         target_term = kwargs['term']
 
-        dps = self.get_existing_deedpages(workflow, bool_full, target_term)
+        skip_pages = False
+        if kwargs['skip_file']:
+            skip_pages = self.get_skip_pages(kwargs['skip_file'])
 
-        self.delete_previous_hits(workflow, bool_full, target_term, dps)
+        dps = self.get_existing_deedpages(workflow, bool_full, target_term, skip_pages)
+
+        if not skip_pages:
+            self.delete_previous_hits(workflow, bool_full, target_term, dps)
 
         now = datetime.datetime.now().strftime('%Y%m%d_%H%M')
 
@@ -261,6 +306,10 @@ class Command(BaseCommand):
         with open(self.term_test_result_path, 'w') as done_manifest:
             done_manifest.write("workflow,s3_lookup,page_ocr_text,bool_basic_match,bool_fuzzy_match,fuzzy_match_json,test_status,match_context\n")
 
+            if skip_pages:
+                skip_writer = csv.DictWriter(done_manifest, fieldnames=skip_pages[0].keys())
+                skip_writer.writerows(skip_pages)
+
         # Trigger fuzzy term search update for each test page
-        pool = ThreadPool(processes=12)
+        pool = ThreadPool(processes=kwargs['pool'])
         pool.map(self.trigger_lambda, dps)

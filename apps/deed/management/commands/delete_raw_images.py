@@ -19,7 +19,7 @@ class Command(BaseCommand):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
-    def delete_in_batches(self, objects_to_delete, batch_size=1000):
+    def delete_in_batches(self, objects_to_delete, batch_size=10000):
         print(f'Deleting {len(objects_to_delete)} s3 files ...')
 
         for i in range(0, len(objects_to_delete), batch_size):
@@ -31,21 +31,22 @@ class Command(BaseCommand):
 
     def delete_raw(self, workflow_slug):
 
-        key_filter = re.compile(f"raw/{workflow_slug}/.+\.tif")
+        key_filter = re.compile(fr"raw/{workflow_slug}/.+\.(?:tif|jpg)")
 
-        objects_to_delete = [{'Key': obj.key} for obj in self.bucket.objects.all(
-        ) if re.match(key_filter, obj.key)]
-
-        self.delete_in_batches(objects_to_delete)
-
-    def delete_web(self, workflow_slug):
-
-        key_filter = re.compile(f"web/{workflow_slug}/.+\.jpg")
-
-        objects_to_delete = [{'Key': obj.key} for obj in self.bucket.objects.all(
-        ) if re.match(key_filter, obj.key)]
+        objects_to_delete = [{'Key': obj.key} for obj in self.bucket.objects.filter(
+                Prefix=f'raw/{workflow_slug}/'
+            ) if re.match(key_filter, obj.key)]
 
         self.delete_in_batches(objects_to_delete)
+
+    # def delete_web(self, workflow_slug):
+
+    #     key_filter = re.compile(fr"web/{workflow_slug}/.+\.jpg")
+
+    #     objects_to_delete = [{'Key': obj.key} for obj in self.bucket.objects.all(
+    #     ) if re.match(key_filter, obj.key)]
+
+    #     self.delete_in_batches(objects_to_delete)
 
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
