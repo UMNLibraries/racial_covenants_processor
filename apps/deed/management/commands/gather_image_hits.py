@@ -135,9 +135,13 @@ class Command(BaseCommand):
             # Confusion terms: Sometimes there are fuzzy variations that cannot be eliminated
             # because you need the fuzziness, but are clearly not valid matches.
             # For example, "caucasian" with a fuzziness of 3 matches "canadian"
-            # With confusion terms we'll attempt to let matches of "canadian" cancel out matches of "caucasian"
-            # that are on the same lines, and if no terms are left, then flag as an exception
-            confusion_terms = [{'match_term': 'caucasian', 'confusion_term': 'canadian'}]
+            # With confusion terms we'll attempt to let matches of "canadian" cancel out matches of "caucasian",
+            #  and if no terms are left, then flag as an exception
+            confusion_terms = [
+                {'match_term': 'caucasian', 'confusion_term': 'canadian'},
+                {'match_term': 'occupied by any', 'confusion_term': 'occupied by any person other than the applicant'},
+                {'match_term': 'persons other than', 'confusion_term': 'person other than the applicant'},
+            ]
             for term in confusion_terms:
                 match_term = term['match_term']
                 confusion_term = term['confusion_term']
