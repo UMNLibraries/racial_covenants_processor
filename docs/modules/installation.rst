@@ -4,6 +4,13 @@ Installation
 Django installation process
 ---------------------------
 
+These steps assume you already have [the repo](https://github.com/UMNLibraries/racial_covenants_processor/tree/main) cloned and the following installed:
+- Python 3.12
+- pipenv
+- gdal
+- PostgreSQL
+- PostGIS
+
 1. Create a PostGIS-enabled database for the project
 The psql command will vary slightly with different OSes. For Mac:
 
@@ -26,7 +33,7 @@ The psql command will vary slightly with different OSes. For Mac:
 
     pipenv install
 
-3. Create a Postgresql service to connect between Django and the DB called ``.pg_service.conf``
+3. Create a ``.pg_service.conf`` file in your user home directory (not the application root directory). This creates a Postgresql service to connect between Django and the database. Add the following to the new file:
 
 .. code-block::
 
@@ -50,3 +57,10 @@ The psql command will vary slightly with different OSes. For Mac:
 .. code-block:: bash
 
     python manage.py createsuperuser
+
+6. Spin up the application
+
+.. code-block:: bash
+    python manage.py runserver
+
+You can view the app at [http://127.0.0.1:8000/](http://127.0.0.1:8000/).
