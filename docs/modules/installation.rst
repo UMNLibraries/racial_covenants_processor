@@ -43,8 +43,13 @@ The psql command will vary slightly with different OSes. For Mac:
     dbname=racial_covenants_processor
     port=5432
 
+4. Create your Django settings file:
 
-4. Sync Django with your database
+.. code-block::
+    cp racial_covenants_processor/settings/local_settings.py.sample racial_covenants_processor/settings/local_settings.py
+
+
+5. Sync Django with your database
 
 .. code-block:: bash
 
@@ -52,13 +57,13 @@ The psql command will vary slightly with different OSes. For Mac:
     python manage.py migrate
 
 
-5. To be able to view the admin pages, create a superuser
+6. To be able to view the admin pages, create a superuser
 
 .. code-block:: bash
 
     python manage.py createsuperuser
 
-6. Spin up the application
+7. Spin up the application
 
 .. code-block:: bash
     python manage.py runserver
