@@ -139,16 +139,22 @@ class Command(BaseCommand):
             #  and if no terms are left, then flag as an exception
             confusion_terms = [
                 {'match_term': 'caucasian', 'confusion_term': 'canadian'},
-                {'match_term': 'occupied by any', 'confusion_term': 'occupied by any person other than the applicant'},
-                {'match_term': 'persons other than', 'confusion_term': 'person other than the applicant'},
+                {'match_term': 'caucasian', 'confusion_term': 'calcasieu'},
+                {'match_term': 'colored', 'confusion_term': 'dolored'},
+                {'match_term': 'occupied by any', 'confusion_term': 'other than the applicant'}
             ]
             for term in confusion_terms:
                 match_term = term['match_term']
                 confusion_term = term['confusion_term']
                 if match_term in report_df.columns and confusion_term in report_df.columns:
                     report_df.loc[
-                        (~report_df[match_term].isna()) & (~report_df[confusion_term].isna()) & (report_df[match_term] == report_df[confusion_term]),
+                        (~report_df[match_term].isna()) & (~report_df[confusion_term].isna()) & (report_df[match_term] <= report_df[confusion_term]),
                     'num_terms'] -= 2
+
+                    # Now eliminate ones with the confusion term but NOT the match term
+                    report_df.loc[
+                        (report_df[match_term].isna()) & (~report_df[confusion_term].isna()),
+                    'num_terms'] -= 1
 
             # Set bool_match to True, unless there's a suspect value or combination
             report_df['bool_match'] = True
