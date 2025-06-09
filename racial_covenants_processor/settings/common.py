@@ -102,8 +102,10 @@ WSGI_APPLICATION = 'racial_covenants_processor.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'USER': 'racial_covenants_processor',
+        'PASSWORD': 'racial_covenants_processor',
         'OPTIONS': {
-            'service': 'deeds_service'
+            'service': 'deeds_service',
         },
     }
 }
