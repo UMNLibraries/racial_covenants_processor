@@ -115,7 +115,7 @@ class Command(BaseCommand):
                     report_df.loc[~report_df[term].isna(), 'deathcert_count'] += report_df[term].apply(lambda x: self.split_or_1(x))
 
             report_df['military_count'] = 0
-            military_terms = ['report of transfer', 'report of separation', 'transfer or discharge', 'blood group', 'notice of separation', 'place of separation', 'rank and classification', 'service no', 'was discharged from', 'date enlisted', 'enlisted record', 'honorable discharge', 'warrant at time of discharge', 'special military qualifications']
+            military_terms = ['report of transfer', 'report of separation', 'transfer or discharge', 'blood group', 'notice of separation', 'place of separation', 'rank and classification', 'service no', 'was discharged from', 'date enlisted', 'enlisted record', 'honorable discharge', 'warrant at time of discharge', 'special military qualifications', 'release or discharge', 'from active duty']
 
             for term in military_terms:
                 if term in report_df.columns:
