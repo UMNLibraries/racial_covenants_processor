@@ -31,6 +31,12 @@ TEST_SUPPLEMENTAL_DATA_SETTINGS = {
                     'doc_date': 'doc_date',
                 }
             }
+        ],
+        'deed_manual_exceptions': [
+            {
+                'data_csv': os.path.join(settings.BASE_DIR, '../apps/deed/fixtures/manual_exceptions_test_data.csv'),
+                'field': 's3_lookup'
+            }
         ]
     }
 }
@@ -52,6 +58,36 @@ class ImageHitTests(TestCase):
         for index, row in match_report_df.iterrows():
             self.assertEqual(row['bool_match'], row['bool_expected_match'])
             self.assertNotEqual(row['bool_exception'], row['bool_expected_match'])
+
+
+@override_settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_SUPPLEMENTAL_DATA_SETTINGS)
+class ManualExceptionTests(TestCase):
+    fixtures = ['deed', 'zoon']
+
+    def test_manual_exception_command(self):
+        workflow = ZooniverseWorkflow.objects.get(pk=1)
+
+        dp_fake_match = DeedPage.objects.get(s3_lookup='match/but/not/really.001')
+        dp_real_match = DeedPage.objects.get(s3_lookup='match/but/4real/4real.001')
+
+        self.assertEqual(dp_fake_match.bool_match, True)
+        self.assertEqual(dp_real_match.bool_match, True)
+        self.assertEqual(dp_fake_match.bool_exception, False)
+        self.assertEqual(dp_real_match.bool_exception, False)
+        self.assertEqual(dp_fake_match.bool_manual, False)
+        self.assertEqual(dp_real_match.bool_manual, False)
+
+        management.call_command('set_manual_exceptions', workflow=workflow.workflow_name)
+
+        dp_fake_match = DeedPage.objects.get(s3_lookup='match/but/not/really.001')
+        dp_real_match = DeedPage.objects.get(s3_lookup='match/but/4real/4real.001')
+
+        self.assertEqual(dp_fake_match.bool_match, False)
+        self.assertEqual(dp_real_match.bool_match, True)
+        self.assertEqual(dp_fake_match.bool_exception, True)
+        self.assertEqual(dp_real_match.bool_exception, False)
+        self.assertEqual(dp_fake_match.bool_manual, True)
+        self.assertEqual(dp_real_match.bool_manual, False)
 
 
 @override_settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_SUPPLEMENTAL_DATA_SETTINGS)
