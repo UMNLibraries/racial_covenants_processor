@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
-from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest
+from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest, connect_to_zooniverse, get_or_create_subject_set, get_existing_subjects
 from apps.deed.models import DeedPage
 
 
@@ -36,30 +36,6 @@ class Command(BaseCommand):
         parser.add_argument('-n', '--num_subjects', type=int,
                             help='Number of subjects to upload')
 
-    def connect_to_zooniverse(self):
-        Panoptes.connect(username=settings.ZOONIVERSE_USERNAME, password=settings.ZOONIVERSE_PASSWORD)
-        project = Project.find(slug='mappingprejudice/mapping-prejudice')
-
-        return project
-
-    def get_or_create_subject_set(self, project, workflow):
-        try:
-            subject_set = SubjectSet.where(project_id=project.id, display_name=workflow.workflow_name).next()
-            print(f"Found existing subjet set {workflow.workflow_name} ({subject_set.id}).")
-
-        except StopIteration:
-            print(f"No matching subject set found. Creating '{workflow.workflow_name}'...")
-            subject_set = SubjectSet()
-            subject_set.links.project = project
-            subject_set.display_name = workflow.workflow_name
-            subject_set.save()
-            print(f"Subject set {subject_set.id} created.")
-        return subject_set
-
-    def get_existing_subjects(self, subject_set):
-        print("Getting existing subjects in subject set...")
-        return [subject.metadata['#s3_lookup'] for subject in subject_set.subjects]
-
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         num_subjects = kwargs['num_subjects']
@@ -75,10 +51,10 @@ class Command(BaseCommand):
             return False
         else:
 
-            zooniverse_project = self.connect_to_zooniverse()
-            subject_set = self.get_or_create_subject_set(zooniverse_project, workflow)
+            zooniverse_project = connect_to_zooniverse()
+            subject_set = get_or_create_subject_set(zooniverse_project, workflow)
 
-            existing_subject_ids = self.get_existing_subjects(subject_set)
+            existing_subject_ids = get_existing_subjects(subject_set)
 
             print(f"Found {len(existing_subject_ids)} existing subjects. Building manifest...")
 

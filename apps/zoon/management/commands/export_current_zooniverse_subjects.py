@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
-from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest
+from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest, connect_to_zooniverse, get_subject_set, get_existing_subjects
 from apps.deed.models import DeedPage
 
 
@@ -29,26 +29,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "WI Milwaukee County"')
-
-    def connect_to_zooniverse(self):
-        Panoptes.connect(username=settings.ZOONIVERSE_USERNAME, password=settings.ZOONIVERSE_PASSWORD)
-        project = Project.find(slug='mappingprejudice/mapping-prejudice')
-
-        return project
-
-    def get_subject_set(self, project, workflow):
-        try:
-            subject_set = SubjectSet.where(project_id=project.id, display_name=workflow.workflow_name).next()
-            print(f"Found existing subjet set {workflow.workflow_name} ({subject_set.id}).")
-
-        except StopIteration:
-            print(f"No matching subject set found. Creating '{workflow.workflow_name}'...")
-            return False
-        return subject_set
-
-    def get_existing_subjects(self, subject_set):
-        print("Getting existing subjects in subject set...")
-        return [subject.metadata for subject in subject_set.subjects]
     
     def save_report_local(self, df, version_slug):
         out_csv = os.path.join(
@@ -66,10 +46,10 @@ class Command(BaseCommand):
         else:
             workflow = get_workflow_obj(workflow_name)
 
-        zooniverse_project = self.connect_to_zooniverse()
-        subject_set = self.get_subject_set(zooniverse_project, workflow)
+        zooniverse_project = connect_to_zooniverse()
+        subject_set = get_subject_set(zooniverse_project, workflow)
 
-        existing_subjects = self.get_existing_subjects(subject_set)
+        existing_subjects = get_existing_subjects(subject_set)
 
         print(f"Found {len(existing_subjects)} existing subjects. Building manifest...")
 

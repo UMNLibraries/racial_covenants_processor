@@ -4,11 +4,15 @@ import random
 import numpy as np
 import pandas as pd
 
+from panoptes_client import Panoptes, Project, Subject, SubjectSet
+
 from django.db.models import F, Case, When, Value, Q
 from django.contrib.postgres.aggregates import StringAgg
 
 from racial_covenants_processor.storage_backends import PrivateMediaStorage
 from apps.deed.models import DeedPage
+
+from django.conf import settings
 
 
 def get_image_url_prefix(img_rel_path):
@@ -164,3 +168,45 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
         return manifest_df.drop(columns=['page_image_web'])
 
     return pd.DataFrame()
+
+
+def connect_to_zooniverse():
+    Panoptes.connect(username=settings.ZOONIVERSE_USERNAME, password=settings.ZOONIVERSE_PASSWORD)
+    project = Project.find(slug=settings.ZOONIVERSE_PROJECT_SLUG)
+
+    return project
+
+
+def get_subject_set(project, workflow):
+    try:
+        subject_set = SubjectSet.where(project_id=project.id, display_name=workflow.workflow_name).next()
+        print(f"Found existing subjet set {workflow.workflow_name} ({subject_set.id}).")
+
+    except StopIteration:
+        print(f"No matching subject set found.")
+        return False
+    return subject_set
+
+
+def get_or_create_subject_set(project, workflow):
+    try:
+        subject_set = SubjectSet.where(project_id=project.id, display_name=workflow.workflow_name).next()
+        print(f"Found existing subjet set {workflow.workflow_name} ({subject_set.id}).")
+
+    except StopIteration:
+        print(f"No matching subject set found. Creating '{workflow.workflow_name}'...")
+        subject_set = SubjectSet()
+        subject_set.links.project = project
+        subject_set.display_name = workflow.workflow_name
+        subject_set.save()
+        print(f"Subject set {subject_set.id} created.")
+    return subject_set
+
+
+def get_existing_subjects(subject_set):
+    print("Getting existing subjects in subject set...")
+    return [subject.metadata for subject in subject_set.subjects]
+
+
+def delete_zooniverse_subjects(subject_set, subject_ids=[]):
+    subject_set.remove(subject_ids)
