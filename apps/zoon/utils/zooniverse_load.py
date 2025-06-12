@@ -205,7 +205,13 @@ def get_or_create_subject_set(project, workflow):
 
 def get_existing_subjects(subject_set):
     print("Getting existing subjects in subject set...")
-    return [subject.metadata for subject in subject_set.subjects]
+    subject_set_objs = []
+    for subject in subject_set.subjects:
+        subject_obj = {'subject_id': subject.id}
+        subject_obj.update(subject.metadata)
+        subject_set_objs.append(subject_obj)
+    return subject_set_objs
+    # return [subject.metadata for subject in subject_set.subjects]
 
 
 def delete_zooniverse_subjects(subject_set, subject_ids=[]):
