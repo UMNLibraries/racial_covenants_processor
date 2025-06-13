@@ -19,7 +19,7 @@ class Command(BaseCommand):
         parser.add_argument('-w', '--workflow', type=str,
                             help='Name of Zooniverse workflow to process, e.g. "Ramsey County"')
 
-    def delete_in_batches(self, objects_to_delete, batch_size=10000):
+    def delete_in_batches(self, objects_to_delete, batch_size=1000):
         print(f'Deleting {len(objects_to_delete)} s3 files ...')
 
         for i in range(0, len(objects_to_delete), batch_size):
@@ -27,11 +27,11 @@ class Command(BaseCommand):
                     'Objects': objects_to_delete[i:i+batch_size]
                 })
 
-            print(response)
+            # print(response)
 
     def delete_raw(self, workflow_slug):
 
-        key_filter = re.compile(fr"raw/{workflow_slug}/.+\.(?:tif|jpg)")
+        key_filter = re.compile(fr"raw/{workflow_slug}/.+\.(?:tif|TIF|tiff|jpg|JPG|JPEG)")
 
         objects_to_delete = [{'Key': obj.key} for obj in self.bucket.objects.filter(
                 Prefix=f'raw/{workflow_slug}/'

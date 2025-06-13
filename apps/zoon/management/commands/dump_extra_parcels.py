@@ -1,14 +1,8 @@
 import os
-import datetime
-import pandas as pd
-
-from django.db.models import F
-from django.utils.text import slugify
 from django.core.management.base import BaseCommand
 
-from django.conf import settings
-
-from apps.zoon.models import ExtraParcelCandidate
+from apps.zoon.utils.zooniverse_config import get_workflow_obj
+from apps.zoon.utils.django_export import dump_cx_model_backups
 
 
 class Command(BaseCommand):
@@ -23,22 +17,5 @@ class Command(BaseCommand):
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
-            epces = ExtraParcelCandidate.objects.filter(
-                workflow__workflow_name=workflow_name
-            ).annotate(
-                workflow_name=F('workflow__workflow_name')
-            ).values()
-
-            epc_df = pd.DataFrame(epces)
-            epc_df.rename(columns={'id': 'db_id'}, inplace=True)
-            epc_df.drop(
-                columns=['workflow_id', 'zooniverse_subject_id'], inplace=True, errors='ignore')
-
-            print(epc_df)
-            backup_dir = os.path.join(settings.BASE_DIR, 'data', 'backup')
-            os.makedirs(backup_dir, exist_ok=True)
-
-            outfile = os.path.join(backup_dir,
-                                   f'extra_parcels_{slugify(workflow_name)}_{datetime.datetime.now().date()}.csv')
-            print(outfile)
-            epc_df.to_csv(outfile, index=False)
+            workflow = get_workflow_obj(workflow_name)
+            outfile = dump_cx_model_backups(workflow, 'zoon', 'ExtraParcelCandidate')
