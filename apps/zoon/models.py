@@ -54,7 +54,7 @@ class UnmappedZooniverseManager(models.Manager):
     def get_queryset(self):
 
         return super().get_queryset().filter(
-            bool_covenant=True,
+            bool_covenant_final=True,
             bool_parcel_match=False
         ).annotate(
             # deed_date=F('deed_date_final'),  # Need to rename with pd
@@ -89,7 +89,7 @@ class AllCovenantedDocsZooniverseManager(models.Manager):
     def get_queryset(self):
 
         return super().get_queryset().filter(
-            bool_covenant=True
+            bool_covenant_final=True
         ).annotate(
             db_id=F('pk'),
             # deed_date=F('deed_date_final'),  # Need to rename with pd
@@ -163,6 +163,13 @@ class ValidationZooniverseManager(models.Manager):
         )
 
 
+# class CopyJSONField(models.JSONField):
+#     '''How to translate imported JSON from CSV to avoid import errors. See https://palewi.re/docs/django-postgres-copy/#import-options'''
+#     # copy_template = """
+#     #     REPLACE(REPLACE ("%(name)s", '''', '"'), 'None', 'null')::json
+#     # """
+
+
 class ZooniverseSubject(models.Model):
     '''This is the main model representing an individual suspected covenant coming back from Zooniverse transcription. Each subject should have five individual transcription responses, which will be aggregated to be displayed with each ZooniverseSubject. Possible future task: Assign an id to correspond to a deed image pre-Zooniverse'''
     workflow = models.ForeignKey(ZooniverseWorkflow, on_delete=models.CASCADE)
@@ -233,9 +240,9 @@ class ZooniverseSubject(models.Model):
     block_final = models.CharField(
         max_length=500, null=True, blank=True, verbose_name="Block")
     map_book_final = models.CharField(
-        max_length=255, blank=True, verbose_name="Map Book")
+        max_length=255, null=True, blank=True, verbose_name="Map Book")
     map_book_page_final = models.CharField(
-        max_length=255, blank=True, verbose_name="Map Book Page")
+        max_length=255, null=True, blank=True, verbose_name="Map Book Page")
     seller_final = models.CharField(
         max_length=1200, null=True, blank=True, verbose_name="Seller name")
     buyer_final = models.CharField(
@@ -266,7 +273,8 @@ class ZooniverseSubject(models.Model):
 
     date_updated = models.DateTimeField(auto_now=True, null=True)
 
-    objects = models.Manager()
+    # objects = models.Manager()
+    objects = CopyManager()
     unmapped_objects = UnmappedZooniverseManager()
     all_covenanted_docs_objects = AllCovenantedDocsZooniverseManager()
     validation_objects = ValidationZooniverseManager()
@@ -274,6 +282,10 @@ class ZooniverseSubject(models.Model):
     def __str__(self):
         return f"{self.workflow} {self.zoon_subject_id}"
 
+    # def copy_image_ids_template(self):
+    #     return """
+    #     to_jsonb(REPLACE ("%(name)s", '''', '"'))
+    #     """
 
     @property
     def deed_pages(self):
@@ -499,6 +511,8 @@ class ZooniverseResponseProcessed(models.Model):
     created_at = models.DateTimeField()
     response_raw = models.ForeignKey(
         ZooniverseResponseRaw, on_delete=models.CASCADE, null=True)
+    
+    objects = CopyManager()
 
 
 class ZooniverseUser(models.Model):
