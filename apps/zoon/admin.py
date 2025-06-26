@@ -1,7 +1,7 @@
 import datetime
 
 from django.contrib import admin
-from django.urls import reverse
+from django.urls import reverse, NoReverseMatch
 from django.utils.html import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -93,7 +93,7 @@ class ResponseInline(admin.TabularInline):
     verbose_name = "Zooniverse individual response"
     verbose_name_plural = "Zooniverse individual response"
     extra = 0
-    exclude = ['classification_id', 'response_raw',
+    exclude = ['zoon_subject_id', 'classification_id', 'response_raw',
                'workflow', 'user_id', 'created_at']
 
     readonly_fields = [
@@ -346,9 +346,12 @@ class SubjectAdmin(admin.ModelAdmin):
     get_parcel_match_count.short_description = 'Parcel match count'
 
     def get_permalink(self, obj):
-        abs_url = reverse('zoon_subject_lookup', kwargs={"zoon_subject_id": str(obj.zoon_subject_id)})
-        # print('hello' + abs_url)
-        return mark_safe(f'<a href="{abs_url}" target="_blank">{abs_url}</a>')
+        try:
+            abs_url = reverse('zoon_subject_lookup', kwargs={"zoon_subject_id": str(obj.zoon_subject_id)})
+            # print('hello' + abs_url)
+            return mark_safe(f'<a href="{abs_url}" target="_blank">{abs_url}</a>')
+        except NoReverseMatch:
+            return ''
 
     # If you would like to add a default range filter
     # method pattern "get_rangefilter_{field_name}_default"

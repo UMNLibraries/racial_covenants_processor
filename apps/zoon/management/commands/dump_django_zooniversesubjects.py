@@ -3,8 +3,6 @@ from django.core.management.base import BaseCommand
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 from apps.zoon.utils.django_export import dump_cx_model_backups
 
-# from apps.zoon.models import ZooniverseSubject, ZooniverseResponseProcessed
-
 class Command(BaseCommand):
     '''
     This command exports flat CSV files of Django ZooniverseSubject data, mainly for migration to a new workflow or as an archival tool.
@@ -23,10 +21,3 @@ class Command(BaseCommand):
         else:
             workflow = get_workflow_obj(workflow_name)
             outfile = dump_cx_model_backups(workflow, 'zoon', 'ZooniverseSubject')
-
-            # ZooniverseSubject
-            # ZooniverseResponseProcessed
-            # ManualCorrection -- These should be separately exported with existing management commands
-            # ExtraParcelCandidate
-            # ManualParcelPINLink
-

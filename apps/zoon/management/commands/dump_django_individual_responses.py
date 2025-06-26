@@ -3,7 +3,6 @@ from django.core.management.base import BaseCommand
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 from apps.zoon.utils.django_export import dump_individual_response_model_backups
 
-# from apps.zoon.models import ZooniverseSubject, ZooniverseResponseProcessed
 
 class Command(BaseCommand):
     '''
@@ -23,11 +22,3 @@ class Command(BaseCommand):
         else:
             workflow = get_workflow_obj(workflow_name)
             outfile = dump_individual_response_model_backups(workflow)
-
-            # This basic approach won't quite work because we need the zooniverse subject ID, not the db_id, for relinking to imported Zooniverse subjects
-
-            # ZooniverseSubject
-            # ZooniverseResponseProcessed
-            # ManualCorrection -- These should be separately exported with existing management commands
-            # ExtraParcelCandidate
-            # ManualParcelPINLink

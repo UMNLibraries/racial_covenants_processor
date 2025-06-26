@@ -53,6 +53,5 @@ class Command(BaseCommand):
                 infile, mapping=mapping)
             print("{} records inserted".format(insert_count))
 
-            # Handle reducer output to develop consensus answers
             management.call_command(
                 'connect_manual_corrections', workflow=workflow_name)
