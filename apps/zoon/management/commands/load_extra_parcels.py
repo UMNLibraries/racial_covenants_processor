@@ -37,8 +37,8 @@ class Command(BaseCommand):
                 'addition': 'addition',
                 'lot': 'lot',
                 'block': 'block',
-                'map_book': 'map_book',
-                'map_book_page': 'map_book_page',
+                # 'map_book': 'map_book',
+                # 'map_book_page': 'map_book_page',
                 'date_added': 'date_added',
                 'date_updated': 'date_updated',
                 'comments': 'comments',
@@ -48,6 +48,5 @@ class Command(BaseCommand):
                 infile, mapping=mapping)
             print("{} records inserted".format(insert_count))
 
-            # Handle reducer output to develop consensus answers
             management.call_command(
                 'connect_extra_parcels', workflow=workflow_name)

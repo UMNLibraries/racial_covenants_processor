@@ -188,8 +188,8 @@ class ZooniverseSubject(models.Model):
     lot = models.TextField(blank=True)
     block = models.CharField(max_length=502, blank=True)
 
-    map_book = models.CharField(max_length=255, blank=True)
-    map_book_page = models.CharField(max_length=255, blank=True)
+    map_book = models.CharField(max_length=255, null=True, blank=True)
+    map_book_page = models.CharField(max_length=255, null=True, blank=True)
 
     city = models.CharField(max_length=503, blank=True)
     seller = models.CharField(max_length=1200, blank=True)
@@ -446,16 +446,17 @@ class ZooniverseSubject(models.Model):
             self.parcel_matches.all().update(bool_covenant=True)
 
     def save(self, *args, **kwargs):
-        self.get_final_values()
-        
-        # Can pass parcel lookup for bulk matches
-        self.check_parcel_match(kwargs.get('parcel_lookup', None))
-        if 'parcel_lookup' in kwargs:
-            del kwargs['parcel_lookup']
+        if self.pk:
+            self.get_final_values()
+            
+            # Can pass parcel lookup for bulk matches
+            self.check_parcel_match(kwargs.get('parcel_lookup', None))
+            if 'parcel_lookup' in kwargs:
+                del kwargs['parcel_lookup']
 
-        self.set_geom_union()
-        # self.set_addresses()
-        set_addresses(self)
+            self.set_geom_union()
+            # self.set_addresses()
+            set_addresses(self)
 
         super(ZooniverseSubject, self).save(*args, **kwargs)
 
@@ -493,6 +494,9 @@ class ZooniverseResponseProcessed(models.Model):
     user_id = models.IntegerField(null=True, db_index=True)
     subject = models.ForeignKey(
         ZooniverseSubject, null=True, on_delete=models.SET_NULL, related_name='responses')
+    
+    zoon_subject_id = models.IntegerField(db_index=True, null=True, blank=True) # Needed only for migration to another workflow
+
     bool_covenant = models.CharField(max_length=100, null=True, blank=True)
     covenant_text = models.TextField(blank=True)
     addition = models.CharField(max_length=500, null=True, blank=True)
@@ -572,8 +576,8 @@ class ManualCorrection(models.Model):
     addition = models.CharField(max_length=500, null=True, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
-    map_book = models.CharField(max_length=255, blank=True)
-    map_book_page = models.CharField(max_length=255, blank=True)
+    map_book = models.CharField(max_length=255, null=True, blank=True)
+    map_book_page = models.CharField(max_length=255, null=True, blank=True)
     seller = models.CharField(max_length=500, null=True, blank=True)
     buyer = models.CharField(max_length=500, null=True, blank=True)
     deed_date = models.DateField(null=True, blank=True)
@@ -748,8 +752,8 @@ class ManualCovenant(models.Model):
     addition = models.CharField(max_length=500, blank=True)
     lot = models.TextField(null=True, blank=True)
     block = models.CharField(max_length=500, null=True, blank=True)
-    map_book = models.CharField(max_length=255, blank=True)
-    map_book_page = models.CharField(max_length=255, blank=True)
+    map_book = models.CharField(max_length=255, null=True, blank=True)
+    map_book_page = models.CharField(max_length=255, null=True, blank=True)
     seller = models.CharField(max_length=500, blank=True)
     buyer = models.CharField(max_length=500, blank=True)
     deed_date = models.DateField(null=True, blank=True)

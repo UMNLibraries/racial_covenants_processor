@@ -42,7 +42,6 @@ def dump_cx_model_backups(workflow, app_name, model_name):
     df.drop(
         columns=['workflow_id', 'zooniverse_subject_id'], inplace=True, errors='ignore')
     
-    print(df.columns)
     if model_name == 'ZooniverseSubject':
         df['image_ids'] = df['image_ids'].apply(lambda x: json.dumps(x))
         df['image_links'] = df['image_links'].apply(lambda x: json.dumps(x))
@@ -62,15 +61,18 @@ def dump_individual_response_model_backups(workflow):
         workflow__workflow_name=workflow_name
     ).annotate(
         workflow_name=F('workflow__workflow_name'),
-        zoon_subject_id=F('subject__zoon_subject_id'),
+        zoon_subject_id_to_set=F('subject__zoon_subject_id'),
         zoon_workflow_id=F('workflow__zoon_id')
     ).values()
 
     df = pd.DataFrame(objs)
     df.rename(columns={'id': 'db_id'}, inplace=True)
+    df['zoon_subject_id'] = df['zoon_subject_id_to_set'].astype(int)
+    df['user_id'] = df['user_id'].astype(pd.Int64Dtype())
+    # df['deed_date_year'] = df['deed_date_year'].astype(pd.Int64Dtype())
     df.drop(
-        columns=['workflow_id', 'subject_id', 'response_raw_id'], inplace=True, errors='ignore')
-
+        columns=['workflow_id', 'subject_id', 'response_raw_id', 'zoon_subject_id_to_set'], inplace=True, errors='ignore')
+    
     print(df)
     outfile = save_backup_file(df, workflow_name, 'zooniverseresponseprocessed')
 
@@ -79,7 +81,7 @@ def dump_individual_response_model_backups(workflow):
 
 def check_workflow_match(workflow, infile_path):
     '''This function checks to see if the workflow in the CSV matches the specified workflow from the user command'''
-    
+
     df = pd.read_csv(infile_path)
     workflow_names = df.workflow_name.drop_duplicates().to_list()
     if len(workflow_names) > 1:
