@@ -30,11 +30,19 @@ This procedure is designed to mitigate the situation we faced in Ramsey County, 
     python manage.py load_extra_parcels --workflow "MN Ramsey County" --infile path/to/csv.csv
     python manage.py load_manual_pin_links --workflow "MN Ramsey County" --infile path/to/csv.csv
 
-5. Re-do join of matches to modern parcel map
+5. Re-join subjects to DeedPage images
+
+.. code-block:: bash
+
+    python manage.py join_deeds_to_subjects --workflow "MN Ramsey County"
+
+6. Re-do join of matches to modern parcel map
 
 .. code-block:: bash
     
     python manage.py rebuild_covenant_spatial_lookups --workflow "MN Ramsey County"
     python manage.py match_parcels --workflow "MN Ramsey County"
+
+7. TK: Don't forget to move ManualCovenants
 
 This process will need to be repeated if new ZooniverseSubjects are loaded from newly retired Zooniverse work
