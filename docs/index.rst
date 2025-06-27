@@ -48,6 +48,7 @@ Deed Machine full workflow
    modules/downloading-new-results.rst
    modules/mapping-covenants.rst
    modules/manual-data-cleaning.rst
+   modules/migrating-zooniversesubjects-to-a-new-workflow.rst
 
 .. toctree::
    :maxdepth: 2
