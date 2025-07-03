@@ -42,11 +42,20 @@ def dump_cx_model_backups(workflow, app_name, model_name):
     df.drop(
         columns=['workflow_id', 'zooniverse_subject_id'], inplace=True, errors='ignore')
     
-    if model_name == 'ZooniverseSubject':
-        df['image_ids'] = df['image_ids'].apply(lambda x: json.dumps(x))
-        df['image_links'] = df['image_links'].apply(lambda x: json.dumps(x))
-        df['join_candidates'] = df['join_candidates'].apply(lambda x: json.dumps(x))
-        df['parcel_addresses'] = df['parcel_addresses'].apply(lambda x: json.dumps(x))
+    for json_field in [
+        'image_ids',
+        'image_links',
+        'join_candidates',
+        'parcel_addresses',
+    ]:
+        if json_field in df.columns:
+            df[json_field] = df[json_field].apply(lambda x: json.dumps(x))
+
+    # if model_name == 'ZooniverseSubject':
+    #     df['image_ids'] = df['image_ids'].apply(lambda x: json.dumps(x))
+    #     df['image_links'] = df['image_links'].apply(lambda x: json.dumps(x))
+    #     df['join_candidates'] = df['join_candidates'].apply(lambda x: json.dumps(x))
+    #     df['parcel_addresses'] = df['parcel_addresses'].apply(lambda x: json.dumps(x))
 
     print(df)
     outfile = save_backup_file(df, workflow_name, model_name.lower())

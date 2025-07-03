@@ -45,7 +45,8 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
         workflow=workflow,
         bool_match=True
     ).exclude(
-        s3_lookup__in=exclude_ids
+        s3_lookup__in=exclude_ids,
+        bool_exception=True # Usually bool_match and bool_exception are mutually exclusive, but there are some cases where they are not (e.g. migrated workflow with previous Zooniverse work we don't want to repeat)
     ).values_list('id', flat=True)
 
     if num_rows:
