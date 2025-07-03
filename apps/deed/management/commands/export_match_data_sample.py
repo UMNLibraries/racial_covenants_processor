@@ -68,6 +68,7 @@ class Command(BaseCommand):
             'page_stats',
             'page_ocr_text',
             'page_ocr_json',
+            'bool_match',
             'bool_exception',
             'page_image_web_highlighted',
         )
@@ -153,6 +154,7 @@ class Command(BaseCommand):
             'doc_date',
             's3_lookup',
             'public_uuid',
+            'bool_match',
             'bool_exception',
             'page_image_web',
             'page_stats',

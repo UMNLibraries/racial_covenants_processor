@@ -34,6 +34,9 @@ class Command(BaseCommand):
         parser.add_argument('-c', '--column', type=str, default='s3_lookup',
                             help='Column name to use to join to DeedPage records. Must match a DeedPage column that is also in the CSV. Defaults to s3_lookup')
         
+        parser.add_argument('-p', '--preserve-match', action="store_true", 
+                            help="Usually bool_match and bool_exception are mutually exclusive, but there are some cases where they are not (e.g. migrated workflow with previous Zooniverse work we don't want to repeat) Including this flag will set bool_exception and bool_manual to True, but leave bool_match as True.")
+        
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         infile = kwargs['infile']
@@ -67,7 +70,8 @@ class Command(BaseCommand):
             }
             print('Retrieving DeedPage records...')
             for dp in DeedPage.objects.filter(**filter_kwargs).only('pk'):
-                dp.bool_match = False
+                # dp.bool_match = False
+                dp.bool_match = kwargs['preserve_match']
                 dp.bool_exception = True
                 dp.bool_manual = True
                 pages_to_update.append(dp)
