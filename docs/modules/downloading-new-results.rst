@@ -39,13 +39,19 @@ Downloading new batches of Zooniverse results
     
     python manage.py load_zooniverse_export --slow --workflow "WI Milwaukee County"
 
-5. Join deed images to zooniverse subjects
+5. (Optional) Load ZooniverseSubject objects migrated from another workflow. (See :ref:`migrating-zooniversesubjects-to-a-new-workflow`.) Do this each time working with a migrated workflow with new Zooniverse results.
+
+.. code-block:: bash
+
+    python manage.py load_django_zooniversesubjects --workflow "WI Milwaukee County" --infile path/to/csv.csv
+
+6. Join deed images to zooniverse subjects
 
 .. code-block:: bash
     
     python manage.py join_deeds_to_subjects --workflow "WI Milwaukee County"
 
-6. Re-join manual corrections to subjects
+7. Re-join manual corrections to subjects
 
 .. code-block:: bash
     
@@ -53,16 +59,16 @@ Downloading new batches of Zooniverse results
     python manage.py connect_extra_parcels --workflow "WI Milwaukee County"
     python manage.py connect_manual_pin_links --workflow "WI Milwaukee County"
 
-7. Automated join of matches to modern parcel map
+8. Automated join of matches to modern parcel map
 
 .. code-block:: bash
     
     python manage.py rebuild_covenant_spatial_lookups --workflow "WI Milwaukee County"
     python manage.py match_parcels --workflow "WI Milwaukee County"
 
-8. :doc:`Manual cleanup <manual-data-cleaning>` of non-mapped covenants as needed.
+9. :doc:`Manual cleanup <manual-data-cleaning>` of non-mapped covenants as needed.
 
-9. Export shapefile/data layers
+10. Export shapefile/data layers
 
 .. code-block:: bash
 
@@ -70,7 +76,7 @@ Downloading new batches of Zooniverse results
     python manage.py dump_covenants_geojson --workflow "WI Milwaukee County"
     python manage.py dump_covenants_csv --workflow "WI Milwaukee County"
 
-10. These exports are slightly different. Each row in these exports represents a covenanted document, not a modern parcel. These may be useful for covenants discharge or for identifying covenants that could not (so far) be mapped. They are not used for our count of racial covenants.
+11. These exports are slightly different. Each row in these exports represents a covenanted document, not a modern parcel. These may be useful for covenants discharge or for identifying covenants that could not (so far) be mapped. They are not used for our count of racial covenants.
 
 .. code-block:: bash
     python manage.py dump_unmapped_csv --workflow "WI Milwaukee County"
