@@ -1,3 +1,5 @@
+.. _downloading-new-results:
+
 Downloading new batches of Zooniverse results
 =============================================
 
@@ -39,7 +41,7 @@ Downloading new batches of Zooniverse results
     
     python manage.py load_zooniverse_export --slow --workflow "WI Milwaukee County"
 
-5. (Optional) Load ZooniverseSubject objects migrated from another workflow. (See :ref:`migrating-zooniversesubjects-to-a-new-workflow`.) Do this each time working with a migrated workflow with new Zooniverse results.
+5. (Optional) Load ZooniverseSubject objects migrated from another workflow. (See :ref:`migrating-to-new-workflow`.) Do this each time working with a migrated workflow with new Zooniverse results.
 
 .. code-block:: bash
 

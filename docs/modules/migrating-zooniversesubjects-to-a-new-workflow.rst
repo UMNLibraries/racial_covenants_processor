@@ -1,3 +1,5 @@
+.. _migrating-to-new-workflow:
+
 Migrating ZooniverseSubjects to a new workflow
 ==============================================
 
