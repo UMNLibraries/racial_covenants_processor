@@ -40,14 +40,35 @@ def int_str_or_blank(value):
 
 def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
 
-    # Get random IDs
-    matching_ids = DeedPage.objects.filter(
-        workflow=workflow,
-        bool_match=True
-    ).exclude(
-        s3_lookup__in=exclude_ids,
-        bool_exception=True # Usually bool_match and bool_exception are mutually exclusive, but there are some cases where they are not (e.g. migrated workflow with previous Zooniverse work we don't want to repeat)
-    ).values_list('id', flat=True)
+    # exclude_kwargs = {
+    #     'bool_exception': True  # Usually bool_match and bool_exception are mutually exclusive, but there are some cases where they are not (e.g. migrated workflow with previous Zooniverse work we don't want to repeat)
+    # }
+    # if len(exclude_ids) > 0:
+    #     # Passing an empty list to exclude messes up queryset, so only add this if it's filled out
+    #     exclude_kwargs['s3_lookup__in'] = exclude_ids
+
+    if len(exclude_ids) > 0:
+        s3_lookups = [ex['#s3_lookup'] for ex in exclude_ids]
+
+        # Get random IDs
+        matching_ids = DeedPage.objects.filter(
+            workflow=workflow,
+            bool_match=True
+        ).exclude(
+            bool_exception=True # Usually bool_match and bool_exception are mutually exclusive, but there are some cases where they are not (e.g. migrated workflow with previous Zooniverse work we don't want to repeat)
+        ).exclude(
+            s3_lookup__in=s3_lookups
+        ).values_list('id', flat=True)
+
+    else:
+
+        # Get random IDs
+        matching_ids = DeedPage.objects.filter(
+            workflow=workflow,
+            bool_match=True
+        ).exclude(
+            bool_exception=True # Usually bool_match and bool_exception are mutually exclusive, but there are some cases where they are not (e.g. migrated workflow with previous Zooniverse work we don't want to repeat)
+        ).values_list('id', flat=True)
 
     if num_rows:
         # Take num_rows or length of matching_ids, whichever is lower
