@@ -88,6 +88,11 @@ def paginate_deedpage_df(df, matches_only=False):
     else:
         df['batch_id'] = ''
 
+    if 'doc_alt_id' in df.columns:
+        df['doc_alt_id'].fillna('', inplace=True)
+    else:
+        df['doc_alt_id'] = ''
+
     # If doc_num is null, use doc_type/book/page as doc_num
     if "doc_num" not in df.columns:
         df["doc_num"] = ''

@@ -262,6 +262,7 @@ class Command(BaseCommand):
         print("Starting Django copy create...")
         DeedPage.objects.from_csv(
             csv_path,
+            force_not_null=['doc_alt_id'],
             static_mapping={
                 'bool_exception': False,
                 'bool_manual': False
