@@ -28,9 +28,12 @@ class DeedImageInline1st(admin.TabularInline):
     exclude = deed_page_exclude_fields + ['zooniverse_subject_2nd_page', 'zooniverse_subject_3rd_page']
     # show_change_link = True
 
-    readonly_fields = ['record_link', 'doc_num', 'book_id', 'page_num', 'split_page_num',
-                       'doc_date', 'bool_match', 'matched_terms', 'page_ocr_text',
-                       'thumbnail_preview']
+    readonly_fields = ['doc_num', 'book_id', 'page_num', 'split_page_num',
+                       'doc_date', 'bool_match', 'matched_terms', 'page_ocr_text']
+    
+    def get_queryset(self, request):
+        qs = super(DeedImageInline1st, self).get_queryset(request)
+        return qs.only(*self.readonly_fields)
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -44,11 +47,20 @@ class DeedImageInline2nd(DeedImageInline1st):
     fk_name = 'zooniverse_subject_2nd_page'
     exclude = deed_page_exclude_fields + ['zooniverse_subject_1st_page', 'zooniverse_subject_3rd_page']
 
+    def get_queryset(self, request):
+        qs = super(DeedImageInline2nd, self).get_queryset(request)
+        return qs.only(*self.readonly_fields)
+
 
 class DeedImageInline3rd(DeedImageInline1st):
     verbose_name_plural = 'Deed page 3'
     fk_name = 'zooniverse_subject_3rd_page'
     exclude = deed_page_exclude_fields + ['zooniverse_subject_1st_page', 'zooniverse_subject_2nd_page']
+
+
+    def get_queryset(self, request):
+        qs = super(DeedImageInline3rd, self).get_queryset(request)
+        return qs.only(*self.readonly_fields)
 
 
 class ManualSupportingDocumentInline(admin.StackedInline):
@@ -208,6 +220,11 @@ class ManualCovenantAdmin(admin.ModelAdmin):
 
 @ admin.register(ZooniverseSubject)
 class SubjectAdmin(admin.ModelAdmin):
+
+    # def get_queryset(self, request):
+    #     qs = super(SubjectAdmin, self).get_queryset(request)
+    #     return qs.select_related('zooniverse_subject_1st_page__set')
+
     search_fields = ['zoon_subject_id',
                      'addition_final', 'covenant_text', 'covenant_text_final']
 
