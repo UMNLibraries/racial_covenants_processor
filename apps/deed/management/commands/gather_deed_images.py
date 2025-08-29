@@ -50,14 +50,14 @@ class Command(BaseCommand):
 
         # TODO: Eliminate this conditional once new Ramsey records are OCRed under new system
         if workflow.workflow_name == 'Ramsey County':
-            key_filter = re.compile(f"web/{workflow.slug}/.+\.jpg")
+            key_filter = re.compile(fr"web/{workflow.slug}/.+\.jpg")
 
             matching_keys = [obj.key for obj in my_bucket.objects.filter(
                 Prefix=f'web/{workflow.slug}/'
             ) if re.match(key_filter, obj.key)]
 
         else:
-            key_filter = re.compile(f"ocr/stats/{workflow.slug}/.+\.json")
+            key_filter = re.compile(fr"ocr/stats/{workflow.slug}/.+\.json")
 
             matching_keys = [obj.key for obj in my_bucket.objects.filter(
                 Prefix=f'ocr/stats/{workflow.slug}/'
