@@ -455,10 +455,15 @@ class ZooniverseSubject(models.Model):
                 del kwargs['parcel_lookup']
 
             self.set_geom_union()
-            # self.set_addresses()
             set_addresses(self)
 
         super(ZooniverseSubject, self).save(*args, **kwargs)
+
+        # Generate flattened covenants for easier export. This has to run post-save or else the values for ZooniverseSubject will not get propogated to the Parcel.covenant_objects call that is needed to generate the flat CovenantedParcel record.
+        if self.parcel_matches.count() > 0:
+            from apps.parcel.utils.export_utils import save_flat_covenanted_parcels, delete_flat_covenanted_parcels
+            delete_flat_covenanted_parcels(self.parcel_matches)
+            save_flat_covenanted_parcels(self.parcel_matches)
 
 
 class ZooniverseResponseRaw(models.Model):
@@ -844,6 +849,12 @@ class ManualCovenant(models.Model):
 
             # Tag matched parcels with bool_covenant=True
             self.parcel_matches.all().update(bool_covenant=True)
+
+            # Generate flattened covenants for easier export. Trying to run this as part of parcel_match process because on ManualCovenant this is sent by post-save signal, in contrast to ZooniverseSubject
+            if self.parcel_matches.count() > 0:
+                from apps.parcel.utils.export_utils import save_flat_covenanted_parcels, delete_flat_covenanted_parcels
+                delete_flat_covenanted_parcels(self.parcel_matches)
+                save_flat_covenanted_parcels(self.parcel_matches)
 
     def save(self, *args, **kwargs):
         

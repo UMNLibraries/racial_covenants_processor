@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.conf import settings
 
 from apps.zoon import views
 from apps.zoon.serializers import SubjectNoGeoViewSet, SubjectGeoViewSet
@@ -55,5 +56,9 @@ urlpatterns = [
     path('deed_search/', DeedSearchView.as_view(), name='deed_search_view'),
     # path('__debug__/', include('debug_toolbar.urls')),
 ]
+
+if settings.DEBUG_TOOLBAR_ON:
+    from debug_toolbar.toolbar import debug_toolbar_urls
+    urlpatterns += debug_toolbar_urls()
 
 urlpatterns += staticfiles_urlpatterns()

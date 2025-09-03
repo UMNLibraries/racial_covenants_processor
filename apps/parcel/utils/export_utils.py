@@ -3,10 +3,11 @@ import geopandas as gpd
 
 from django.contrib.gis.db.models.functions import AsWKT
 
-from apps.parcel.models import Parcel
-from apps.zoon.models import ZooniverseSubject, ManualCovenant
+from apps.parcel.models import Parcel, CovenantedParcel
+from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ManualCovenant
 from apps.zoon.models import MATCH_TYPE_OPTIONS, MANUAL_COV_OPTIONS
 
+MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
 
 EXPORT_FIELDS_ORDERED = [
     'db_id',
@@ -48,6 +49,126 @@ EXPORT_FIELDS_ORDERED = [
     'plat_dbid',
     'subd_dbid',
 ]
+
+def delete_flat_covenanted_parcels(parcels):
+    existing_covs = CovenantedParcel.objects.filter(parcel__pk__in=parcels.values_list('pk', flat=True))
+    if existing_covs.count() > 0:
+        print(f'Deleting existing covs: {existing_covs}')
+
+        existing_covs.delete()
+
+    return parcels
+
+def save_flat_covenanted_parcels(parcels):
+    '''Take a queryset of covenanted parcels instances and make flat CovenantedParcel export instance using Parcel.covenanted_parcels model manager.'''
+
+    PARCEL_MODEL_FIELDS = [
+        'id',
+        'workflow',
+        'cnty_name',
+        'cnty_fips',
+        'doc_num',
+        'cnty_pin',
+
+        'deed_date',
+        'seller',
+        'buyer',
+        'cov_type',
+        'cov_text',
+
+        'zn_subj_id',
+        'zn_dt_ret',
+        # 'image_ids',
+
+        'deed_page_1',
+        'deed_page_2',
+        'deed_page_3',
+
+        'med_score',
+        'manual_cx',
+        'match_type',
+        'join_candidates',
+
+        'street_add',
+        'city',
+        'state',
+        'zip_code',
+
+        'add_cov',
+        'block_cov',
+        'lot_cov',
+
+        'map_book',
+        'map_page',
+
+        'add_mod',
+        'block_mod',
+        'lot_mod',
+        'ph_dsc_mod',
+
+        'plat__pk',
+        'subdivision_spatial__pk',
+
+        'dt_updated',
+        'geom_4326'
+    ]
+
+    parcel_pks = parcels.values_list('pk', flat=True)
+    # print(f'parcel pks: {parcel_pks}')
+
+    cov_creation_objs = []
+    for p in Parcel.covenant_objects.filter(pk__in=parcel_pks).values(*PARCEL_MODEL_FIELDS):
+
+        # print(p)
+
+        # Reshape fields
+        p['workflow'] = ZooniverseWorkflow.objects.get(pk=p['workflow'])
+        try:
+            p['deed_year'] = p['deed_date'].year
+        except:
+            p['deed_year'] = None
+
+        # There may not be join candidates in some cases, e.g. addition-wide covenants
+        try:
+            p['join_strgs'] = ';'.join([jc['join_string'] for jc in p['join_candidates']])
+        except TypeError:
+            p['join_strgs'] = ''
+
+        # print(p['match_type'])
+        # print(f'foo: {[mt[1] for mt in MATCH_TYPES if mt[0] == p['match_type']]}')
+        # print(f'bar: {[mt[1] for mt in MATCH_TYPES if mt[0] == p['match_type']][0]}')
+        # match_type_list = [mt[1] for mt in MATCH_TYPES if mt[0] == p['match_type']]
+        try:
+            p['match_type'] = [mt[1] for mt in MATCH_TYPES if mt[0] == p['match_type']][0] if p['match_type'] is not None else 'Automatic match'
+        except IndexError:
+            p['match_type'] = 'Something else'
+                
+        # p['match_type'] = [mt[1] for mt in MATCH_TYPES if mt[0] == p['match_type']][0] if p['match_type'] is not None else 'Automatic match'
+        p['image_ids'] = ','.join(dp for dp in [p['deed_page_1'], p['deed_page_2'], p['deed_page_3']] if dp not in [None, ''])
+
+        # Rename fields
+        p['parcel_id'] = p.pop('id')  # Set foreign key to parcel
+        p['plat_dbid'] = p.pop('plat__pk')  # These can just be text representations
+        p['subd_dbid'] = p.pop('subdivision_spatial__pk')
+
+        # Delete unnecessary fields
+        # del p['id']
+        del p['join_candidates']
+        del p['deed_page_1']
+        del p['deed_page_2']
+        del p['deed_page_3']
+
+        cp = CovenantedParcel(
+            **p
+        )
+        cov_creation_objs.append(cp)
+
+    # print(f'Creating cp objects: {cov_creation_objs}')    
+    
+    CovenantedParcel.objects.bulk_create(cov_creation_objs)
+
+    return CovenantedParcel.objects.filter(parcel__pk__in=parcel_pks)
+
 
 
 def build_gdf(workflow):
@@ -112,7 +233,7 @@ def build_gdf(workflow):
     # covenants_df['dt_updated'] = covenants_df['dt_updated'].astype(str)
     covenants_df['join_strgs'] = covenants_df['join_candidates'].apply(lambda x: ';'.join([jc['join_string'] for jc in x]))
 
-    MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
+    # MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
 
     # TEMP TEMP TEMP until bug #90 closed
     covenants_df = covenants_df[covenants_df['match_type'] != '']

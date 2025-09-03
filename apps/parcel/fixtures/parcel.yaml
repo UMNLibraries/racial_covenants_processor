@@ -282,3 +282,97 @@
         orig_data: '{"foo": "bar"}'
         orig_filename: 'test/fixtures/parcel.shp'
         geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+
+# For testing parcel matching export to CovenantedParcel
+-   model: parcel.parcel
+    pk: 12
+    fields:
+        workflow: 1
+        feature_id: 11
+        pin_primary: 'covenanted-parcel-1'
+        pin_secondary: '654321'
+        street_address: '126 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: Covenanted Parcel Addition
+        plat_standardized: covenanted parcel
+        block: '1'
+        lot: '1'
+        join_description: BLOCK 1 LOT 1 COVENANTED PARCEL ADDITION
+        phys_description: BLOCK 1 LOT 1 COVENANTED PARCEL ADDITION
+        # subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+-   model: parcel.parcel
+    pk: 13
+    fields:
+        workflow: 1
+        feature_id: 12
+        pin_primary: 'covenanted-parcel-2'
+        pin_secondary: '654321'
+        street_address: '126 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: Covenanted Parcel Addition
+        plat_standardized: covenanted parcel
+        block: '1'
+        lot: '2'
+        join_description: BLOCK 1 LOT 2 COVENANTED PARCEL ADDITION
+        phys_description: BLOCK 1 LOT 2 COVENANTED PARCEL ADDITION
+        # subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+-   model: parcel.parcel
+    pk: 14
+    fields:
+        workflow: 1
+        feature_id: 13
+        pin_primary: 'covenanted-parcel-aw-1'
+        pin_secondary: '654321'
+        street_address: '126 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: Not Covenanted Parcel AW Addition
+        plat_standardized: not covenanted parcel aw
+        block: '1'
+        lot: '1'
+        join_description: BLOCK 1 LOT 1 NOT COVENANTED PARCEL AW ADDITION
+        phys_description: BLOCK 1 LOT 1 NOT COVENANTED PARCEL AW ADDITION
+        # subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
+-   model: parcel.parcel
+    pk: 15
+    fields:
+        workflow: 1
+        feature_id: 14
+        pin_primary: 'covenanted-parcel-aw-2'
+        pin_secondary: '654321'
+        street_address: '126 Main St.'
+        city: 'St. Paul'
+        state: 'MN'
+        zip_code: '12345'
+        county_name: 'Ramsey'
+        county_fips: '27123'
+        plat_name: Not Covenanted Parcel AW Addition
+        plat_standardized: not covenanted parcel aw
+        block: '1'
+        lot: '2'
+        join_description: BLOCK 1 LOT 2 NOT COVENANTED PARCEL AW ADDITION
+        phys_description: BLOCK 1 LOT 2 NOT COVENANTED PARCEL AW ADDITION
+        # subdivision_spatial: 1
+        orig_data: '{"foo": "bar"}'
+        orig_filename: 'test/fixtures/parcel.shp'
+        geom_4326: 'MULTIPOLYGON (((-93.213996 44.968512,-93.212839 44.969831,-93.211711 44.969427,-93.211410 44.968204,-93.213425 44.967885,-93.213996 44.968512 )))'
