@@ -1,6 +1,6 @@
 from django.test import TestCase, override_settings
 from django.core import management
-from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
+from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ManualCovenant
 from apps.parcel.models import Parcel, ManualParcelCandidate, CovenantedParcel
 
 from apps.parcel.utils.parcel_utils import standardize_addition, get_blocks, get_lots, write_join_strings
@@ -358,4 +358,38 @@ class CovenantedParcelTests(TestCase):
         
         self.assertEqual(cps_after.count(), 2)
 
+    def test_manual_covenant_covenanted_parcel_creation(self):
         # TODO: ManualCovenant testing for CovenantParcel creation
+        cps_initial = CovenantedParcel.objects.filter(
+            add_cov='Manual Covenant CP Addition'
+        )
+        self.assertEqual(cps_initial.count(), 0)
+
+        mc = ManualCovenant(
+            workflow_id=1,
+            bool_confirmed=True,
+            bool_parcel_match=False,
+            deed_date='2025-04-01',
+            addition='Manual Covenant CP Addition',
+            block='1',
+            lot='1'
+        )
+        mc.save()
+
+        mc2 = ManualCovenant.objects.get(addition='Manual Covenant CP Addition')
+        mc2.save()
+
+        cps_after = CovenantedParcel.objects.filter(
+            add_cov='Manual Covenant CP Addition'
+        )
+        
+        self.assertEqual(cps_after.count(), 1)
+
+        # Now delete the ManualCovenant and confirm that the ManualCovenant is deleted
+        mc2.delete()
+
+        cps_after_delete = CovenantedParcel.objects.filter(
+            add_cov='Manual Covenant CP Addition'
+        )
+        self.assertEqual(cps_after_delete.count(), 0)
+

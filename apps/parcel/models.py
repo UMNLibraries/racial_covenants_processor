@@ -610,7 +610,7 @@ class CovenantedParcel(models.Model):
     street_add = models.CharField(max_length=255, null=True)
     city = models.CharField(max_length=500, null=True)
     state = models.CharField(max_length=2, null=True, db_index=True)
-    zip_code = models.CharField(max_length=5, null=True)
+    zip_code = models.CharField(max_length=25, null=True)
     add_cov = models.CharField(max_length=500, null=True)
     block_cov = models.CharField(max_length=100, null=True)
     lot_cov = models.CharField(max_length=500, null=True)

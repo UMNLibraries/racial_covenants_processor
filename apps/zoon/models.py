@@ -860,6 +860,20 @@ class ManualCovenant(models.Model):
         
         super(ManualCovenant, self).save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        # Custom logic before deletion to keep CovenantedParcels up to date
+        parcel_match_pks = list(self.parcel_matches.values_list('pk', flat=True))
+
+        # Call the parent class's delete method
+        super().delete(*args, **kwargs)
+
+        if len(parcel_match_pks) > 0:
+            print('found some matches to clear')
+            from apps.parcel.utils.export_utils import save_flat_covenanted_parcels, delete_flat_covenanted_parcels
+            parcels_to_clear = Parcel.objects.filter(pk__in=parcel_match_pks).only('id')
+            delete_flat_covenanted_parcels(parcels_to_clear)
+            save_flat_covenanted_parcels(parcels_to_clear)
+
 
 @receiver(models.signals.post_save, sender=ManualCovenant)
 def manual_cov_post_save(sender, instance=None, created=False, **kwargs):
@@ -884,6 +898,26 @@ def manual_cov_post_save(sender, instance=None, created=False, **kwargs):
         instance.save()
     finally:
         del instance._dirty
+
+
+# @receiver(models.signals.post_delete, sender=ManualCovenant)
+# def cleanup_covenanted_parcels(sender, instance, **kwargs):
+#     """
+#     This function is called before an instance of ManualCovenant is deleted.
+#     It can be used to perform cleanup or related actions.
+#     """
+#     print(f"Post-delete signal triggered for ManualCovenant instance: {instance.id}")
+
+#     # Example: Delete related objects that are not handled by on_delete cascade
+#     # or perform other cleanup tasks.
+#     # For instance, if you have a 'RelatedModel' that should be deleted
+#     # when 'MyModel' is deleted, but it's not a direct ForeignKey with CASCADE.
+
+#     if instance.parcel_matches.count() > 0:
+#         print('found some matches')
+#         from apps.parcel.utils.export_utils import save_flat_covenanted_parcels, delete_flat_covenanted_parcels
+#         delete_flat_covenanted_parcels(instance.parcel_matches)
+#         save_flat_covenanted_parcels(instance.parcel_matches)
 
 
 class ManualCovenantParcelPINLink(models.Model):
