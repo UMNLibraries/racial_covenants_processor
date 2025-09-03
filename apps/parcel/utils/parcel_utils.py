@@ -331,3 +331,4 @@ def addition_wide_parcel_match(cov_obj):
         cov_obj.bool_parcel_match = True
         for p in matching_subdivision_alternates:
             cov_obj.parcel_matches.add(*p.subdivision.parcel_set.all())
+

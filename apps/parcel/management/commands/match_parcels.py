@@ -11,6 +11,7 @@ from django.conf import settings
 from apps.zoon.models import ZooniverseSubject, ManualCovenant, ManualParcelPINLink, ManualCovenantParcelPINLink
 from apps.parcel.models import JoinReport, Parcel
 from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, addition_wide_parcel_match
+from apps.parcel.utils.export_utils import delete_flat_covenanted_parcels, save_flat_covenanted_parcels
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 from apps.zoon.utils.zooniverse_join import set_addresses
 
@@ -116,6 +117,12 @@ class Command(BaseCommand):
 
         print("Tagging bool_covenant=True for matched Parcels on ManualCovenants...")
         Parcel.objects.filter(workflow=workflow, manualcovenant__isnull=False, manualcovenant__bool_confirmed=True).update(bool_covenant=True)
+
+    def save_flattened_covenants(self, workflow):
+        matched_parcels = Parcel.objects.filter(workflow=workflow, bool_covenant=True)
+        delete_flat_covenanted_parcels(matched_parcels)
+        flat_covenants = save_flat_covenanted_parcels(matched_parcels)
+        return flat_covenants
 
     def write_match_report(self, workflow, bool_local=False, bool_test=False):
         fieldnames = ['join_string', 'match', 'subject_id',
@@ -299,6 +306,8 @@ class Command(BaseCommand):
             self.match_parcel_pin_links_manual(workflow, workflow_pins_lookup)
 
             self.tag_matched_parcels(workflow)
+
+            self.save_flattened_covenants(workflow)
 
             bool_local = kwargs['local']
             bool_test = kwargs['test']

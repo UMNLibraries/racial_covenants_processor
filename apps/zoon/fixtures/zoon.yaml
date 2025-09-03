@@ -11,6 +11,7 @@
         workflow: 1
         zoon_subject_id: 1
         bool_covenant_final: True
+        deed_date_final: '2025-04-01'
         covenant_text_final: This is sample covenant text
         addition_final: JANE'S ADDITION
         image_ids: ''
@@ -24,6 +25,7 @@
         workflow: 1
         zoon_subject_id: 2
         bool_covenant_final: True
+        deed_date_final: '2025-04-01'
         covenant_text_final: This is sample covenant text
         addition_final: JANE'S ADDITION
         image_ids: ''
@@ -40,6 +42,7 @@
         bool_covenant: True
         bool_covenant_final: True  # Since there is no manual correction associated with this, need both _final and regular values set.
         bool_manual_correction: True  # Necessary for bulk join in match_parcels.py
+        deed_date_final: '2025-04-01'
         covenant_text: This is sample covenant text
         addition: Lyndale Beach 2nd Addition
         addition_final: Lyndale Beach 2nd Addition
@@ -59,6 +62,7 @@
         bool_covenant: True
         bool_covenant_final: True  # Since there is no manual correction associated with this, need both _final and regular values set.
         bool_manual_correction: True  # Necessary for bulk join in match_parcels.py
+        deed_date_final: '2025-04-01'
         covenant_text: This is sample covenant text
         addition: Lyndale Beach 2nd Addition Variation
         addition_final: Lyndale Beach 2nd Addition Variation
@@ -76,6 +80,7 @@
         workflow: 1
         zoon_subject_id: 4
         bool_covenant_final: True
+        deed_date_final: '2025-04-01'
         covenant_text_final: This is sample covenant text
         addition_final: JANE'S ADDITION
         image_ids: ''
@@ -87,6 +92,7 @@
     fields:
         workflow: 1
         bool_confirmed: True
+        deed_date: '2025-04-01'
         covenant_text: This is sample covenant manual text
         addition: JANE'S ADDITION
         lot: 4
@@ -100,6 +106,7 @@
     fields:
         workflow: 1
         bool_confirmed: True
+        deed_date: '2025-04-01'
         covenant_text: This is sample covenant manual text
         addition: MANY COVENANTS 1ST ADDITION
         cov_type: PT
@@ -115,6 +122,7 @@
         zoon_subject_id: 5
         bool_covenant: True
         bool_covenant_final: True
+        deed_date_final: '2025-04-01'
         covenant_text_final: This is sample covenant text
         addition_final: "No Man's Land But Make it Confusing"
         image_ids: ''
@@ -138,6 +146,7 @@
     fields:
         workflow: 1
         bool_confirmed: True
+        deed_date: '2025-04-01'
         covenant_text: This is sample covenant manual text
         addition: MYSTERIOUS ADDITION
         cov_type: SE
@@ -150,6 +159,7 @@
     fields:
         workflow: 1
         bool_confirmed: True
+        deed_date: '2025-04-01'
         covenant_text: This is sample covenant manual text
         addition: MYSTERIOUS ADDITION 2
         cov_type: SE
@@ -163,5 +173,35 @@
         manual_covenant: 4
         parcel_pin: mppl-test-pin-2
         comments: "This should get linked to a Parcel"
+        date_added: '2024-07-18 00:00:00.123456+00:00'
+        date_updated: '2024-07-18 00:00:00.123456+00:00'
+
+# For testing parcel matching export to CovenantedParcel
+-   model: zoon.zooniversesubject
+    pk: 7
+    fields:
+        workflow: 1
+        zoon_subject_id: 5
+        bool_covenant: True
+        bool_covenant_final: True
+        deed_date_final: '2025-04-01'
+        covenant_text_final: This is sample covenant text
+        addition_final: Covenanted Parcel Addition
+        image_ids: ''
+        lot_final: 1
+        block_final: 1
+        bool_parcel_match: False
+-   model: zoon.manualcovenant
+    pk: 5
+    fields:
+        workflow: 1
+        bool_confirmed: True
+        deed_date: '2025-04-01'
+        covenant_text: This is sample covenant manual text
+        addition: Covenanted Parcel Addition
+        lot: 2
+        block: 1
+        cov_type: SE
+        bool_parcel_match: False
         date_added: '2024-07-18 00:00:00.123456+00:00'
         date_updated: '2024-07-18 00:00:00.123456+00:00'

@@ -588,3 +588,51 @@ class AllCovenantedDocsCSVExport(models.Model):
 
     class Meta:
         ordering = ('-id',)
+
+
+
+
+class CovenantedParcel(models.Model):
+    '''This is a holder model to hopefully speed up export of flattened covenants data produced by the Parcel.covenanted_objects manager.'''
+    workflow = workflow = models.ForeignKey(
+         "zoon.ZooniverseWorkflow", null=True, on_delete=models.SET_NULL)
+    parcel = models.ForeignKey(
+         "parcel.Parcel", null=True, on_delete=models.SET_NULL)
+    cnty_name = models.CharField(max_length=255, null=True, db_index=True)
+    cnty_fips = models.CharField(max_length=255, null=True)
+    doc_num = models.CharField(max_length=255, null=True)
+    deed_year = models.IntegerField(null=True)
+    deed_date = models.DateField(null=True)
+    # exec_date = models.DateField(null=True)
+    cov_text = models.TextField(null=True)
+    seller = models.CharField(max_length=1200, null=True)
+    buyer = models.CharField(max_length=1200, null=True)
+    street_add = models.CharField(max_length=255, null=True)
+    city = models.CharField(max_length=500, null=True)
+    state = models.CharField(max_length=2, null=True, db_index=True)
+    zip_code = models.CharField(max_length=5, null=True)
+    add_cov = models.CharField(max_length=500, null=True)
+    block_cov = models.CharField(max_length=100, null=True)
+    lot_cov = models.CharField(max_length=500, null=True)
+    map_book = models.CharField(max_length=255, null=True)
+    map_page = models.CharField(max_length=255, null=True)
+    cnty_pin = models.CharField(max_length=50, null=True)
+    add_mod = models.CharField(max_length=500, null=True)
+    block_mod = models.CharField(max_length=100, null=True)
+    lot_mod = models.CharField(max_length=500, null=True)
+    ph_dsc_mod = models.TextField(null=True)
+    join_strgs = models.JSONField(null=True)
+    # geocd_addr = models.CharField(max_length=255, null=True)
+    # geocd_dist = models.CharField(max_length=255, null=True)
+    cov_type = models.CharField(max_length=25, null=True)
+    match_type = models.CharField(max_length=255, null=True)
+    manual_cx = models.BooleanField(null=True)
+    dt_updated = models.DateField(null=True)
+    zn_subj_id = models.IntegerField(null=True)
+    zn_dt_ret = models.DateField(null=True)
+    image_ids = models.JSONField(null=True)
+    med_score = models.FloatField(null=True)
+    plat_dbid = models.IntegerField(null=True)
+    subd_dbid = models.IntegerField(null=True)
+
+    geom_4326 = models.MultiPolygonField(srid=4326)

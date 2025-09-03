@@ -1,9 +1,10 @@
 from django.test import TestCase, override_settings
 from django.core import management
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
-from apps.parcel.models import Parcel, ManualParcelCandidate
+from apps.parcel.models import Parcel, ManualParcelCandidate, CovenantedParcel
 
 from apps.parcel.utils.parcel_utils import standardize_addition, get_blocks, get_lots, write_join_strings
+from apps.parcel.utils.export_utils import delete_flat_covenanted_parcels, save_flat_covenanted_parcels
 
 
 class JoinStringTests(TestCase):
@@ -280,3 +281,81 @@ class ParcelCandidateTests(TestCase):
 
         mpc.delete()
         self.assertEqual(parcel.parceljoincandidate_set.all().count(), 1)
+
+
+@override_settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS)
+class CovenantedParcelTests(TestCase):
+    fixtures = ['zoon', 'plat', 'parcel']
+
+    @classmethod
+    def setUpTestData(cls):
+        workflow = ZooniverseWorkflow.objects.get(pk=1)
+        
+        # Rebuild spatial lookups and run parcel auto-match before running these tests
+        management.call_command('rebuild_parcel_spatial_lookups', workflow=workflow.workflow_name)
+        management.call_command('rebuild_covenant_spatial_lookups', workflow=workflow.workflow_name)
+        management.call_command('match_parcels', workflow=workflow.workflow_name)
+
+    def test_parcel_match(self):
+        parcel_1 = Parcel.objects.get(pin_primary='covenanted-parcel-1')
+        self.assertEqual(parcel_1.bool_covenant, True)
+
+        parcel_2 = Parcel.objects.get(pin_primary='covenanted-parcel-2')
+        self.assertEqual(parcel_2.bool_covenant, True)
+
+    def test_save_flat_covenanted_parcels(self):
+
+        parcels = Parcel.objects.filter(pin_primary__in=['covenanted-parcel-1', 'covenanted-parcel-2'])
+
+        # Delete covs created by match_parcels
+        cleared_parcels = delete_flat_covenanted_parcels(parcels)
+        self.assertEqual(CovenantedParcel.objects.filter(parcel__pin_primary='covenanted-parcel-1').count(), 0)
+        self.assertEqual(CovenantedParcel.objects.filter(parcel__pin_primary='covenanted-parcel-2').count(), 0)
+
+        # Manually create some new covs
+        flat_covs = save_flat_covenanted_parcels(parcels)
+        self.assertEqual(CovenantedParcel.objects.filter(parcel__pin_primary='covenanted-parcel-1').count(), 1)
+        self.assertEqual(CovenantedParcel.objects.filter(parcel__pin_primary='covenanted-parcel-2').count(), 1)
+
+        flat_cov_1 = flat_covs.get(parcel__pin_primary='covenanted-parcel-1')
+        self.assertEqual(flat_cov_1.cov_text, 'This is sample covenant text')
+
+        # Delete manually created covs and test again
+        cleared_parcels = delete_flat_covenanted_parcels(parcels)
+        self.assertEqual(CovenantedParcel.objects.filter(parcel__pin_primary='covenanted-parcel-1').count(), 0)
+        self.assertEqual(CovenantedParcel.objects.filter(parcel__pin_primary='covenanted-parcel-2').count(), 0)
+
+    def test_addition_wide_covenanted_parcel_creation(self):
+        # Create addition-wide ZooniverseSubject and see if it creates CovenantedParcel objects
+        cps_initial = CovenantedParcel.objects.filter(
+            add_cov='Covenanted Parcel AW Addition'
+        )
+        self.assertEqual(cps_initial.count(), 0)
+
+        awc = ZooniverseSubject(
+            workflow_id=1,
+            bool_covenant=True,
+            # bool_covenant_final=True,
+            bool_parcel_match=False,
+            deed_date_final='2025-04-01',
+            addition='Not Covenanted Parcel AW Addition',
+            addition_final='Not Covenanted Parcel AW Addition',
+            block='NONE',
+            lot='NONE',
+            match_type='AW',
+            match_type_final='AW',
+            zoon_subject_id='1234',
+            image_ids='',
+        )
+        awc.save()
+
+        awc2 = ZooniverseSubject.objects.get(addition='Not Covenanted Parcel AW Addition')
+        awc2.save()
+
+        cps_after = CovenantedParcel.objects.filter(
+            add_cov='Not Covenanted Parcel AW Addition'
+        )
+        
+        self.assertEqual(cps_after.count(), 2)
+
+        # TODO: ManualCovenant testing for CovenantParcel creation
