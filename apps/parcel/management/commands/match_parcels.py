@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from apps.zoon.models import ZooniverseSubject, ManualCovenant, ManualParcelPINLink, ManualCovenantParcelPINLink
-from apps.parcel.models import JoinReport, Parcel
+from apps.parcel.models import JoinReport, Parcel, CovenantedParcel
 from apps.parcel.utils.parcel_utils import build_parcel_spatial_lookups, addition_wide_parcel_match
 from apps.parcel.utils.export_utils import delete_flat_covenanted_parcels, save_flat_covenanted_parcels
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
@@ -119,8 +119,12 @@ class Command(BaseCommand):
         Parcel.objects.filter(workflow=workflow, manualcovenant__isnull=False, manualcovenant__bool_confirmed=True).update(bool_covenant=True)
 
     def save_flattened_covenants(self, workflow):
+        # Do a more broad deletion to find any stragglers
+        print("Deleting old CovenantedParcel records from this workflow...")
+        CovenantedParcel.objects.filter(workflow=workflow).delete()
+
+        print("Creating CovenantedParcel records from this workflow...")
         matched_parcels = Parcel.objects.filter(workflow=workflow, bool_covenant=True)
-        delete_flat_covenanted_parcels(matched_parcels)
         flat_covenants = save_flat_covenanted_parcels(matched_parcels)
         return flat_covenants
 

@@ -5,7 +5,7 @@ from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from django_filters import filters, FilterSet
 
-from .models import Parcel, ShpExport, GeoJSONExport, CSVExport
+from .models import Parcel, CovenantedParcel, ShpExport, GeoJSONExport, CSVExport
 from apps.zoon.models import ZooniverseSubject
 
 covenant_api_fields = [
@@ -50,68 +50,72 @@ covenant_api_fields = [
 
 # Serializers define the API representation.
 class ParcelNoGeoSerializer(serializers.ModelSerializer):
-    # mostly defined in annotations on model manager in  models.py
-    cov_type = serializers.CharField()
-    cov_text = serializers.CharField()
-    zn_subj_id = serializers.CharField()
-    image_ids = serializers.CharField()
-    zn_dt_ret = serializers.DateTimeField()
-    med_score = serializers.FloatField()
-    manual_cx = serializers.BooleanField()
-    add_cov = serializers.CharField()
-    block_cov = serializers.CharField()
-    lot_cov = serializers.CharField()
-    seller = serializers.CharField()
-    buyer = serializers.CharField()
-    deed_date = serializers.DateField()
-    doc_num = serializers.CharField()
-    match_type = serializers.CharField()
-    dt_updated = serializers.DateTimeField()
-    cnty_name = serializers.CharField()
-    cnty_fips = serializers.CharField()
-    cnty_pin = serializers.CharField()
-    street_add= serializers.CharField()
-    add_mod = serializers.CharField()
-    block_mod = serializers.CharField()
-    lot_mod = serializers.CharField()
-    ph_dsc_mod = serializers.CharField()
+    # # mostly defined in annotations on model manager in  models.py
+    # cov_type = serializers.CharField()
+    # cov_text = serializers.CharField()
+    # zn_subj_id = serializers.CharField()
+    # image_ids = serializers.CharField()
+    # zn_dt_ret = serializers.DateTimeField()
+    # med_score = serializers.FloatField()
+    # manual_cx = serializers.BooleanField()
+    # add_cov = serializers.CharField()
+    # block_cov = serializers.CharField()
+    # lot_cov = serializers.CharField()
+    # seller = serializers.CharField()
+    # buyer = serializers.CharField()
+    # deed_date = serializers.DateField()
+    # doc_num = serializers.CharField()
+    # match_type = serializers.CharField()
+    # dt_updated = serializers.DateTimeField()
+    # cnty_name = serializers.CharField()
+    # cnty_fips = serializers.CharField()
+    # cnty_pin = serializers.CharField()
+    # street_add= serializers.CharField()
+    # add_mod = serializers.CharField()
+    # block_mod = serializers.CharField()
+    # lot_mod = serializers.CharField()
+    # ph_dsc_mod = serializers.CharField()
 
     class Meta:
-        model = Parcel
-        fields = covenant_api_fields
+        # model = Parcel
+        model = CovenantedParcel
+        # fields = covenant_api_fields
+        exclude = ['geom_4326']
 
 
 class ParcelGeoSerializer(GeoFeatureModelSerializer):
     # mostly defined in annotations on model manager in  models.py
-    cov_type = serializers.CharField()
-    cov_text = serializers.CharField()
-    zn_subj_id = serializers.CharField()
-    image_ids = serializers.CharField()
-    zn_dt_ret = serializers.DateTimeField()
-    med_score = serializers.FloatField()
-    manual_cx = serializers.BooleanField()
-    add_cov = serializers.CharField()
-    block_cov = serializers.CharField()
-    lot_cov = serializers.CharField()
-    seller = serializers.CharField()
-    buyer = serializers.CharField()
-    deed_date = serializers.DateField()
-    doc_num = serializers.CharField()
-    match_type = serializers.CharField()
-    dt_updated = serializers.DateTimeField()
-    cnty_name = serializers.CharField()
-    cnty_fips = serializers.CharField()
-    cnty_pin = serializers.CharField()
-    street_add= serializers.CharField()
-    add_mod = serializers.CharField()
-    block_mod = serializers.CharField()
-    lot_mod = serializers.CharField()
-    ph_dsc_mod = serializers.CharField()
+    # cov_type = serializers.CharField()
+    # cov_text = serializers.CharField()
+    # zn_subj_id = serializers.CharField()
+    # image_ids = serializers.CharField()
+    # zn_dt_ret = serializers.DateTimeField()
+    # med_score = serializers.FloatField()
+    # manual_cx = serializers.BooleanField()
+    # add_cov = serializers.CharField()
+    # block_cov = serializers.CharField()
+    # lot_cov = serializers.CharField()
+    # seller = serializers.CharField()
+    # buyer = serializers.CharField()
+    # deed_date = serializers.DateField()
+    # doc_num = serializers.CharField()
+    # match_type = serializers.CharField()
+    # # dt_updated = serializers.DateTimeField()
+    # cnty_name = serializers.CharField()
+    # cnty_fips = serializers.CharField()
+    # cnty_pin = serializers.CharField()
+    # street_add= serializers.CharField()
+    # add_mod = serializers.CharField()
+    # block_mod = serializers.CharField()
+    # lot_mod = serializers.CharField()
+    # ph_dsc_mod = serializers.CharField()
 
     class Meta:
-        model = Parcel
+        # model = Parcel
+        model = CovenantedParcel
 
-        fields = covenant_api_fields
+        # fields = covenant_api_fields
+        fields = '__all__'
 
         geo_field = 'geom_4326'
 
@@ -137,6 +141,20 @@ class CSVExportSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+# class CovenantFilter(FilterSet):
+#     # username = filters.CharFilter()
+#     min_deed_date = filters.IsoDateTimeFilter(field_name="deed_date", lookup_expr='gte')
+#     min_exec_date = filters.IsoDateTimeFilter(field_name="exec_date", lookup_expr='gte')
+#     max_deed_date = filters.IsoDateTimeFilter(field_name="deed_date", lookup_expr='lte')
+#     max_exec_date = filters.IsoDateTimeFilter(field_name="exec_date", lookup_expr='lte')
+#     county = filters.CharFilter(field_name='cnty_name', lookup_expr='iexact')
+#     # state = filters.CharFilter(field_name='state', lookup_expr='iexact')
+
+#     class Meta:
+#         model = Parcel
+#         fields = ['workflow', 'workflow__workflow_name', 'state']
+
+
 class CovenantFilter(FilterSet):
     # username = filters.CharFilter()
     min_deed_date = filters.IsoDateTimeFilter(field_name="deed_date", lookup_expr='gte')
@@ -147,13 +165,14 @@ class CovenantFilter(FilterSet):
     # state = filters.CharFilter(field_name='state', lookup_expr='iexact')
 
     class Meta:
-        model = Parcel
+        model = CovenantedParcel
         fields = ['workflow', 'workflow__workflow_name', 'state']
 
 
 # ViewSets define the view behavior.
 class CovenantNoGeoViewSet(viewsets.ModelViewSet):
-    queryset = Parcel.covenant_objects.all()
+    # queryset = Parcel.covenant_objects.all()
+    queryset = CovenantedParcel.objects.all()
     serializer_class = ParcelNoGeoSerializer
     filterset_class = CovenantFilter
 
@@ -163,7 +182,8 @@ class CovenantNoGeoViewSet(viewsets.ModelViewSet):
 
 
 class CovenantGeoViewSet(viewsets.ModelViewSet):
-    queryset = Parcel.covenant_objects.all()
+    # queryset = Parcel.covenant_objects.all()
+    queryset = CovenantedParcel.objects.all()
     serializer_class = ParcelGeoSerializer
     filterset_class = CovenantFilter
 
