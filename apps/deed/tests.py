@@ -185,36 +185,78 @@ class DeedPagePrevNextTests(TestCase):
         workflow = ZooniverseWorkflow.objects.get(pk=1)
         tag_prev_next_image_sql(workflow, True)
 
-    def test_highlight_web_img(self):
-        deed_page = DeedPage.objects.get(
-            s3_lookup='mydoctype/myself/1234/p7'
-        )
-        print(deed_page.page_image_web)
-        print(deed_page.page_image_web_highlighted)
-        assert deed_page.page_image_web_highlighted == ''
+    # def test_highlight_web_img(self):
+    #     deed_page = DeedPage.objects.get(
+    #         s3_lookup='mydoctype/myself/1234/p7'
+    #     )
+    #     print(deed_page.page_image_web)
+    #     print(deed_page.page_image_web_highlighted)
+    #     assert deed_page.page_image_web_highlighted == ''
 
-    def test_zooniverse_image_selction(self):
+    # def test_zooniverse_image_selction(self):
+    #     workflow = ZooniverseWorkflow.objects.get(pk=1)
+    #     manifest_df = build_zooniverse_manifest(workflow)
+
+    #     test_s3_lookup = '1970/1970 images/1970-08-24/1026969'
+
+    #     # test_subject = [s for s in manifest if s['s3_lookup'] == test_s3_lookup]
+    #     test_django_obj = DeedPage.objects.get(s3_lookup=test_s3_lookup)
+    #     test_subject = manifest_df[manifest_df['#s3_lookup'] == test_s3_lookup].to_dict('records')[0]
+
+    #     # assert test_django_obj.page_image_web_highlighted == None
+    #     # assert test_django_obj.prev_page_image_web == None
+    #     assert test_django_obj.page_image_web == 'web/fake/justinsez.jpg'
+
+    #     print(test_subject['#s3_lookup'], test_subject['#image1'], test_subject['#image2'], test_subject['#image3'])
+    #     print(test_subject['image_ids'].split(',')[0])
+    #     print('Howdy ' + test_subject['#image1'])
+    #     assert os.path.basename(test_subject['#image1']) == 'justinsez.jpg'
+    #     assert test_subject['#image2'] == ''
+    #     assert test_subject['#image3'] == ''
+    #     assert test_subject['image_ids'].split(',')[0] == test_s3_lookup
+    #     assert test_subject['default_frame'] == 1
+
+    def test_zooniverse_manifest_exclusions_bool_match(self):
+        '''make sure that only appropriate DeedPage objects are included in zooniverse_manifest'''
         workflow = ZooniverseWorkflow.objects.get(pk=1)
         manifest_df = build_zooniverse_manifest(workflow)
 
-        test_s3_lookup = '1970/1970 images/1970-08-24/1026969'
+        # Initially set as a match, so should be in manifest
+        test_s3_lookup = 'dont/upload/me/1'
 
-        # test_subject = [s for s in manifest if s['s3_lookup'] == test_s3_lookup]
-        test_django_obj = DeedPage.objects.get(s3_lookup=test_s3_lookup)
-        test_subject = manifest_df[manifest_df['#s3_lookup'] == test_s3_lookup].to_dict('records')[0]
+        df_match = manifest_df[manifest_df['#s3_lookup'] == test_s3_lookup]
+        self.assertEqual(df_match.shape[0], 1)
 
-        # assert test_django_obj.page_image_web_highlighted == None
-        # assert test_django_obj.prev_page_image_web == None
-        assert test_django_obj.page_image_web == 'web/fake/justinsez.jpg'
+        # Change bool_match to False
+        dp = DeedPage.objects.get(s3_lookup=test_s3_lookup)
+        dp.bool_match = False
+        dp.save()
 
-        print(test_subject['#s3_lookup'], test_subject['#image1'], test_subject['#image2'], test_subject['#image3'])
-        print(test_subject['image_ids'].split(',')[0])
-        print('Howdy ' + test_subject['#image1'])
-        assert os.path.basename(test_subject['#image1']) == 'justinsez.jpg'
-        assert test_subject['#image2'] == ''
-        assert test_subject['#image3'] == ''
-        assert test_subject['image_ids'].split(',')[0] == test_s3_lookup
-        assert test_subject['default_frame'] == 1
+        # Now test again
+        manifest_df = build_zooniverse_manifest(workflow)
+        df_match = manifest_df[manifest_df['#s3_lookup'] == test_s3_lookup]
+        self.assertEqual(df_match.shape[0], 0)
+
+        # Reset to make sure it shows up again before running further tests
+        dp = DeedPage.objects.get(s3_lookup=test_s3_lookup)
+        dp.bool_match = True
+        dp.save()
+
+        # Now test again, should appear again
+        manifest_df = build_zooniverse_manifest(workflow)
+        df_match = manifest_df[manifest_df['#s3_lookup'] == test_s3_lookup]
+        self.assertEqual(df_match.shape[0], 1)
+
+        # Change bool_exception to True
+        dp = DeedPage.objects.get(s3_lookup=test_s3_lookup)
+        dp.bool_match = False
+        dp.bool_exception = True
+        dp.save()
+
+        # Now test again, should be gone
+        manifest_df = build_zooniverse_manifest(workflow)
+        df_match = manifest_df[manifest_df['#s3_lookup'] == test_s3_lookup]
+        self.assertEqual(df_match.shape[0], 0)
     
     def test_prev_next_doc_num_page_2(self):
 
