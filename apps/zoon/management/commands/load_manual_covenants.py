@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand
 from apps.zoon.models import ManualCovenant
 
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
+from apps.zoon.utils.django_export import check_workflow_match
 
 
 class Command(BaseCommand):
@@ -23,13 +24,17 @@ class Command(BaseCommand):
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
             return False
+        else:
+            workflow = get_workflow_obj(workflow_name)
 
         if not infile:
             print('Missing infile path. Please specify with --infile.')
             return False
         else:
 
-            workflow = get_workflow_obj(workflow_name)
+            bool_workflow_match = check_workflow_match(workflow, infile)
+            if not bool_workflow_match:
+                return False
 
             print("Loading manual covenants from CSV...")
 
