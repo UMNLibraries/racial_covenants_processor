@@ -11,6 +11,7 @@ class ManualParcelCandidateInline(admin.StackedInline):
 
 @admin.register(Parcel)
 class ParcelAdmin(admin.ModelAdmin):
+    
     fields = [
         'workflow',
         'feature_id',
@@ -26,20 +27,27 @@ class ParcelAdmin(admin.ModelAdmin):
         'plat',
         'plat_name',
         'plat_standardized',
-        'subdivision_spatial',
+        'subdivision_spatial__name',
         'block',
         'lot',
-        'join_description',
+        # 'join_description',
         'phys_description',
         'township',
         'range',
         'section',
-        'orig_filename',
+        # 'orig_filename',
     ]
     list_filter = ['workflow', 'city']
-    list_display = ['pin_primary', 'street_address', 'plat', 'subdivision_spatial', 'city', 'plat_name', 'block', 'lot']
+    list_display = ['pin_primary', 'street_address', 'plat', 'subdivision_spatial__name', 'city', 'plat_name', 'block', 'lot']
     search_fields = ['plat_name', 'pin_primary', 'street_address', 'city']
     # readonly_fields = ['geom_4326', 'plat']
+
+    def get_queryset(self, request):
+        # Call the parent's get_queryset to get the base QuerySet
+        qs = super().get_queryset(request)
+        # Further refine the QuerySet, e.g., filter by a specific field
+        actual_db_fields = [f for f in self.fields if f not in ['join_strings']]
+        return qs.only(*actual_db_fields).select_related('subdivision_spatial')
 
     inlines = [
         ManualParcelCandidateInline
