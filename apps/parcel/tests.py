@@ -7,6 +7,14 @@ from apps.parcel.utils.parcel_utils import standardize_addition, get_blocks, get
 from apps.parcel.utils.export_utils import delete_flat_covenanted_parcels, save_flat_covenanted_parcels
 
 
+TEST_ZOON_SETTINGS = {
+    'MN Test County': {
+        'zoon_workflow_id': 13143,
+        'zoon_workflow_version': 4.1,
+    }
+}
+
+
 class JoinStringTests(TestCase):
     fixtures = ['plat', 'zoon']
 
@@ -233,12 +241,6 @@ class JoinStringTests(TestCase):
         self.assertEqual(write_join_strings(
             addition, block, lot)[0]['join_string'], 'arden hills 2 block 7 lot 1')
 
-TEST_ZOON_SETTINGS = {
-    'MN Test County': {
-        'zoon_workflow_id': 13143,
-        'zoon_workflow_version': 4.1,
-    }
-}
 
 @override_settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS)
 class ParcelCandidateTests(TestCase):

@@ -1,10 +1,11 @@
 import pandas as pd
+import numpy as np
 import geopandas as gpd
 
 from django.contrib.gis.db.models.functions import AsWKT
 
 from apps.parcel.models import Parcel, CovenantedParcel
-from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ManualCovenant
+from apps.zoon.models import ZooniverseSubject, ManualCovenant
 from apps.zoon.models import MATCH_TYPE_OPTIONS, MANUAL_COV_OPTIONS
 
 MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
@@ -15,6 +16,7 @@ EXPORT_FIELDS_ORDERED = [
     'cnty_name',
     'cnty_fips',
     'doc_num',
+    'main_image',
     'deed_year',
     'deed_date',
     'exec_date',
@@ -59,15 +61,35 @@ def delete_flat_covenanted_parcels(parcels):
 
     return parcels
 
+def year_or_null(date_obj):
+    try:
+        return date_obj.year
+    except:
+        return None
+    
+def join_strings_to_str(join_candidates):
+    # There may not be join candidates in some cases, e.g. addition-wide covenants
+    try:
+        return ';'.join([jc['join_string'] for jc in join_candidates])
+    except TypeError:
+        return ''
+    
+def match_type_to_str(match_type):
+    try:
+        return [mt[1] for mt in MATCH_TYPES if mt[0] == match_type][0] if match_type is not None else 'Automatic match'
+    except IndexError:
+        return 'Something else'
+
+
 def save_flat_covenanted_parcels(parcels):
     '''Take a queryset of covenanted parcels instances and make flat CovenantedParcel export instance using Parcel.covenanted_parcels model manager.'''
 
     PARCEL_MODEL_FIELDS = [
         'id',
-        'workflow',
         'cnty_name',
         'cnty_fips',
         'doc_num',
+        'main_image',
         'cnty_pin',
 
         'deed_date',
@@ -78,7 +100,6 @@ def save_flat_covenanted_parcels(parcels):
 
         'zn_subj_id',
         'zn_dt_ret',
-        # 'image_ids',
 
         'deed_page_1',
         'deed_page_2',
@@ -114,137 +135,64 @@ def save_flat_covenanted_parcels(parcels):
     ]
 
     parcel_pks = parcels.values_list('pk', flat=True)
-    # print(f'parcel pks: {parcel_pks}')
 
-    cov_creation_objs = []
-    for p in Parcel.covenant_objects.filter(pk__in=parcel_pks).values(*PARCEL_MODEL_FIELDS):
+    if len(parcel_pks) == 0:
+        print('No mapped covenants to export.')
+        return False
+    else:
+        cov_creation_objs = []
 
-        # print(p)
+        parcel_covenants = Parcel.covenant_objects.filter(pk__in=parcel_pks).values(*PARCEL_MODEL_FIELDS)
+        covenants_df = pd.DataFrame(parcel_covenants)
+        covenants_df['workflow'] = parcels.first().workflow
 
-        # Reshape fields
-        p['workflow'] = ZooniverseWorkflow.objects.get(pk=p['workflow'])
-        try:
-            p['deed_year'] = p['deed_date'].year
-        except:
-            p['deed_year'] = None
+        covenants_df['deed_date'] = covenants_df['deed_date'].apply(lambda x: pd.to_datetime(x,errors = 'coerce', format = '%Y-%m-%d'))
+        covenants_df['deed_year'] = covenants_df['deed_date'].apply(lambda x: year_or_null(x))
+        covenants_df['deed_year'] = covenants_df['deed_year'].fillna(np.nan).replace([np.nan], [None])
 
-        # There may not be join candidates in some cases, e.g. addition-wide covenants
-        try:
-            p['join_strgs'] = ';'.join([jc['join_string'] for jc in p['join_candidates']])
-        except TypeError:
-            p['join_strgs'] = ''
+        covenants_df['dt_updated'] = pd.DatetimeIndex(covenants_df['dt_updated']).date
 
-        # print(p['match_type'])
-        # print(f'foo: {[mt[1] for mt in MATCH_TYPES if mt[0] == p['match_type']]}')
-        # print(f'bar: {[mt[1] for mt in MATCH_TYPES if mt[0] == p['match_type']][0]}')
-        # match_type_list = [mt[1] for mt in MATCH_TYPES if mt[0] == p['match_type']]
-        try:
-            p['match_type'] = [mt[1] for mt in MATCH_TYPES if mt[0] == p['match_type']][0] if p['match_type'] is not None else 'Automatic match'
-        except IndexError:
-            p['match_type'] = 'Something else'
-                
-        # p['match_type'] = [mt[1] for mt in MATCH_TYPES if mt[0] == p['match_type']][0] if p['match_type'] is not None else 'Automatic match'
-        p['image_ids'] = ','.join(dp for dp in [p['deed_page_1'], p['deed_page_2'], p['deed_page_3']] if dp not in [None, ''])
+        covenants_df['join_strgs'] = covenants_df['join_candidates'].apply(lambda x: join_strings_to_str(x))
+        covenants_df['match_type'] = covenants_df['match_type'].apply(lambda x: match_type_to_str(x))
+        covenants_df['image_ids'] = covenants_df[['deed_page_1', 'deed_page_2', 'deed_page_3']].apply(lambda x: ','.join(x.dropna()), axis=1)
 
-        # Rename fields
-        p['parcel_id'] = p.pop('id')  # Set foreign key to parcel
-        p['plat_dbid'] = p.pop('plat__pk')  # These can just be text representations
-        p['subd_dbid'] = p.pop('subdivision_spatial__pk')
+        covenants_df.rename(columns={
+            'id': 'parcel_id', # Set foreign key to parcel
+            'plat__pk': 'plat_dbid',  # These can just be text representations
+            'subdivision_spatial__pk': 'subd_dbid',  # These can just be text representations
+        }, inplace=True)
 
         # Delete unnecessary fields
-        # del p['id']
-        del p['join_candidates']
-        del p['deed_page_1']
-        del p['deed_page_2']
-        del p['deed_page_3']
+        covenants_df.drop(columns=['join_candidates', 'deed_page_1', 'deed_page_2', 'deed_page_3'], inplace=True)
+        
+        # Fill nulls
+        covenants_df = covenants_df.fillna(np.nan).replace([np.nan], [None])
+ 
+        for p in covenants_df.to_dict('records'):
+            cp = CovenantedParcel(
+                **p
+            )
+            cov_creation_objs.append(cp)
 
-        cp = CovenantedParcel(
-            **p
-        )
-        cov_creation_objs.append(cp)
+        print(f'Creating {len(cov_creation_objs)} CovenantedParcel objects...')    
+        
+        CovenantedParcel.objects.bulk_create(cov_creation_objs)
 
-    # print(f'Creating cp objects: {cov_creation_objs}')    
-    
-    CovenantedParcel.objects.bulk_create(cov_creation_objs)
-
-    return CovenantedParcel.objects.filter(parcel__pk__in=parcel_pks)
+        return CovenantedParcel.objects.filter(parcel__pk__in=parcel_pks)
 
 
 
 def build_gdf(workflow):
-    joined_covenants = Parcel.covenant_objects.filter(
+    joined_covenants = CovenantedParcel.objects.filter(
         workflow=workflow
     ).annotate(
         wkt_4326=AsWKT('geom_4326')
-    ).values(
-        'id',
-        'workflow',
-        'cnty_name',
-        'cnty_fips',
-        'doc_num',
-        'cnty_pin',
-
-        'deed_date',
-        'seller',
-        'buyer',
-        'cov_type',
-        'cov_text',
-
-        'zn_subj_id',
-        'zn_dt_ret',
-        # 'image_ids',
-
-        'deed_page_1',
-        'deed_page_2',
-        'deed_page_3',
-
-        'med_score',
-        'manual_cx',
-        'match_type',
-        'join_candidates',
-
-        'street_add',
-        'city',
-        'state',
-        'zip_code',
-
-        'add_cov',
-        'block_cov',
-        'lot_cov',
-
-        'map_book',
-        'map_page',
-
-        'add_mod',
-        'block_mod',
-        'lot_mod',
-        'ph_dsc_mod',
-
-        'plat__pk',
-        'subdivision_spatial__pk',
-
-        'dt_updated',
-        'wkt_4326'
-    )
+    ).values()
 
     covenants_df = pd.DataFrame(joined_covenants)
 
-    covenants_df['deed_year'] = pd.DatetimeIndex(covenants_df['deed_date']).year
-    # covenants_df['dt_updated'] = covenants_df['dt_updated'].astype(str)
-    covenants_df['join_strgs'] = covenants_df['join_candidates'].apply(lambda x: ';'.join([jc['join_string'] for jc in x]))
-
-    # MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
-
     # TEMP TEMP TEMP until bug #90 closed
-    covenants_df = covenants_df[covenants_df['match_type'] != '']
-
-    # print(MATCH_TYPES)
-    # print(covenants_df[covenants_df['match_type'] == ''][['add_cov', 'block_cov', 'join_strgs', 'add_mod', 'ph_dsc_mod']])
-    covenants_df['match_type'] = covenants_df['match_type'].apply(lambda x: [mt[1] for mt in MATCH_TYPES if mt[0] == x][0] if x is not None else 'Automatic match')
-
-    covenants_df['image_ids'] = covenants_df[['deed_page_1', 'deed_page_2', 'deed_page_3']].apply(lambda x: ','.join(x.dropna()), axis=1)
-
-    # covenants_df['image_ids'] = covenants_df['image_ids'].apply(lambda x: ','.join([img if img else '' for img in x]))
+    # covenants_df = covenants_df[covenants_df['match_type'] != '']
 
     # Currently blank fields in existing workflows
     covenants_df[[
@@ -254,8 +202,6 @@ def build_gdf(workflow):
         'geocd_dist',
     ]] = ''
 
-    covenants_df.drop(columns=['join_candidates', 'deed_page_1', 'deed_page_2', 'deed_page_3'], inplace=True)
-
     # Convert datetime fields to true date
     date_fields = ['exec_date', 'deed_date']
     # print(covenants_df[date_fields])
@@ -263,8 +209,7 @@ def build_gdf(workflow):
 
     covenants_df.rename(columns={
         'id': 'db_id',
-        'plat__pk': 'plat_dbid',
-        'subdivision_spatial__pk': 'subd_dbid',
+        'workflow_id': 'workflow',
         'wkt_4326': 'geometry'
     }, inplace=True)
 

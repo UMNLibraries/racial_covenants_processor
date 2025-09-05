@@ -6,6 +6,7 @@ from io import StringIO
 
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
+from django.core import management
 from django.conf import settings
 
 from apps.zoon.models import ZooniverseSubject, ManualCovenant, ManualParcelPINLink, ManualCovenantParcelPINLink
@@ -117,16 +118,6 @@ class Command(BaseCommand):
 
         print("Tagging bool_covenant=True for matched Parcels on ManualCovenants...")
         Parcel.objects.filter(workflow=workflow, manualcovenant__isnull=False, manualcovenant__bool_confirmed=True).update(bool_covenant=True)
-
-    def save_flattened_covenants(self, workflow):
-        # Do a more broad deletion to find any stragglers
-        print("Deleting old CovenantedParcel records from this workflow...")
-        CovenantedParcel.objects.filter(workflow=workflow).delete()
-
-        print("Creating CovenantedParcel records from this workflow...")
-        matched_parcels = Parcel.objects.filter(workflow=workflow, bool_covenant=True)
-        flat_covenants = save_flat_covenanted_parcels(matched_parcels)
-        return flat_covenants
 
     def write_match_report(self, workflow, bool_local=False, bool_test=False):
         fieldnames = ['join_string', 'match', 'subject_id',
@@ -309,10 +300,10 @@ class Command(BaseCommand):
             self.match_parcel_pin_links_zooniverse(workflow, workflow_pins_lookup)
             self.match_parcel_pin_links_manual(workflow, workflow_pins_lookup)
 
-            self.tag_matched_parcels(workflow)
-
-            self.save_flattened_covenants(workflow)
+            self.tag_matched_parcels(workflow)         
 
             bool_local = kwargs['local']
             bool_test = kwargs['test']
             self.write_match_report(workflow, bool_local, bool_test)
+
+            management.call_command('refresh_flattened_covenants', workflow=workflow.workflow_name)
