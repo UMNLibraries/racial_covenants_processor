@@ -296,7 +296,7 @@ class CovenantedParcelTests(TestCase):
         # Rebuild spatial lookups and run parcel auto-match before running these tests
         management.call_command('rebuild_parcel_spatial_lookups', workflow=workflow.workflow_name)
         management.call_command('rebuild_covenant_spatial_lookups', workflow=workflow.workflow_name)
-        management.call_command('match_parcels', workflow=workflow.workflow_name)
+        management.call_command('match_parcels', '--test', workflow=workflow.workflow_name)
 
     def test_parcel_match(self):
         parcel_1 = Parcel.objects.get(pin_primary='covenanted-parcel-1')
