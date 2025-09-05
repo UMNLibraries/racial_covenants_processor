@@ -1329,3 +1329,25 @@
         bool_exception: false
         matched_terms: []
         doc_page_count: null
+# For testing zooniverse manifest exemptions
+-   model: deed.deedpage
+    pk: 52
+    fields:
+        workflow: 1
+        s3_lookup: 'dont/upload/me/1'
+        doc_num: 'ignoreme1'
+        batch_id: 'A'
+        book_id: 'A'
+        page_num: 790
+        split_page_num: null
+        doc_date: null
+        doc_type: ''
+        public_uuid: 'justinsez'
+        page_image_web: 'dont/upload/me/1.jpg'
+        page_stats: ''
+        page_ocr_text: ''
+        page_ocr_json: ''
+        bool_match: true
+        bool_exception: false
+        matched_terms: []
+        doc_page_count: null
