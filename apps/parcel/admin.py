@@ -27,7 +27,7 @@ class ParcelAdmin(admin.ModelAdmin):
         'plat',
         'plat_name',
         'plat_standardized',
-        'subdivision_spatial__name',
+        'subdivision_spatial',
         'block',
         'lot',
         # 'join_description',
