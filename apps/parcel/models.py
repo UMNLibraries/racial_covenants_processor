@@ -25,6 +25,8 @@ class CovenantsParcelManager(models.Manager):
         ).only(
             'workflow',
             'zoon_subject_id',
+            'deedpage_doc_num',
+            'deedpage_s3_lookup',
             'image_ids',
             'image_links',
             'subject_1st_page__s3_lookup',
@@ -343,6 +345,19 @@ class CovenantsParcelManager(models.Manager):
                 default=Value(''),
                 output_field=CharField()
             )
+        ).annotate(
+            main_image=Case(
+                When(
+                    Exists(oldest_deed),
+                    then=Subquery(oldest_deed.values('deedpage_s3_lookup'))
+                ),
+                When(
+                    Exists(oldest_deed_manual),
+                    then=Subquery(oldest_deed_manual.values('doc_num'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         )
 
 
@@ -601,6 +616,7 @@ class CovenantedParcel(models.Model):
     cnty_name = models.CharField(max_length=255, null=True, db_index=True)
     cnty_fips = models.CharField(max_length=255, null=True)
     doc_num = models.CharField(max_length=255, null=True)
+    main_image = models.CharField(max_length=500, null=True)
     deed_year = models.IntegerField(null=True)
     deed_date = models.DateField(null=True)
     # exec_date = models.DateField(null=True)
