@@ -1,42 +1,20 @@
-{% extends 'base.html' %}
 
 {% load humanize %}
-
-
-
-  {% block content %}
-
-  <style>
-
-    .workflow-stats td {
-      text-align: right;
-    }
-
-    .workflow-stats td:first-child {
-      text-align: left;
-    }
-  </style>
-
+<c-layouts.base>
   <header class="main">
     <h2>{{workflow.workflow_name}} summary</h2>
     <i>Last updated: {{last_update}}</i>
   </header>
 
+  <c-map></c-map>
+
   <p><a href="{% url 'workflow_matches' workflow.id %}">Workflow current match status</a></p>
-  <table class="workflow-stats">
-    <tr>
-      <td>Total retired subjects</td>
-      <td>{{subject_count|intcomma}}</td>
-    </tr>
-    <tr>
-      <td>Total subjects with covenants</td>
-      <td>{{covenants_count|intcomma}} (+{{covenants_maybe_count|intcomma}} TBD)</td>
-    </tr>
-    <tr>
-      <td>Total covenants mapped</td>
-      <td>{{mapped_count|intcomma}}</td>
-    </tr>
-  </table>
+  <c-workflow.table
+    :subject_count="subject_count"
+    :covenants_count="covenants_count"
+    :mapped_count="mapped_count"
+    :covenants_maybe_count="covenants_maybe_count" 
+  />
 
   <h3>Admin links</h3>
   <ul>
@@ -47,44 +25,11 @@
     <li><a href="/admin/parcel/parcel/?workflow__id__exact={{workflow.id}}">Parcels</a></li>
   </ul>
 
-  <h3>Download in-progress shapefiles</h3>
-  {% for shp in shp_exports %}
-    <p><a href="{{ shp.shp_zip.url }}">{{ shp.created_at }}</a> {{ shp.covenant_count|intcomma }} mapped covenants</p>
+  {% for section in export_sections %}
+    <h3>{{ section.title }}</h3>
+    {% for export in section.exports %}
+      <c-workflow.download-link :export="export" />
+    {% endfor %}
   {% endfor %}
 
-  <h3>Download in-progress geoJSONs</h3>
-  {% for json in geojson_exports %}
-    <p><a href="{{ json.geojson.url }}">{{ json.created_at }}</a> {{ json.covenant_count|intcomma }} mapped covenants</p>
-  {% endfor %}
-
-  <h3>Download in-progress CSVs</h3>
-  {% for csv in csv_exports %}
-    <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.covenant_count|intcomma }} mapped covenants</p>
-  {% endfor %}
-
-  <h3>Download all covenanted docs CSVs</h3>
-  {% for csv in all_covenanted_docs %}
-    <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.doc_count|intcomma }} covenanted docs</p>
-  {% endfor %}
-
-  <h3>Download unmapped CSVs</h3>
-  {% for csv in unmapped_exports %}
-    <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.covenant_count|intcomma }} unmapped subjects</p>
-  {% endfor %}
-
-  <h3>Download validation CSVs</h3>
-  {% for csv in validation_exports %}
-    <p><a href="{{ csv.csv.url }}">{{ csv.created_at }}</a> {{ csv.covenant_count|intcomma }} retired Zooniverse subjects</p>
-  {% endfor %}
-
-  <h3>Download past join reports</h3>
-  {% for report in join_reports %}
-    <p><a href="{{ report.report_csv.url }}">{{ report.created_at }}</a> {{ report.covenant_count|intcomma }} covenants</p>
-  {% endfor %}
-
-  <h3>Download OCR hit reports</h3>
-  {% for csv in hit_reports %}
-    <p><a href="{{ csv.report_csv.url }}">{{ csv.created_at }}</a> {{ csv.num_hits|intcomma }} OCR hits</p>
-  {% endfor %}
-
-{% endblock %}
+</c-layouts.base>

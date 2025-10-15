@@ -31,14 +31,10 @@ ndjson = "*"
 panoptes-client = "*"
 django-debug-toolbar = "*"
 joblib = "*"
-# joblib = "==1.1.0"  # TEMP to get around bug, but leaves security vulnerability in place
 fiona = "*"
 django-extensions = "*"
 panoptes-aggregation = "*"
-# panoptes-aggregation = {editable = true, ref = "master", git = "git+https://github.com/zooniverse/aggregation-for-caesar"}
-# panoptes-aggregation = {editable = true, ref = "nan_int", git = "git+https://github.com/mikejcorey/aggregation-for-caesar"}
 jupyter = "*"
-# notebook = "==6.5.5"
 pyzmq = ">=25.1.1"
 traitlets = "==5.9.0"
 sphinxcontrib-django = "*"
@@ -47,6 +43,7 @@ pysolr = "*"
 django-compressor = "*"
 typing-extensions = "*"
 django-libsass = "*"
+django-cotton = "*"
 
 [dev-packages]
 csvkit = "*"

@@ -1,0 +1,51 @@
+{% load static %}
+
+<!DOCTYPE HTML>
+<!--
+	Editorial by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>The Deed Machine - By Mapping Prejudice</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="{% static 'html5up-editorial/assets/css/fontawesome-all.min.css' %}" media="screen">
+    <link href="{% static 'html5up-editorial/assets/css/main.css' %}" rel="stylesheet" media="screen">
+    <link href="{% static 'css/deed-machine.css' %}" rel="stylesheet" media="screen">
+    
+    <!-- MapLibre GL JS -->
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css">
+    <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
+
+    <!-- Geoman -->
+    <link rel="stylesheet" href="https://unpkg.com/@geoman-io/maplibre-geoman-free@latest/dist/maplibre-geoman.css">
+    <script src="https://unpkg.com/@geoman-io/maplibre-geoman-free@latest/dist/maplibre-geoman.umd.js"></script>
+
+    <!-- PMTiles -->
+    <script src="https://unpkg.com/pmtiles@3.0.7/dist/pmtiles.js"></script>
+
+    <!-- Turf.js for measurements -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+	</head>
+	<body class="is-preload">
+    <c-wrapper>
+      <c-main>
+        {{ slot }}
+      </c-main>
+      <c-sidebar />  
+    </c-wrapper>
+
+    <script src="{% static 'html5up-editorial/assets/js/jquery.min.js' %}"></script>
+    <script src="{% static 'html5up-editorial/assets/js/browser.min.js' %}"></script>
+    <script src="{% static 'html5up-editorial/assets/js/breakpoints.min.js' %}"></script>
+    <script src="{% static 'html5up-editorial/assets/js/util.js' %}"></script>
+    <script src="{% static 'html5up-editorial/assets/js/main.js' %}"></script>
+  </body>
+</html>

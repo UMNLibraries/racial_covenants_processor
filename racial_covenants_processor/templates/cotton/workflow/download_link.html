@@ -1,0 +1,7 @@
+{% load humanize %}
+
+<p>
+  <a href="{{ export.url }}">{{ export.created }}</a>
+  {{ export.count/intcomma }} {{ export.label }}
+</p>
+  
