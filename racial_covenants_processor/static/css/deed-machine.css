@@ -5,3 +5,69 @@
 .deedpage-result img {
     width: 100%;
 } 
+
+/* Measurement Popup Styles */
+.measurement-popup .maplibregl-popup-content {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    padding: 8px;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.measurement-popup .maplibregl-popup-tip {
+    border-top-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Property Display Styles */
+.property-item {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.property-key {
+    font-weight: 600;
+    color: #374151;
+}
+
+.property-value {
+    color: #6b7280;
+}
+
+/* Event Log Styles */
+.event-item {
+    padding: 12px;
+    margin: 8px 0;
+    background: #f3f4f6;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.geojson-header {
+    background: #3b82f6;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.geojson-header:hover {
+    background: #2563eb;
+}
+
+.geojson {
+    background: #1f2937;
+    color: #10b981;
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 11px;
+    margin-top: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}

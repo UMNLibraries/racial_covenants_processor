@@ -1,8 +1,6 @@
-{% extends 'base.html' %}
-
 {% load humanize %}
 
-{% block content %}
+<c-layouts.base>
 <p>The Deed Machine is a multi-language set of tools that use OCR and crowdsourced transcription to identify racially restrictive covenant language, then map the results.</p>
 
 <p>The Deed Machine was created at Mapping Prejudice at the University of Minnesota Libraries. Current collaborators include Michael Corey, Suleman Diwan, Justin Schell, and the University of Minnesota Libraries IT staff.</p>
@@ -10,5 +8,4 @@
 {% for workflow in all_workflows %}
     <p><a href="{% url 'workflow' workflow.id %}">{{ workflow }}</a></p>
   {% endfor %}
-
-{% endblock %}
+</c-layouts.base>
