@@ -58,8 +58,8 @@ def generate_workflow_summary_context(request, workflow):
         'hit_reports': hit_reports,
         'last_update': last_update,
         'subject_count': subjects.count(),
-        'covenants_count': subjects.filter(bool_covenant=True).count(),
-        'covenants_maybe_count': subjects.filter(bool_covenant=None).count(),
+        'covenants_count': subjects.filter(bool_covenant_final=True).count(),
+        'covenants_maybe_count': subjects.filter(bool_covenant_final=None).count(),
         'mapped_count': mapped_count,
         'all_workflows': all_workflows
     }
