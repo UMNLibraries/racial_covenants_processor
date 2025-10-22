@@ -11,13 +11,11 @@
     
 	</head>
 	<body class="is-preload">
-    <div id="wrapper" class="container-xl">
-      <div class="grid-xl">
-        <c-sidebar />
-        <c-main>
-          {{ slot }}
-        </c-main>
-      </div>
+    <div class="grid-xl">
+      <c-sidebar />
+      <c-main>
+        {{ slot }}
+      </c-main>
     </div>
     {% comment %} <script type="module" src="https://cdn.jsdelivr.net/npm/kelpui@1/js/kelp.js"></script> {% endcomment %}
   </body>

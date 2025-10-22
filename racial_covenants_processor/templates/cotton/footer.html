@@ -1,3 +1,5 @@
-<footer id="footer">
-    <p class="copyright size-2xs">Copyright &copy; <a href="{{ license }}">{{ copyright }}</a>.</p>
+{% load static %}
+<footer id="footer" class="sidecar align-center">
+    <a href="https://mappingprejudice.umn.edu/" target="_blank"><img class="avatar" src="{% static 'images/MappingPrejudice_C_600.png' %}" width="75" height="75" alt="Mapping Prejudice" /></a>
+    <p class="copyright size-2xs" style="color: var(--color-gray-50)">Copyright &copy; <a class="link-subtle" href="{{ license }}">{{ copyright }}</a>.</p>
 </footer>
