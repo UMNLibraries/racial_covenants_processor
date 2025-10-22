@@ -1,27 +1,21 @@
 {% load static %}
-<nav id="menu">
-    <header class="major">
-        <h2>Menu</h2>
-    </header>
-    <ul>
-        <li><a href="{% url 'index' %}">Homepage</a></li>
-        <li><a href="{% url 'admin:index' %}">Admin home</a></li>
+<nav>
+    <ul class="list-unstyled">
+        <li><a class="link-subtle" href="{% url 'index' %}">Homepage</a></li>
+        <li><a class="link-subtle" href="{% url 'admin:index' %}">Admin home</a></li>
         <li>
-            <span class="opener">Workflows</span>
-            <ul>
+            <span>Workflows</span>
+            <ul style="list-style: none;">
             {% for workflow in all_workflows %}
-                <li><a href="{% url 'workflow' workflow.id %}">{{ workflow }}</a></li>
+                <li><a class="link-subtle" href="{% url 'workflow' workflow.id %}">{{ workflow }}</a></li>
             {% endfor %}
             </ul>
         </li>
-        <li><a href="{% url 'deed_search_view' %}">DeedPage search</a></li>
-        <li><a href="https://the-deed-machine.readthedocs.io/en/latest/index.html" target="_blank">Documentation</a></li>
-        <li><a href="https://github.com/UMNLibraries/racial_covenants_processor" target="_blank">Deed Machine code</a></li>
-        <li><a href="https://github.com/UMNLibraries/mp-us-racial-covenants" target="_blank">Public data</a></li>
-        <li><a href="https://github.com/UMNLibraries/mp-deed-machine-dailies" target="_blank">Hourly data</a></li>
+        <li><a class="link-subtle" href="{% url 'deed_search_view' %}">DeedPage search</a></li>
+        <li><a class="link-subtle" href="https://the-deed-machine.readthedocs.io/en/latest/index.html" target="_blank">Documentation</a></li>
+        <li><a class="link-subtle" href="https://github.com/UMNLibraries/racial_covenants_processor" target="_blank">Deed Machine code</a></li>
+        <li><a class="link-subtle" href="https://github.com/UMNLibraries/mp-us-racial-covenants" target="_blank">Public data</a></li>
+        <li><a class="link-subtle" href="https://github.com/UMNLibraries/mp-deed-machine-dailies" target="_blank">Hourly data</a></li>
     </ul>
-
-    <hr class="major"/>
-
-    <span class="image"><a href="https://mappingprejudice.umn.edu/" target="_blank"><img src="{% static 'images/MappingPrejudice_C_600.png' %}" width="150" /></a></span>
+    <hr />
 </nav>
