@@ -2,7 +2,9 @@ import json
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Union
 from django.contrib.gis import geos
-from django.db.models import F, Value, Count
+from django.db.models import F, Value, Count, OuterRef, Case, When, Exists, Subquery, CharField
+
+# from django.db.models import OuterRef, Subquery, F, Case, Value, When, Exists, BooleanField, DateField, CharField, IntegerField, JSONField, FloatField
 from django.dispatch import receiver
 from django.utils.text import slugify
 
@@ -85,8 +87,17 @@ class AllCovenantedDocsZooniverseManager(models.Manager):
     The main model manager used for covenant exports is in apps/parcel/models.py.
     Unlike the main exporter, de-duping is not done here to eliminate multiple occurences
     of the same document.'''
+    
 
     def get_queryset(self):
+        from apps.deed.models import DeedPage
+
+        deed_page = DeedPage.objects.filter(
+            s3_lookup=OuterRef('deedpage_s3_lookup'),
+            workflow=OuterRef('workflow')
+        ).only(
+            'page_image_web_highlighted'
+        )
 
         return super().get_queryset().filter(
             bool_covenant_final=True
@@ -117,6 +128,17 @@ class AllCovenantedDocsZooniverseManager(models.Manager):
             mapped_city=F('parcel_matches__city'),
             mapped_state=F('parcel_matches__state'),
             mapped_parcel_pin=F('parcel_matches__pin_primary'),
+            main_image=F('deedpage_s3_lookup'),
+            # highlight_image=F('page_image_web_highlighted')
+        ).annotate(
+            highlight_image=Case(
+                When(
+                    Exists(deed_page),
+                    then=Subquery(deed_page.values('page_image_web_highlighted'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         )
 
 

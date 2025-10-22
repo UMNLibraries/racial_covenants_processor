@@ -8,6 +8,8 @@ from apps.parcel.models import Parcel, CovenantedParcel
 from apps.zoon.models import ZooniverseSubject, ManualCovenant
 from apps.zoon.models import MATCH_TYPE_OPTIONS, MANUAL_COV_OPTIONS
 
+from apps.zoon.utils.zooniverse_load import get_image_url_prefix, get_full_url
+
 MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
 
 EXPORT_FIELDS_ORDERED = [
@@ -361,6 +363,8 @@ def build_all_covenanted_docs_df(workflow):
         'dt_updated',
         'zn_subj_id',
         'zn_dt_ret',
+        'main_image',
+        'highlight_image',
         'image_ids',
         'med_score',
     ]
@@ -376,6 +380,8 @@ def build_all_covenanted_docs_df(workflow):
         'image_ids',
         'zn_subj_id',
         'zn_dt_ret',
+        'main_image',
+        'highlight_image',
         'med_score',
         'manual_cx',
         'add_cov',
@@ -453,6 +459,8 @@ def build_all_covenanted_docs_df(workflow):
         }, inplace=True
     )
     manual_covenanted_docs_expanded_df['image_ids'] = ''
+    manual_covenanted_docs_expanded_df['main_image'] = ''
+    manual_covenanted_docs_expanded_df['highlight_image'] = ''
     manual_covenanted_docs_expanded_df['cov_type'] = 'manual'
 
     all_covenanted_docs_expanded_df = pd.concat([zoon_covenanted_docs_expanded_df, manual_covenanted_docs_expanded_df])
@@ -508,7 +516,41 @@ def build_all_covenanted_docs_df(workflow):
         on=["cov_type", "db_id"]
     )
 
+    first_image_url = all_covenanted_docs_df['highlight_image'].iloc[0]
+    url_prefix = get_image_url_prefix(first_image_url)
+    all_covenanted_docs_df['highlight_image'] = all_covenanted_docs_df['highlight_image'].apply(lambda x: get_full_url(url_prefix, x))
     all_covenanted_docs_df['deed_date'] = pd.to_datetime(all_covenanted_docs_df['deed_date'])
     all_covenanted_docs_df['deed_year'] = all_covenanted_docs_df['deed_date'].dt.year
 
     return all_covenanted_docs_df[ALL_DOCS_ATTRIBUTES]
+
+
+def build_discharge_df(workflow):
+
+    DISCHARGE_ATTRIBUTES = [
+        'db_id',
+        'doc_num',
+        'deed_year',
+        'deed_date',
+        'cov_text',
+        'seller',
+        'buyer',
+        'add_cov',
+        'block_cov',
+        'lot_cov',
+        'map_book',
+        'map_page',
+        'is_mapped',
+        'addresses',
+        'cities',
+        'state',
+        'cnty_pins',
+        'manual_cx',
+        'dt_updated',
+        'main_image',
+        'highlight_image',
+        # 'image_ids',
+    ]
+
+    df = build_all_covenanted_docs_df(workflow)
+    return df[DISCHARGE_ATTRIBUTES]
