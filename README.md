@@ -41,3 +41,5 @@ The individual lambda functions that make up the OCR, term search and web image 
 
 ### 6. For deedstats notebook (not yet committed)
 ```python manage.py shell_plus --notebook```
+
+Testing a change
