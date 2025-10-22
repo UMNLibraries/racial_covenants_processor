@@ -1,12 +1,15 @@
 
 {% load humanize %}
 <c-layouts.base>
-  <header class="main">
+  <div class="stack">
+  <header>
     <h2>{{workflow.workflow_name}} summary</h2>
     <i>Last updated: {{last_update}}</i>
   </header>
 
-  <c-map></c-map>
+  <div>
+    <c-map></c-map>
+  </div>
 
   <p><a href="{% url 'workflow_matches' workflow.id %}">Workflow current match status</a></p>
   <c-workflow.table
@@ -31,5 +34,5 @@
       <c-workflow.download-link :export="export" />
     {% endfor %}
   {% endfor %}
-
+</div>
 </c-layouts.base>

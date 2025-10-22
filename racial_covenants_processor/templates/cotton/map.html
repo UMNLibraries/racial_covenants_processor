@@ -1,8 +1,9 @@
 {% load static %}
-<div x-data="mapApp()" x-init="initMap()" class="flex h-96">
+
+<div x-data="mapApp()" x-init="initMap()" style="display: flex; height: 50vh">
     <!-- Map Container -->
-    <div class="flex-1 relative w-full">
-        <div id="map" class="w-full h-full"></div>
+    <div style="width: 100%; position: relative;">
+        <div id="map" style="width: 100%; height: 100%"></div>
     </div>
 
     {% if sidebar %}
@@ -127,13 +128,7 @@
     </div>
     {% endif %}
 </div>
-<!-- Custom JavaScript -->
 <script>
-  /**
- * MapLibre + Geoman + Alpine.js Integration
- * For use with Django projects
- */
-
 function mapApp() {
   return {
     map: null,
@@ -197,7 +192,7 @@ function mapApp() {
 
     /**
      * Define the MapLibre style specification
-     * UPDATE: Change the PMTiles URL to point to your Django static/media files
+     * TODO: Change the PMTiles URL to point to Django static/media files
      */
     getMapStyle() {
       return {
@@ -769,48 +764,15 @@ function mapApp() {
       console.log("Save covenant clicked");
       console.log("Selected features:", this.selectedFeatures);
       console.log("Events:", this.gmEvents);
-
-      // Example Django integration:
-      fetch("/api/save-covenant/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
-        },
-        body: JSON.stringify({
-          selected_features: this.selectedFeatures,
-          events: this.gmEvents,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Success:", data);
-          alert("Covenant saved successfully!");
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          alert("Error saving covenant");
-        });
     },
   };
 }
-
-/**
- * Helper function to get CSRF token for Django
- */
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== "") {
-    const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === name + "=") {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-}
-
 </script>
+
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@geoman-io/maplibre-geoman-free@latest/dist/maplibre-geoman.css">
+<script src="https://unpkg.com/@geoman-io/maplibre-geoman-free@latest/dist/maplibre-geoman.umd.js"></script>
+<script src="https://unpkg.com/pmtiles@3.0.7/dist/pmtiles.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
