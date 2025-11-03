@@ -6,6 +6,9 @@ import pandas as pd
 
 from panoptes_client import Panoptes, Project, Subject, SubjectSet
 
+from django import db
+# import psycopg2
+from django.db.utils import OperationalError
 from django.db.models import F, Case, When, Value, Q
 from django.contrib.postgres.aggregates import StringAgg
 
@@ -31,6 +34,7 @@ def get_full_url(url_prefix, file_name):
     except:
         return ''
 
+
 def int_str_or_blank(value):
     try:
         return str(int(value))
@@ -38,15 +42,7 @@ def int_str_or_blank(value):
         return ''
 
 
-def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
-
-    # exclude_kwargs = {
-    #     'bool_exception': True  # Usually bool_match and bool_exception are mutually exclusive, but there are some cases where they are not (e.g. migrated workflow with previous Zooniverse work we don't want to repeat)
-    # }
-    # if len(exclude_ids) > 0:
-    #     # Passing an empty list to exclude messes up queryset, so only add this if it's filled out
-    #     exclude_kwargs['s3_lookup__in'] = exclude_ids
-
+def get_deedpage_values(workflow, exclude_ids=[], num_rows=None):
     if len(exclude_ids) > 0:
         s3_lookups = [ex['#s3_lookup'] for ex in exclude_ids]
 
@@ -61,7 +57,6 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
         ).values_list('id', flat=True)
 
     else:
-
         # Get random IDs
         matching_ids = DeedPage.objects.filter(
             workflow=workflow,
@@ -77,6 +72,61 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
     else:
         final_set = matching_ids
 
+    return final_set
+    
+
+def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
+
+    # exclude_kwargs = {
+    #     'bool_exception': True  # Usually bool_match and bool_exception are mutually exclusive, but there are some cases where they are not (e.g. migrated workflow with previous Zooniverse work we don't want to repeat)
+    # }
+    # if len(exclude_ids) > 0:
+    #     # Passing an empty list to exclude messes up queryset, so only add this if it's filled out
+    #     exclude_kwargs['s3_lookup__in'] = exclude_ids
+
+    # if len(exclude_ids) > 0:
+    #     s3_lookups = [ex['#s3_lookup'] for ex in exclude_ids]
+
+    #     # try:
+    #     #     # Perform database operations
+    #     #     some_model.objects.all()
+    #     # except db.connections.OperationalError:
+    #     #     # Connection lost, close it and try again
+    #     #     db.connections.close_all()
+    #     #     # Django will automatically re-establish a connection on the next query
+    #     #     some_model.objects.all()
+        
+    #     # Get random IDs
+    #     matching_ids = DeedPage.objects.filter(
+    #         workflow=workflow,
+    #         bool_match=True
+    #     ).exclude(
+    #         bool_exception=True # Usually bool_match and bool_exception are mutually exclusive, but there are some cases where they are not (e.g. migrated workflow with previous Zooniverse work we don't want to repeat)
+    #     ).exclude(
+    #         s3_lookup__in=s3_lookups
+    #     ).values_list('id', flat=True)
+
+    # else:
+
+    #     # Get random IDs
+    #     matching_ids = DeedPage.objects.filter(
+    #         workflow=workflow,
+    #         bool_match=True
+    #     ).exclude(
+    #         bool_exception=True # Usually bool_match and bool_exception are mutually exclusive, but there are some cases where they are not (e.g. migrated workflow with previous Zooniverse work we don't want to repeat)
+    #     ).values_list('id', flat=True)
+
+    # It often takes a very long time for Zooniverse to respond with subjects in existing subject set,
+    # so sometimes the connection will need to be reset before this step runs
+    try:
+        final_set = get_deedpage_values(workflow, exclude_ids, num_rows)
+    except OperationalError:
+        # Connection lost, close it and try again
+        db.connections.close_all()
+        # Django will automatically re-establish a connection on the next query
+        final_set = get_deedpage_values(workflow, exclude_ids, num_rows)
+
+    
     if len(final_set) > 0:
         # Get all doc nums with at least one hit
         pages_with_hits = DeedPage.objects.filter(
