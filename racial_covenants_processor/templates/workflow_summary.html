@@ -29,10 +29,25 @@
   </ul>
 
   {% for section in export_sections %}
-    <h3>{{ section.title }}</h3>
-    {% for export in section.exports %}
-      <c-workflow.download-link :export="export" />
-    {% endfor %}
+    {% if section.exports %}
+      <div style="margin-top: 1rem; padding: 1rem; border-left: 4px solid #ccc; background-color: #f9f9f9;">
+        <h3>{{ section.title }}</h3>
+        {% for export in section.exports %}
+          {% if forloop.first %}
+            <c-workflow.download-link :export="export" />
+          {% else %}
+            {% if forloop.counter == 2 %}
+              <details>
+                <summary>Show more exports</summary>
+            {% endif %}
+            <c-workflow.download-link :export="export" />
+            {% if forloop.last %}
+              </details>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
   {% endfor %}
 </div>
 </c-layouts.base>
