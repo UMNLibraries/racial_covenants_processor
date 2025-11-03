@@ -30,7 +30,7 @@
 
   {% for section in export_sections %}
     {% if section.exports %}
-      <div style="margin-top: 1rem; padding: 1rem; border-left: 4px solid #ccc; background-color: #f9f9f9;">
+      <div class="fill warning padding-m margin-start-m" style="border-left: 4px solid #ccc;">
         <h3>{{ section.title }}</h3>
         {% for export in section.exports %}
           {% if forloop.first %}
