@@ -3,15 +3,10 @@ import re
 import datetime
 import boto3
 import shutil
-import pandas as pd
 
 from django.core.management.base import BaseCommand
-from django.core.files.base import File
-from django.db.models import Q, F, OuterRef, When, Exists, Subquery, Case, Value, CharField
 from django.conf import settings
 
-from apps.deed.models import DeedPage
-from apps.zoon.models import ZooniverseSubject
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 from apps.parcel.utils.export_utils import build_metes_and_bounds_df
 
