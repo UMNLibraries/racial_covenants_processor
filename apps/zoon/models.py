@@ -138,6 +138,14 @@ class AllCovenantedDocsZooniverseManager(models.Manager):
                 ),
                 default=Value(''),
                 output_field=CharField()
+            ),
+            web_image=Case(
+                When(
+                    Exists(deed_page),
+                    then=Subquery(deed_page.values('page_image_web'))
+                ),
+                default=Value(''),
+                output_field=CharField()
             )
         )
 

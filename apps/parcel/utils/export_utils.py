@@ -364,6 +364,7 @@ def build_all_covenanted_docs_df(workflow):
         'zn_subj_id',
         'zn_dt_ret',
         'main_image',
+        'web_image',
         'highlight_image',
         'image_ids',
         'med_score',
@@ -381,6 +382,7 @@ def build_all_covenanted_docs_df(workflow):
         'zn_subj_id',
         'zn_dt_ret',
         'main_image',
+        'web_image',
         'highlight_image',
         'med_score',
         'manual_cx',
@@ -460,6 +462,7 @@ def build_all_covenanted_docs_df(workflow):
     )
     manual_covenanted_docs_expanded_df['image_ids'] = ''
     manual_covenanted_docs_expanded_df['main_image'] = ''
+    manual_covenanted_docs_expanded_df['web_image'] = ''
     manual_covenanted_docs_expanded_df['highlight_image'] = ''
     manual_covenanted_docs_expanded_df['cov_type'] = 'manual'
 
@@ -516,8 +519,9 @@ def build_all_covenanted_docs_df(workflow):
         on=["cov_type", "db_id"]
     )
 
-    first_image_url = all_covenanted_docs_df['highlight_image'].iloc[0]
+    first_image_url = all_covenanted_docs_df['web_image'].iloc[0]
     url_prefix = get_image_url_prefix(first_image_url)
+    all_covenanted_docs_df['web_image'] = all_covenanted_docs_df['web_image'].apply(lambda x: get_full_url(url_prefix, x))
     all_covenanted_docs_df['highlight_image'] = all_covenanted_docs_df['highlight_image'].apply(lambda x: get_full_url(url_prefix, x))
     all_covenanted_docs_df['deed_date'] = pd.to_datetime(all_covenanted_docs_df['deed_date'])
     all_covenanted_docs_df['deed_year'] = all_covenanted_docs_df['deed_date'].dt.year
@@ -554,3 +558,26 @@ def build_discharge_df(workflow):
 
     df = build_all_covenanted_docs_df(workflow)
     return df[DISCHARGE_ATTRIBUTES]
+
+
+def build_metes_and_bounds_df(workflow, n_items=50):
+    M_AND_B_ATTRIBUTES = [
+        'doc_num',
+        'deed_year',
+        'deed_date',
+        'is_mapped',
+        'image_lookup',
+        'web_image',
+    ]
+    df = build_all_covenanted_docs_df(workflow)
+    df = df[df['match_type'] == 'PD']
+    df.rename(columns={'main_image': 'image_lookup'}, inplace=True)
+
+    # Drop rows with blank web_image
+    df.dropna(subset=['image_lookup'], inplace=True)
+
+    if df.shape[0] > 0:
+        sample_size = n_items if df.shape[0] > n_items else df.shape[0]
+        df = df.sample(n=sample_size)[M_AND_B_ATTRIBUTES]
+        return df
+    return pd.DataFrame()
