@@ -1,5 +1,10 @@
-<c-vars deed_years deed_year_counts />
-<div x-data="deedYearChart('{{ deed_years|escapejs }}', '{{ deed_year_counts|escapejs }}')" class="workflow-charts stack">
+<c-vars deed_year_data_json />
+
+<script id="deed-year-data" type="application/json">
+{{ deed_year_data_json|safe }}
+</script>
+
+<div x-data="deedYearChart()" class="workflow-charts stack">
   <h3>Covenanted Parcels by Deed Year</h3>
 
   <div class="chart-container" style="position: relative; height: 400px; margin-bottom: 2rem;">
@@ -10,34 +15,38 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <script>
-  function deedYearChart(deedYearsJson, deedYearCountsJson) {
+  function deedYearChart() {
     return {
-      deedYears: [],
-      deedYearCounts: [],
+      deedYearData: [],
       deedYearChartInstance: null,
 
       init() {
         try {
-          this.deedYears = JSON.parse(deedYearsJson);
-          this.deedYearCounts = JSON.parse(deedYearCountsJson);
-          this.$nextTick(() => {
-            this.createDeedYearChart();
-          });
+          const dataElement = document.getElementById('deed-year-data');
+          if (dataElement) {
+            this.deedYearData = JSON.parse(dataElement.textContent);
+            this.$nextTick(() => {
+              this.createDeedYearChart();
+            });
+          }
         } catch (e) {
           console.error('Error parsing deed year data:', e);
         }
       },
 
       createDeedYearChart() {
+        const deedYears = this.deedYearData.map(item => item.deed_year);
+        const deedYearCounts = this.deedYearData.map(item => item.count);
+
         const ctx = this.$refs.deedYearChart.getContext('2d');
         this.deedYearChartInstance = new Chart(ctx, {
           type: 'bar',
           data: {
-            labels: this.deedYears,
+            labels: deedYears,
             datasets: [
               {
                 label: 'Covenanted Parcels',
-                data: this.deedYearCounts,
+                data: deedYearCounts,
                 backgroundColor: 'rgba(255, 99, 132, 0.7)',
                 borderColor: 'rgb(255, 99, 132)',
                 borderWidth: 1
