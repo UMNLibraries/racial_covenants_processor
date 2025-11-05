@@ -1,0 +1,93 @@
+<c-vars deed_years deed_year_counts />
+<div x-data="deedYearChart('{{ deed_years|escapejs }}', '{{ deed_year_counts|escapejs }}')" class="workflow-charts stack">
+  <h3>Covenanted Parcels by Deed Year</h3>
+
+  <div class="chart-container" style="position: relative; height: 400px; margin-bottom: 2rem;">
+    <canvas x-ref="deedYearChart"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+  function deedYearChart(deedYearsJson, deedYearCountsJson) {
+    return {
+      deedYears: [],
+      deedYearCounts: [],
+      deedYearChartInstance: null,
+
+      init() {
+        try {
+          this.deedYears = JSON.parse(deedYearsJson);
+          this.deedYearCounts = JSON.parse(deedYearCountsJson);
+          this.$nextTick(() => {
+            this.createDeedYearChart();
+          });
+        } catch (e) {
+          console.error('Error parsing deed year data:', e);
+        }
+      },
+
+      createDeedYearChart() {
+        const ctx = this.$refs.deedYearChart.getContext('2d');
+        this.deedYearChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: this.deedYears,
+            datasets: [
+              {
+                label: 'Covenanted Parcels',
+                data: this.deedYearCounts,
+                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                borderColor: 'rgb(255, 99, 132)',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: {
+                display: true,
+                text: 'Covenanted Parcels by Deed Year'
+              },
+              legend: {
+                display: true,
+                position: 'top'
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Number of Parcels'
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Deed Year'
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+  }
+</script>
+
+<style>
+  .workflow-charts {
+    margin: 2rem 0;
+  }
+
+  .chart-container {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+</style>
