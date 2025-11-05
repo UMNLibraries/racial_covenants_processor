@@ -195,14 +195,6 @@ def generate_workflow_summary_context(request, workflow):
 
     all_workflows = ZooniverseWorkflow.objects.all()
 
-    # Get CovenantedParcel objects grouped by deed_year
-    deed_year_data = list(
-        CovenantedParcel.objects.filter(workflow=workflow, deed_year__isnull=False)
-        .values('deed_year')
-        .annotate(count=Count('id'))
-        .order_by('deed_year')
-    )
-
     context = {
         "workflow": workflow,
         "export_sections": export_sections,
@@ -212,16 +204,39 @@ def generate_workflow_summary_context(request, workflow):
         "covenants_maybe_count": subjects.filter(bool_covenant=None).count(),
         "mapped_count": mapped_count,
         "all_workflows": all_workflows,
-        "deed_year_data_json": json.dumps(deed_year_data),
     }
     return context
+
+
+def generate_workflow_summary_chart_data(request, workflow):
+    deed_year_data = list(
+        CovenantedParcel.objects.filter(workflow=workflow, deed_year__isnull=False)
+        .values("deed_year")
+        .annotate(count=Count("id"))
+        .order_by("deed_year")
+    )
+
+    city_data = list(
+        CovenantedParcel.objects.filter(workflow=workflow, deed_year__isnull=False)
+        .values("city")
+        .annotate(count=Count("id"))
+        .order_by("city")
+    )
+
+    return {
+        "deed_year_data_json": json.dumps(deed_year_data),
+        "city_data_json": json.dumps(city_data),
+    }
 
 
 @login_required(login_url="/admin/login/")
 def workflow_summary(request, workflow_id):
     workflow = ZooniverseWorkflow.objects.get(id=workflow_id)
 
-    context = generate_workflow_summary_context(request, workflow)
+    summary = generate_workflow_summary_context(request, workflow)
+    charts = generate_workflow_summary_chart_data(request, workflow)
+
+    context = summary | charts
 
     return render(request, "workflow_summary.html", context)
 
