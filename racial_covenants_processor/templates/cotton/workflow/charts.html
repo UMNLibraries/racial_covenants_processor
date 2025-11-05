@@ -5,8 +5,6 @@
 </script>
 
 <div x-data="deedYearChart()" class="workflow-charts stack">
-  <h3>Covenanted Parcels by Deed Year</h3>
-
   <div class="chart-container" style="position: relative; height: 400px; margin-bottom: 2rem;">
     <canvas x-ref="deedYearChart"></canvas>
   </div>
@@ -62,8 +60,7 @@
                 text: 'Covenanted Parcels by Deed Year'
               },
               legend: {
-                display: true,
-                position: 'top'
+                display: false,
               }
             },
             scales: {
@@ -91,12 +88,5 @@
 <style>
   .workflow-charts {
     margin: 2rem 0;
-  }
-
-  .chart-container {
-    background: white;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
 </style>
