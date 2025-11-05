@@ -1,52 +1,84 @@
-<c-vars deed_year_data_json />
+<c-vars deed_year_data_json block_cov_data_json />
 
 <script id="deed-year-data" type="application/json">
 {{ deed_year_data_json|safe }}
 </script>
 
-<div x-data="deedYearChart()" class="workflow-charts stack">
-  <div class="chart-container" style="position: relative; height: 400px; margin-bottom: 2rem;">
-    <canvas x-ref="deedYearChart"></canvas>
+<script id="city-data" type="application/json">
+{{ city_data_json|safe }}
+</script>
+
+<div class="workflow-charts stack">
+  <div
+    x-data="barChart('deed-year-data', 'deedYearChart', {
+      title: 'Covenanted Parcels by Deed Year',
+      labelKey: 'deed_year',
+      dataKey: 'count',
+      xAxisLabel: 'Deed Year',
+      yAxisLabel: 'Number of Parcels',
+      backgroundColor: 'rgba(255, 99, 132, 0.7)',
+      borderColor: 'rgb(255, 99, 132)'
+    })"
+    class="chart-container"
+    style="position: relative; height: 400px; margin-bottom: 2rem;"
+  >
+    <canvas x-ref="chartCanvas"></canvas>
+  </div>
+
+  <div
+    x-data="barChart('city-data', 'cityChart', {
+      title: 'Covenanted Parcels by City',
+      labelKey: 'city',
+      dataKey: 'count',
+      xAxisLabel: 'City',
+      yAxisLabel: 'Number of Parcels',
+      backgroundColor: 'rgba(54, 162, 235, 0.7)',
+      borderColor: 'rgb(54, 162, 235)'
+    })"
+    class="chart-container"
+    style="position: relative; height: 400px; margin-bottom: 2rem;"
+  >
+    <canvas x-ref="chartCanvas"></canvas>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <script>
-  function deedYearChart() {
+  function barChart(dataId, chartName, config) {
     return {
-      deedYearData: [],
-      deedYearChartInstance: null,
+      chartData: [],
+      chartInstance: null,
 
       init() {
         try {
-          const dataElement = document.getElementById('deed-year-data');
+          const dataElement = document.getElementById(dataId);
           if (dataElement) {
-            this.deedYearData = JSON.parse(dataElement.textContent);
+            this.chartData = JSON.parse(dataElement.textContent);
             this.$nextTick(() => {
-              this.createDeedYearChart();
+              this.createChart();
             });
           }
         } catch (e) {
-          console.error('Error parsing deed year data:', e);
+          console.error(`Error parsing ${chartName} data:`, e);
         }
       },
 
-      createDeedYearChart() {
-        const deedYears = this.deedYearData.map(item => item.deed_year);
-        const deedYearCounts = this.deedYearData.map(item => item.count);
+      createChart() {
+        const labels = this.chartData.map(item => item[config.labelKey]);
+        const data = this.chartData.map(item => item[config.dataKey]);
 
-        const ctx = this.$refs.deedYearChart.getContext('2d');
-        this.deedYearChartInstance = new Chart(ctx, {
+        const ctx = this.$refs.chartCanvas.getContext('2d');
+        this.chartInstance = new Chart(ctx, {
           type: 'bar',
           data: {
-            labels: deedYears,
+            labels: labels,
             datasets: [
               {
-                label: 'Covenanted Parcels',
-                data: deedYearCounts,
-                backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                borderColor: 'rgb(255, 99, 132)',
+                label: config.title,
+                data: data,
+                backgroundColor: config.backgroundColor,
+                borderColor: config.borderColor,
                 borderWidth: 1
               }
             ]
@@ -57,7 +89,7 @@
             plugins: {
               title: {
                 display: true,
-                text: 'Covenanted Parcels by Deed Year'
+                text: config.title
               },
               legend: {
                 display: false,
@@ -68,13 +100,13 @@
                 beginAtZero: true,
                 title: {
                   display: true,
-                  text: 'Number of Parcels'
+                  text: config.yAxisLabel
                 }
               },
               x: {
                 title: {
                   display: true,
-                  text: 'Deed Year'
+                  text: config.xAxisLabel
                 }
               }
             }
