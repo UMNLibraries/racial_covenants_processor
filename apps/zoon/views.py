@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.auth.decorators import login_required
+import json
 
 from django.db.models import Max, Count
 from apps.deed.models import SearchHitReport
@@ -195,15 +196,12 @@ def generate_workflow_summary_context(request, workflow):
     all_workflows = ZooniverseWorkflow.objects.all()
 
     # Get CovenantedParcel objects grouped by deed_year
-    deed_year_data = (
+    deed_year_data = list(
         CovenantedParcel.objects.filter(workflow=workflow, deed_year__isnull=False)
         .values('deed_year')
         .annotate(count=Count('id'))
         .order_by('deed_year')
     )
-
-    deed_years = [item['deed_year'] for item in deed_year_data]
-    deed_year_counts = [item['count'] for item in deed_year_data]
 
     context = {
         "workflow": workflow,
@@ -214,8 +212,7 @@ def generate_workflow_summary_context(request, workflow):
         "covenants_maybe_count": subjects.filter(bool_covenant=None).count(),
         "mapped_count": mapped_count,
         "all_workflows": all_workflows,
-        "deed_years": deed_years,
-        "deed_year_counts": deed_year_counts,
+        "deed_year_data_json": json.dumps(deed_year_data),
     }
     return context
 
