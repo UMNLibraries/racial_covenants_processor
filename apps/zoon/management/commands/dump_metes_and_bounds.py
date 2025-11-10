@@ -36,7 +36,7 @@ class Command(BaseCommand):
         for ext in test_exts:
             object_key = f"raw/{workflow.slug}/{s3_lookup}.{ext}"
             # Remove splitpage, e.g. if it's a multipage image, try to find the original
-            # object_key = re.sub(r"__SPLITPAGE_\d+", "", object_key)
+            object_key = re.sub(r"_SPLITPAGE_\d+", "", object_key)
             local_path = os.path.join(download_folder, os.path.basename(object_key))
             print(object_key)
 

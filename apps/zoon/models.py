@@ -130,23 +130,23 @@ class AllCovenantedDocsZooniverseManager(models.Manager):
             mapped_parcel_pin=F('parcel_matches__pin_primary'),
             main_image=F('deedpage_s3_lookup'),
             # highlight_image=F('page_image_web_highlighted')
-        ).annotate(
-            highlight_image=Case(
-                When(
-                    Exists(deed_page),
-                    then=Subquery(deed_page.values('page_image_web_highlighted'))
-                ),
-                default=Value(''),
-                output_field=CharField()
-            ),
-            web_image=Case(
-                When(
-                    Exists(deed_page),
-                    then=Subquery(deed_page.values('page_image_web'))
-                ),
-                default=Value(''),
-                output_field=CharField()
-            )
+        # ).annotate(
+        #     highlight_image=Case(
+        #         When(
+        #             Exists(deed_page),
+        #             then=Subquery(deed_page.values('page_image_web_highlighted'))
+        #         ),
+        #         default=Value(''),
+        #         output_field=CharField()
+        #     ),
+        #     web_image=Case(
+        #         When(
+        #             Exists(deed_page),
+        #             then=Subquery(deed_page.values('page_image_web'))
+        #         ),
+        #         default=Value(''),
+        #         output_field=CharField()
+        #     )
         )
 
 

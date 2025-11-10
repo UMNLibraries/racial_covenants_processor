@@ -5,6 +5,7 @@ import geopandas as gpd
 from django.contrib.gis.db.models.functions import AsWKT
 
 from apps.parcel.models import Parcel, CovenantedParcel
+from apps.deed.models import DeedPage
 from apps.zoon.models import ZooniverseSubject, ManualCovenant
 from apps.zoon.models import MATCH_TYPE_OPTIONS, MANUAL_COV_OPTIONS
 
@@ -370,6 +371,20 @@ def build_all_covenanted_docs_df(workflow):
         'med_score',
     ]
 
+    image_links_df = pd.DataFrame(DeedPage.objects.filter(
+        workflow=workflow,
+        bool_match=True
+    ).values(
+        's3_lookup',
+        'page_image_web',
+        'page_image_web_highlighted'
+    )).rename(columns={
+        'page_image_web': 'web_image',
+        'page_image_web_highlighted': 'highlight_image',
+    })
+
+    # print(image_links_df.shape[0])
+
     zoon_covenanted_subjects = ZooniverseSubject.all_covenanted_docs_objects.filter(
         workflow=workflow
     ).values(
@@ -382,8 +397,8 @@ def build_all_covenanted_docs_df(workflow):
         'zn_subj_id',
         'zn_dt_ret',
         'main_image',
-        'web_image',
-        'highlight_image',
+        # 'web_image',
+        # 'highlight_image',
         'med_score',
         'manual_cx',
         'add_cov',
@@ -403,6 +418,10 @@ def build_all_covenanted_docs_df(workflow):
         'cov_type',
         'match_type_final',  # Need to rename with pd =Value('unmapped')
     )
+
+    # print(zoon_covenanted_subjects)
+
+    # return False
 
     # TK
     all_manual_covenants = ManualCovenant.all_covenanted_docs_objects.filter(
@@ -451,6 +470,12 @@ def build_all_covenanted_docs_df(workflow):
         'city_final': 'city',
         'match_type_final': 'match_type',
     }, inplace=True)
+    zoon_covenanted_docs_expanded_df = zoon_covenanted_docs_expanded_df.merge(
+        image_links_df,
+        how="left",
+        left_on="main_image",
+        right_on="s3_lookup"
+    )
 
     manual_covenanted_docs_expanded_df = pd.DataFrame(all_manual_covenants)
     
