@@ -141,7 +141,8 @@ class Command(BaseCommand):
                 {'match_term': 'caucasian', 'confusion_term': 'canadian'},
                 {'match_term': 'caucasian', 'confusion_term': 'calcasieu'},
                 {'match_term': 'colored', 'confusion_term': 'dolored'},
-                {'match_term': 'occupied by any', 'confusion_term': 'other than the applicant'}
+                {'match_term': 'occupied by any', 'confusion_term': 'other than the applicant'},
+                {'match_term': 'jew (10)', 'confusion_term': 'jew'}
             ]
             for term in confusion_terms:
                 match_term = term['match_term']

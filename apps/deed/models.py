@@ -118,9 +118,11 @@ class DeedPage(models.Model):
             models.Index(fields=['-id', 'workflow_id'], name='id_workflow_index'),
             models.Index(fields=['workflow_id', '-id'], name='workflow_id_index'),
             models.Index(fields=['workflow_id'], name='workflow_only_index'),
+            models.Index(fields=['workflow_id', 'bool_match'], name='workflow_plus_match_index'),
             models.Index(fields=['zooniverse_subject_1st_page_id'], name='zpage_1_index'),
             models.Index(fields=['zooniverse_subject_2nd_page_id'], name='zpage_2_index'),
-            models.Index(fields=['zooniverse_subject_3rd_page_id'], name='zpage_3_index')
+            models.Index(fields=['zooniverse_subject_3rd_page_id'], name='zpage_3_index'),
+            models.Index(fields=['workflow_id', 's3_lookup'], name='s3_lookup_workflow_index')
         ]
 
     @property
