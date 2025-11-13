@@ -422,6 +422,11 @@ class Parcel(models.Model):
     covenant_objects = CovenantsParcelManager()
     """Manager used to list only parcels linked to racial covenants See CovenantsParcelManager() for details."""
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['subdivision_spatial_id', 'workflow_id'], name='workflow_and_subdivision_index'),
+        ]
+
     def __str__(self):
         return f"{self.county_name} {self.plat_name} LOT {self.lot} BLOCK {self.block} ({self.pk})"
 
