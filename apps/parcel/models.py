@@ -425,6 +425,7 @@ class Parcel(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['subdivision_spatial_id', 'workflow_id'], name='workflow_and_subdivision_index'),
+            models.Index(fields=['workflow_id', 'bool_covenant'], name='workflow_and_bool_cov_index'),
         ]
 
     def __str__(self):

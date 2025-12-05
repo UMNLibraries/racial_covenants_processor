@@ -7,6 +7,7 @@ import pandas as pd
 from panoptes_client import Panoptes, Project, Subject, SubjectSet
 
 from django import db
+from django.apps import apps
 # import psycopg2
 from django.db.utils import OperationalError
 from django.db.models import F, Case, When, Value, Q
@@ -14,6 +15,7 @@ from django.contrib.postgres.aggregates import StringAgg
 
 from racial_covenants_processor.storage_backends import PrivateMediaStorage
 from apps.deed.models import DeedPage
+from apps.zoon.models import ZooniverseWorkflow
 
 from django.conf import settings
 
@@ -288,3 +290,27 @@ def get_existing_subjects(subject_set):
 
 def delete_zooniverse_subjects(subject_set, subject_ids=[]):
     subject_set.remove(subject_ids)
+
+
+def chunk_list(input_list, chunk_size):
+    return [input_list[i:i + chunk_size] for i in range(0, len(input_list), chunk_size)]
+
+
+# def bulk_delete_models(workflow_name, app_label, model_name, batch_size=10000):
+#     print(f'Deleting old {model_name} records (but not their images)...')
+
+#     workflow = ZooniverseWorkflow.objects.get(workflow_name=workflow_name)
+#     ModelClass = apps.get_model(app_label=app_label, model_name=model_name)
+
+#     if model_name in ['ZooniverseResponseRaw']:
+#         delete_pks = ModelClass.objects.filter(workflow_name=workflow_name).values_list('pk', flat=True)
+#     else:
+#         delete_pks = ModelClass.objects.filter(workflow=workflow).values_list('pk', flat=True)
+
+#     print(f"Found {len(delete_pks)} to delete.")
+
+#     delete_count = 0
+#     for chunk in chunk_list(delete_pks, batch_size):
+#         ModelClass.objects.filter(pk__in=chunk).delete()
+#         delete_count += batch_size
+#         print(f"Deleted {delete_count} records...")

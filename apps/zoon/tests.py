@@ -5,6 +5,8 @@ from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ManualCovena
 from apps.parcel.models import Parcel
 from apps.deed.utils.deed_pagination import tag_prev_next_image_sql
 from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest
+# from apps.zoon.management.commands import load_zooniverse_export
+from apps.zoon.management.commands.load_zooniverse_export import Command as LoadZooniverseExportTest
 
 
 class ZooniverseUploadTests(TestCase):
@@ -218,6 +220,18 @@ class ZooniverseUploadTests(TestCase):
         self.assertIn('web/fake/30000102/02720303_NOTINDEX_0001.jpg', test_image_row['#image1'].iloc[0])
         self.assertIn('web/fake/30000102/02720303_NOTINDEX_0002.jpg', test_image_row['#image2'].iloc[0])
         self.assertIn('web/fake/30000102/02720303_NOTINDEX_0003.jpg', test_image_row['#image3'].iloc[0])
+
+    # Run this one last in this class
+    def test_clear_all_tables(self):
+
+        workflow = ZooniverseWorkflow.objects.get(pk=1)
+        zs = ZooniverseSubject.objects.filter(workflow=workflow)
+        self.assertGreater(zs.count(), 0)
+        
+        LoadZooniverseExportTest.clear_all_tables(None, workflow.workflow_name)
+
+        zs = ZooniverseSubject.objects.filter(workflow=workflow)
+        self.assertEqual(zs.count(), 0)
 
 
 TEST_ZOON_SETTINGS = {

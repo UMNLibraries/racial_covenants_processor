@@ -477,6 +477,9 @@ class ZooniverseSubject(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk:
+
+            # Get list of current parcel_matches
+            previous_parcel_match_pks = self.parcel_matches.values_list('pk', flat=True)
             self.get_final_values()
             
             # Can pass parcel lookup for bulk matches
@@ -492,7 +495,9 @@ class ZooniverseSubject(models.Model):
         # Generate flattened covenants for easier export. This has to run post-save or else the values for ZooniverseSubject will not get propogated to the Parcel.covenant_objects call that is needed to generate the flat CovenantedParcel record.
         if self.parcel_matches.count() > 0:
             from apps.parcel.utils.export_utils import save_flat_covenanted_parcels, delete_flat_covenanted_parcels
-            delete_flat_covenanted_parcels(self.parcel_matches)
+            # TODO: get list of parcel matches before save, in case some go away, otherwise they won't be deleted
+            previous_parcel_matches = Parcel.objects.filter(workflow=self.workflow, pk__in=previous_parcel_match_pks)
+            delete_flat_covenanted_parcels(previous_parcel_matches)
             save_flat_covenanted_parcels(self.parcel_matches)
 
 
