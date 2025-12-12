@@ -16,7 +16,8 @@ class Command(BaseCommand):
 
     def reconnect_objs(self, workflow):
         resp_objs = ZooniverseResponseProcessed.objects.filter(
-            workflow=workflow
+            workflow=workflow,
+            zoon_subject_id__isnull=False
         ).only('pk', 'zoon_subject_id')
 
         resp_subject_ids = resp_objs.values_list('zoon_subject_id', flat=True)

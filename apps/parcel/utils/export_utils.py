@@ -5,8 +5,11 @@ import geopandas as gpd
 from django.contrib.gis.db.models.functions import AsWKT
 
 from apps.parcel.models import Parcel, CovenantedParcel
+from apps.deed.models import DeedPage
 from apps.zoon.models import ZooniverseSubject, ManualCovenant
 from apps.zoon.models import MATCH_TYPE_OPTIONS, MANUAL_COV_OPTIONS
+
+from apps.zoon.utils.zooniverse_load import get_image_url_prefix, get_full_url
 
 MATCH_TYPES = MATCH_TYPE_OPTIONS + MANUAL_COV_OPTIONS
 
@@ -361,9 +364,26 @@ def build_all_covenanted_docs_df(workflow):
         'dt_updated',
         'zn_subj_id',
         'zn_dt_ret',
+        'main_image',
+        'web_image',
+        'highlight_image',
         'image_ids',
         'med_score',
     ]
+
+    # image_links_df = pd.DataFrame(DeedPage.objects.filter(
+    #     workflow=workflow,
+    #     bool_match=True
+    # ).values(
+    #     's3_lookup',
+    #     'page_image_web',
+    #     'page_image_web_highlighted'
+    # )).rename(columns={
+    #     'page_image_web': 'web_image',
+    #     'page_image_web_highlighted': 'highlight_image',
+    # })
+
+    # print(image_links_df.shape[0])
 
     zoon_covenanted_subjects = ZooniverseSubject.all_covenanted_docs_objects.filter(
         workflow=workflow
@@ -376,6 +396,9 @@ def build_all_covenanted_docs_df(workflow):
         'image_ids',
         'zn_subj_id',
         'zn_dt_ret',
+        'main_image',
+        'web_image',
+        'highlight_image',
         'med_score',
         'manual_cx',
         'add_cov',
@@ -395,6 +418,10 @@ def build_all_covenanted_docs_df(workflow):
         'cov_type',
         'match_type_final',  # Need to rename with pd =Value('unmapped')
     )
+
+    # print(zoon_covenanted_subjects)
+
+    # return False
 
     # TK
     all_manual_covenants = ManualCovenant.all_covenanted_docs_objects.filter(
@@ -443,6 +470,12 @@ def build_all_covenanted_docs_df(workflow):
         'city_final': 'city',
         'match_type_final': 'match_type',
     }, inplace=True)
+    # zoon_covenanted_docs_expanded_df = zoon_covenanted_docs_expanded_df.merge(
+    #     image_links_df,
+    #     how="left",
+    #     left_on="main_image",
+    #     right_on="s3_lookup"
+    # )
 
     manual_covenanted_docs_expanded_df = pd.DataFrame(all_manual_covenants)
     
@@ -453,6 +486,9 @@ def build_all_covenanted_docs_df(workflow):
         }, inplace=True
     )
     manual_covenanted_docs_expanded_df['image_ids'] = ''
+    manual_covenanted_docs_expanded_df['main_image'] = ''
+    manual_covenanted_docs_expanded_df['web_image'] = ''
+    manual_covenanted_docs_expanded_df['highlight_image'] = ''
     manual_covenanted_docs_expanded_df['cov_type'] = 'manual'
 
     all_covenanted_docs_expanded_df = pd.concat([zoon_covenanted_docs_expanded_df, manual_covenanted_docs_expanded_df])
@@ -508,7 +544,65 @@ def build_all_covenanted_docs_df(workflow):
         on=["cov_type", "db_id"]
     )
 
+    first_image_url = all_covenanted_docs_df['web_image'].iloc[0]
+    url_prefix = get_image_url_prefix(first_image_url)
+    all_covenanted_docs_df['web_image'] = all_covenanted_docs_df['web_image'].apply(lambda x: get_full_url(url_prefix, x))
+    all_covenanted_docs_df['highlight_image'] = all_covenanted_docs_df['highlight_image'].apply(lambda x: get_full_url(url_prefix, x))
     all_covenanted_docs_df['deed_date'] = pd.to_datetime(all_covenanted_docs_df['deed_date'])
     all_covenanted_docs_df['deed_year'] = all_covenanted_docs_df['deed_date'].dt.year
 
     return all_covenanted_docs_df[ALL_DOCS_ATTRIBUTES]
+
+
+def build_discharge_df(workflow):
+
+    DISCHARGE_ATTRIBUTES = [
+        'db_id',
+        'doc_num',
+        'deed_year',
+        'deed_date',
+        'cov_text',
+        'seller',
+        'buyer',
+        'add_cov',
+        'block_cov',
+        'lot_cov',
+        'map_book',
+        'map_page',
+        'is_mapped',
+        'addresses',
+        'cities',
+        'state',
+        'cnty_pins',
+        'manual_cx',
+        'dt_updated',
+        'main_image',
+        'highlight_image',
+        # 'image_ids',
+    ]
+
+    df = build_all_covenanted_docs_df(workflow)
+    return df[DISCHARGE_ATTRIBUTES]
+
+
+def build_metes_and_bounds_df(workflow, n_items=50):
+    M_AND_B_ATTRIBUTES = [
+        'doc_num',
+        'deed_year',
+        'deed_date',
+        'is_mapped',
+        'image_lookup',
+        'web_image',
+    ]
+    df = build_all_covenanted_docs_df(workflow)
+    df = df[df['match_type'] == 'PD']
+    df.rename(columns={'main_image': 'image_lookup'}, inplace=True)
+
+    # Drop rows with blank web_image
+    df.dropna(subset=['image_lookup'], inplace=True)
+
+    if df.shape[0] > 0:
+        sample_size = n_items if df.shape[0] > n_items else df.shape[0]
+        df = df.sample(n=sample_size)[M_AND_B_ATTRIBUTES]
+        return df
+    return pd.DataFrame()

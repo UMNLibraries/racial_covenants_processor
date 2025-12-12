@@ -11,6 +11,7 @@ from apps.parcel.models import (
     ShpExport,
     CSVExport,
     AllCovenantedDocsCSVExport,
+    DischargeCSVExport,
     UnmappedCSVExport,
     ValidationCSVExport,
     JoinReport,
@@ -96,6 +97,24 @@ def generate_workflow_summary_context(request, workflow):
                     "label": "mapped covenants",
                 }
                 for exp in csv_exports
+            ],
+        }
+    )
+
+    all_discharges = DischargeCSVExport.objects.filter(workflow=workflow).order_by(
+        "-created_at"
+    )
+    export_sections.append(
+        {
+            "title": "Download all discharge CSVs",
+            "exports": [
+                {
+                    "url": exp.csv.url,
+                    "created": exp.created_at,
+                    "count": exp.doc_count,
+                    "label": "discharge CSVs",
+                }
+                for exp in all_discharges
             ],
         }
     )
@@ -200,8 +219,8 @@ def generate_workflow_summary_context(request, workflow):
         "export_sections": export_sections,
         "last_update": last_update,
         "subject_count": subjects.count(),
-        "covenants_count": subjects.filter(bool_covenant=True).count(),
-        "covenants_maybe_count": subjects.filter(bool_covenant=None).count(),
+        "covenants_count": subjects.filter(bool_covenant_final=True).count(),
+        "covenants_maybe_count": subjects.filter(bool_covenant_final=None).count(),
         "mapped_count": mapped_count,
         "all_workflows": all_workflows,
     }

@@ -19,7 +19,7 @@ class Command(BaseCommand):
         CovenantedParcel.objects.filter(workflow=workflow).delete()
 
         print("Creating CovenantedParcel records from this workflow...")
-        matched_parcels = Parcel.objects.filter(workflow=workflow, bool_covenant=True)
+        matched_parcels = Parcel.objects.filter(workflow=workflow, bool_covenant=True).only('pk')
         flat_covenants = save_flat_covenanted_parcels(matched_parcels)
 
         if flat_covenants:
