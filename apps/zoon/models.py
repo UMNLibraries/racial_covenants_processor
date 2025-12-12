@@ -2,7 +2,9 @@ import json
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Union
 from django.contrib.gis import geos
-from django.db.models import F, Value, Count
+from django.db.models import F, Value, Count, OuterRef, Case, When, Exists, Subquery, CharField
+
+# from django.db.models import OuterRef, Subquery, F, Case, Value, When, Exists, BooleanField, DateField, CharField, IntegerField, JSONField, FloatField
 from django.dispatch import receiver
 from django.utils.text import slugify
 
@@ -85,8 +87,17 @@ class AllCovenantedDocsZooniverseManager(models.Manager):
     The main model manager used for covenant exports is in apps/parcel/models.py.
     Unlike the main exporter, de-duping is not done here to eliminate multiple occurences
     of the same document.'''
+    
 
     def get_queryset(self):
+        from apps.deed.models import DeedPage
+
+        deed_page = DeedPage.objects.filter(
+            s3_lookup=OuterRef('deedpage_s3_lookup'),
+            workflow=OuterRef('workflow')
+        ).only(
+            'page_image_web_highlighted'
+        )
 
         return super().get_queryset().filter(
             bool_covenant_final=True
@@ -117,6 +128,25 @@ class AllCovenantedDocsZooniverseManager(models.Manager):
             mapped_city=F('parcel_matches__city'),
             mapped_state=F('parcel_matches__state'),
             mapped_parcel_pin=F('parcel_matches__pin_primary'),
+            main_image=F('deedpage_s3_lookup'),
+            # highlight_image=F('page_image_web_highlighted')
+        ).annotate(
+            highlight_image=Case(
+                When(
+                    Exists(deed_page),
+                    then=Subquery(deed_page.values('page_image_web_highlighted'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            ),
+            web_image=Case(
+                When(
+                    Exists(deed_page),
+                    then=Subquery(deed_page.values('page_image_web'))
+                ),
+                default=Value(''),
+                output_field=CharField()
+            )
         )
 
 
@@ -447,6 +477,9 @@ class ZooniverseSubject(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk:
+
+            # Get list of current parcel_matches
+            previous_parcel_match_pks = self.parcel_matches.values_list('pk', flat=True)
             self.get_final_values()
             
             # Can pass parcel lookup for bulk matches
@@ -462,7 +495,9 @@ class ZooniverseSubject(models.Model):
         # Generate flattened covenants for easier export. This has to run post-save or else the values for ZooniverseSubject will not get propogated to the Parcel.covenant_objects call that is needed to generate the flat CovenantedParcel record.
         if self.parcel_matches.count() > 0:
             from apps.parcel.utils.export_utils import save_flat_covenanted_parcels, delete_flat_covenanted_parcels
-            delete_flat_covenanted_parcels(self.parcel_matches)
+            # TODO: get list of parcel matches before save, in case some go away, otherwise they won't be deleted
+            previous_parcel_matches = Parcel.objects.filter(workflow=self.workflow, pk__in=previous_parcel_match_pks)
+            delete_flat_covenanted_parcels(previous_parcel_matches)
             save_flat_covenanted_parcels(self.parcel_matches)
 
 

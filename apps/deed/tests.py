@@ -736,3 +736,27 @@ class DeedPagePrevNextTests(TestCase):
         )
         # self.assertEqual(deed_page_1.next_page_image_web.__str__(), 'web/fake/deedhold/t/0833/08330291.002.jpg')
         # self.assertEqual(deed_page_1.next_next_page_image_web.__str__(), '')
+
+    # Stearns County examples
+    def test_prev_next_stearns_book_page(self):
+        """Does deedpage find correct prev/next images and deedpage records? Note different batch number on deed_page_1
+        """
+
+        deed_page_1 = DeedPage.objects.get(
+            s3_lookup='Stearns_DocID_Archive/usmnstr-sat-148-000-0000-000_00275-001'
+        )
+
+        deed_page_2 = DeedPage.objects.get(
+            s3_lookup='Stearns_DocID_Archive/usmnstr-sat-148-000-0000-000_00276-001'
+        )
+
+        self.assertEqual(
+            deed_page_2.prev_page_image_web.__str__(),
+            deed_page_1.page_image_web.__str__()
+        )
+        self.assertEqual(
+            deed_page_1.next_page_image_web.__str__(),
+            deed_page_2.page_image_web.__str__()
+        )
+        self.assertEqual(deed_page_1.doc_page_count, 1)
+        self.assertEqual(deed_page_2.doc_page_count, 1)
