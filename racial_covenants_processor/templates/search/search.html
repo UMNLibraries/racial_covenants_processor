@@ -1,109 +1,177 @@
 {% extends 'base.html' %}
-
 {% load humanize %}
 
 {% block content %}
-    <style>
+<style>
+    .font-tester:before {
+        font-family: 'Font Awesome 5 Free';
+        content: '\f0c9';
+        color: #9fa3a6;
+        font-weight: 900;
+        display: inline-block;
+    }
 
-        .font-tester:before {
-            font-family: 'Font Awesome 5 Free';
-            /* content: '\f078'; */
-            content: '\f0c9';
-            color: #9fa3a6;
-            font-weight: 900;
-            display: inline-block;
+    .deedpage-result .box {
+        height: 100%;
+    }
+</style>
+
+<header class="main">
+    <h2>DeedPage search</h2>
+</header>
+
+<form id="deed-search-form">
+    <div class="row gtr-uniform">
+
+        {{ form.non_field_errors }}
+
+        <div class="col-6">
+            {{ form.q.errors }}
+            <label for="{{ form.q.id_for_label }}">Search</label>
+            {{ form.q }}
+        </div>
+
+        <div class="col-6">
+            {{ form.workflow.errors }}
+            <label for="{{ form.workflow.id_for_label }}">Workflow filter</label>
+            {{ form.workflow }}
+        </div>
+
+        <div class="col-3">
+            {{ form.bool_match.errors }}
+            {{ form.bool_match }}
+            <label for="{{ form.bool_match.id_for_label }}">Matches only?</label>
+        </div>
+
+        <div class="col-12">
+            <ul class="actions">
+                <li>
+                    <input type="submit" value="Search" class="primary">
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</form>
+
+<hr>
+
+<div id="search-status"></div>
+
+<div class="box alt">
+    <div id="search-results" class="row gtr-50 gtr-uniform">
+        <!-- Results injected here -->
+    </div>
+</div>
+
+<div id="pagination-container"></div>
+
+<script>
+(function () {
+    const form = document.getElementById("deed-search-form");
+    const resultsContainer = document.getElementById("search-results");
+    const statusContainer = document.getElementById("search-status");
+    const paginationContainer = document.getElementById("pagination-container");
+    const limit = 24;
+
+    function buildSearchParams(offset) {
+        const params = new URLSearchParams();
+
+        const q = document.getElementById("{{ form.q.id_for_label }}").value.trim();
+        if (q) params.append("search", q);
+
+        const workflow = document.getElementById("{{ form.workflow.id_for_label }}").value;
+        if (workflow) params.append("workflow", workflow);
+
+        const boolMatch = document.getElementById("{{ form.bool_match.id_for_label }}");
+        if (boolMatch && boolMatch.checked) {
+            params.append("bool_match", "true");
         }
-    </style>
 
-    <header class="main">
-        <h2>DeedPage search</h2>
-    </header>
+        params.append("limit", limit.toString());
+        params.append("offset", offset.toString());
 
-    <!-- <div class="font-tester">Hello</div> -->
+        return params;
+    }
 
-    <form method="get" action=".">
-        <div class="row gtr-uniform">
+    function renderPagination(data) {
+        if (!data.previous && !data.next) {
+            paginationContainer.innerHTML = "";
+            return;
+        }
 
-            {{ form.non_field_errors }}
-            <div class="col-6">
-                {{ form.q.errors }}
-                <label for="{{ form.q.id_for_label }}">Search</label>
-                {{ form.q }}
-            </div>
+        paginationContainer.innerHTML = `
+            <ul class="pagination">
+                <li>
+                    ${data.previous !== null 
+                        ? `<a href="#" class="button" data-offset="${data.previous}">Previous</a>`
+                        : `<span class="button disabled">Previous</span>`}
+                </li>
+                <li>
+                    ${data.next !== null 
+                        ? `<a href="#" class="button" data-offset="${data.next}">Next</a>`
+                        : `<span class="button disabled">Next</span>`}
+                </li>
+            </ul>
+        `;
 
-            <div class="col-6">
-                {{ form.workflow.errors }}
-                <label for="{{ form.workflow.id_for_label }}">Workflow filter</label>
-                {{ form.workflow }}
-            </div>
+        paginationContainer.querySelectorAll("a[data-offset]").forEach(link => {
+            link.addEventListener("click", (e) => {
+                e.preventDefault();
+                performSearch(parseInt(link.dataset.offset));
+            });
+        });
+    }
 
-            <div class="col-6">
-                <ul class="actions">
-                    <li><input type="submit" value="Search" class="primary"></li>
-                </ul>
-            </div>
+    async function performSearch(offset = 0) {
+        resultsContainer.innerHTML = "";
+        statusContainer.innerHTML = "<p>Searching…</p>";
+        paginationContainer.innerHTML = "";
 
-            <div class="col-3">
-                {{ form.bool_match.errors }}
-                {{ form.bool_match }}
-                <label for="{{ form.bool_match.id_for_label }}">Matches only?</label>
-            </div>   
-        </div>
-    </form>
+        const params = buildSearchParams(offset);
 
-    {% if page_obj.has_previous or page_obj.has_next %}
-    <div class="row">
-        <h3>Results: Page {{ page_obj.number|intcomma }} of {{ page_obj.paginator.num_pages|intcomma }}</h3>
-    </div>
+        try {
+            const response = await fetch(`/api/deeds/search/?${params.toString()}`);
+            const data = await response.json();
 
-    <ul class="pagination">
-        {% if page_obj.has_previous %}
-        <li><a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}" class="button{% if not page_obj.has_previous %} disabled{% endif %}">Previous</a>
-        {% else %}
-        <li><span class="button disabled">Previous</li>
-        {% endif %}
+            statusContainer.innerHTML = "";
 
-        {% if page_obj.has_next %}
-        <li><a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}" class="button{% if not page_obj.has_next %} disabled{% endif %}">Next</a>
-        {% else %}
-        <li><span class="button disabled">Previous</li>
-        {% endif %}
-    </ul>
+            if (!data.results || data.results.length === 0) {
+                statusContainer.innerHTML = "<p>No results found.</p>";
+                return;
+            }
 
-    {% endif %}
+            data.results.forEach(result => {
+                const col = document.createElement("div");
+                col.className = "col-3 deedpage-result";
 
-    <div class="box alt">
-        <div class="row gtr-50 gtr-uniform">
-        {% for result in page_obj.object_list %}
-            <div class="col-3 deedpage-result">
-                <div class="box">
-                    <span class="image">{{ result.object.thumbnail_preview }}</span>
-                    <div class="record-link">{{ result.object.workflow }}</div>
-                    <div class="record-link"><strong>Full record:</strong></div>
-                    <div class="record-link">{{ result.object.record_link }}</div>
-                </div>
-            </div>
-        {% empty %}
-            <p>No results found.</p>
-        {% endfor %}
-        </div>
-    </div>
+                col.innerHTML = `
+                    <div class="box">
+                        ${result.thumbnail_preview ? `<span class="image">${result.thumbnail_preview}</span>` : ""}
+                        <div class="record-link">${result.workflow?.workflow_name ?? ""}</div>
+                        <div class="record-link"><strong>Full record:</strong></div>
+                        <div class="record-link">
+                            ${result.record_link ?? ""}
+                        </div>
+                    </div>
+                `;
 
-    {% if page_obj.has_previous or page_obj.has_next %}
-    <ul class="pagination">
-        {% if page_obj.has_previous %}
-        <li><a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}" class="button{% if not page_obj.has_previous %} disabled{% endif %}">Previous</a>
-        {% else %}
-        <li><span class="button disabled">Previous</li>
-        {% endif %}
+                resultsContainer.appendChild(col);
+            });
 
-        {% if page_obj.has_next %}
-        <li><a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}" class="button{% if not page_obj.has_next %} disabled{% endif %}">Next</a>
-        {% else %}
-        <li><span class="button disabled">Previous</li>
-        {% endif %}
-    </ul>
+            renderPagination(data);
 
-    {% endif %}
+        } catch (err) {
+            console.error(err);
+            statusContainer.innerHTML = "<p class='error'>Search failed.</p>";
+        }
+    }
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        await performSearch(0);
+    });
+})();
+</script>
 
 {% endblock %}

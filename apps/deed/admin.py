@@ -1,10 +1,6 @@
 from django.contrib import admin
 from rangefilter.filters import DateRangeFilter
 
-# from haystack.query import SearchQuerySet
-from haystack.admin import SearchModelAdmin
-from haystack.admin import SearchModelAdminMixin
-
 from .models import DeedPage, SearchHitReport
 
 @admin.register(SearchHitReport)

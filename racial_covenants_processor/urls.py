@@ -23,7 +23,7 @@ from apps.zoon import views
 from apps.zoon.serializers import SubjectNoGeoViewSet, SubjectGeoViewSet
 from apps.parcel.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet, ShpExportViewSet, GeoJSONExportViewSet, CSVExportViewSet
 
-from apps.deed.views import DeedSearchView
+from apps.deed.views import DeedPageViewSet, deed_search_page
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
@@ -36,6 +36,7 @@ router.register(r'covenants-geo', CovenantGeoViewSet, basename='covenantsgeo')
 router.register(r'shp-exports', ShpExportViewSet)
 router.register(r'geojson-exports', GeoJSONExportViewSet)
 router.register(r'csv-exports', CSVExportViewSet)
+router.register(r'deeds', DeedPageViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -51,9 +52,9 @@ urlpatterns = [
 
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls')),
-    # path('search/', include('haystack.urls')),
 
-    path('deed_search/', DeedSearchView.as_view(), name='deed_search_view'),
+    path("deed_search/", deed_search_page, name="deed_search_view"),
+
     # path('__debug__/', include('debug_toolbar.urls')),
 ]
 

@@ -48,8 +48,8 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'django.contrib.humanize',
 
-    'haystack',
     # 'compressor',
+    'django_elasticsearch_dsl',
     'rangefilter',
     'storages',
     'localflavor',
@@ -59,6 +59,19 @@ INSTALLED_APPS = [
     # 'django_extensions',
     # 'debug_toolbar'
 ]
+
+
+ELASTICSEARCH_DSL = {
+    "default": {
+        "hosts": [os.getenv("ELASTICSEARCH_URL", "http://localhost:9200")],
+        'http_auth': ('elastic', '7mj6zKcfgzMVEa3FT84A'),
+    },
+}
+ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
+ELASTICSEARCH_DSL_INDEX_SETTINGS = {}
+ELASTICSEARCH_DSL_AUTOSYNC = True
+ELASTICSEARCH_DSL_AUTO_REFRESH = True
+ELASTICSEARCH_DSL_PARALLEL = False
 
 MIDDLEWARE = [
     'racial_covenants_processor.middleware.HealthCheckMiddleware',
@@ -109,17 +122,6 @@ DATABASES = {
             'service': 'deeds_service',
         },
     }
-}
-
-# Example (Solr 6.X)
-HAYSTACK_CONNECTIONS = {
-    'default': {
-        'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': 'http://127.0.0.1:8983/solr/tester',                 # Assuming you created a core named 'tester' as described in installing search engines.
-        'ADMIN_URL': 'http://127.0.0.1:8983/solr/admin/cores'
-        # ...or for multicore...
-        # 'URL': 'http://127.0.0.1:8983/solr/mysite',
-    },
 }
 
 if os.environ.get('GITHUB_WORKFLOW'):
@@ -244,8 +246,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination'
 }
 
-AWS_ACCESS_KEY_ID = ''
-AWS_SECRET_ACCESS_KEY = ''
+# AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
+# AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+AWS_ACCESS_KEY_ID = 'ASIA32WBYIEOM2S7MWIF'
+AWS_SECRET_ACCESS_KEY = 'JjrPHwBoButvzUwrhuv4uOyx9zPvqEOzDUTucS3m'
 AWS_S3_REGION_NAME = 'us-east-2'
 
 try:
