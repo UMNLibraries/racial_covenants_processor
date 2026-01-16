@@ -112,20 +112,17 @@ class DeedPageViewSet(PaginatedElasticSearchAPIView):
         is_numeric = search_terms.strip().isdigit()
 
         text_search_fields = [
-            "page_ocr_text",
+            "s3_lookup",
             "doc_num",
+            "doc_alt_id",
             "doc_type",
             "matched_terms",
             "workflow",
             "book_id",
+            "public_uuid",
         ]
         numeric_fields = [
             "page_num",
-        ]
-        filter_fields = [
-            "bool_match",
-            "bool_exception",
-            "doc_date",
         ]
 
         fuzzy_query = Q(
@@ -159,14 +156,6 @@ class DeedPageViewSet(PaginatedElasticSearchAPIView):
             query = fuzzy_query | exact_query | wildcard_query
         else:
             query = fuzzy_query | wildcard_query
-
-        if len(param_filters) > 0:
-            filters = []
-            for field in filter_fields:
-                if field in param_filters:
-                    filters.append(Q("term", **{field: param_filters[field]}))
-            filter_query = Q("bool", should=[query], filter=filters)
-            query = query & filter_query
 
         return query
     
