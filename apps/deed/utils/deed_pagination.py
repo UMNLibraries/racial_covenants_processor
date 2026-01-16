@@ -7,13 +7,19 @@ from apps.deed.models import DeedPage
 
 
 def tag_doc_num_page_counts(df):
-    page_counts = df[['doc_num', 'public_uuid']].groupby(['doc_num']).count().reset_index().rename(columns={'public_uuid': 'doc_page_count'})
+    if 'batch_id' in df.columns:
+        setup_fields = ['batch_id', 'doc_num', 'public_uuid']
+        groupby_fields = ['batch_id', 'doc_num']
+    else:
+        setup_fields = ['doc_num', 'public_uuid']
+        groupby_fields = ['doc_num']
+    page_counts = df[setup_fields].groupby(groupby_fields).count().reset_index().rename(columns={'public_uuid': 'doc_page_count'})
     # page_counts = df[['doc_num']].value_counts().reset_index(names='doc_page_count')
     # print(page_counts)
     return df.merge(
         page_counts,
         how='left',
-        on='doc_num'
+        on=groupby_fields
     )
 
 

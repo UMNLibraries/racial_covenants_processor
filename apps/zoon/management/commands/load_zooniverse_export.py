@@ -9,12 +9,15 @@ from itertools import chain
 from sqlalchemy import create_engine
 
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.core import management
 from django.conf import settings
 
+from apps.deed.models import DeedPage
 from apps.zoon.models import ZooniverseResponseRaw, ZooniverseResponseProcessed, ZooniverseWorkflow, ZooniverseSubject, ReducedResponse_Question, ReducedResponse_Text
 # from apps.zoon.utils.zooniverse_config import get_workflow_version
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
+# from apps.zoon.utils.zooniverse_load import bulk_delete_models
 from apps.parcel.utils.parcel_utils import write_join_strings
 
 
@@ -118,12 +121,47 @@ class Command(BaseCommand):
     def clear_all_tables(self, workflow_name: str):
         print('WARNING: Clearing all tables before import...')
 
-        ZooniverseResponseRaw.objects.filter(
-            workflow_name=workflow_name).delete()
-        ZooniverseSubject.objects.filter(
-            workflow__workflow_name=workflow_name).delete()
-        ZooniverseResponseProcessed.objects.filter(
-            workflow__workflow_name=workflow_name).delete()
+        try:
+            with transaction.atomic():
+                # bulk_delete_models(workflow_name, 'zoon', 'ZooniverseResponseRaw', batch_size=10000)
+
+                # First set deedpage.zooniverse_subject to null for this workflow
+                print("Clearing DeedPage records joined to zooniversesubjects...")
+                matched_dps = DeedPage.objects.filter(workflow__workflow_name=workflow_name, zooniverse_subject__isnull=False).only('pk')
+                for dp in matched_dps:
+                    dp.zooniverse_subject_id = None
+                DeedPage.objects.bulk_update(matched_dps, ['zooniverse_subject_id'], batch_size=1000)
+
+                matched_dps = DeedPage.objects.filter(workflow__workflow_name=workflow_name, zooniverse_subject_1st_page__isnull=False).only('pk')
+                for dp in matched_dps:
+                    dp.zooniverse_subject_1st_page_id = None
+                DeedPage.objects.bulk_update(matched_dps, ['zooniverse_subject_1st_page_id'], batch_size=1000)
+
+                matched_dps = DeedPage.objects.filter(workflow__workflow_name=workflow_name, zooniverse_subject_2nd_page__isnull=False).only('pk')
+                for dp in matched_dps:
+                    dp.zooniverse_subject_2nd_page_id = None
+                DeedPage.objects.bulk_update(matched_dps, ['zooniverse_subject_2nd_page_id'], batch_size=1000)
+
+                matched_dps = DeedPage.objects.filter(workflow__workflow_name=workflow_name, zooniverse_subject_3rd_page__isnull=False).only('pk')
+                for dp in matched_dps:
+                    dp.zooniverse_subject_3rd_page_id = None
+                DeedPage.objects.bulk_update(matched_dps, ['zooniverse_subject_3rd_page_id'], batch_size=1000)
+
+                # bulk_delete_models(workflow_name, 'zoon', 'ZooniverseSubject', batch_size=10000)
+                # bulk_delete_models(workflow_name, 'zoon', 'ZooniverseResponseProcessed', batch_size=10000)
+
+                print("Deleting previous Zooniverse records...")
+                ZooniverseResponseRaw.objects.filter(
+                    workflow_name=workflow_name).delete()
+                ZooniverseSubject.objects.filter(
+                    workflow__workflow_name=workflow_name).delete()
+                ZooniverseResponseProcessed.objects.filter(
+                    workflow__workflow_name=workflow_name).delete()
+
+        except:
+            print('DB error reported, rolling back...')
+            raise
+            return False
 
         try:
             workflow = ZooniverseWorkflow.objects.get(
@@ -146,6 +184,8 @@ class Command(BaseCommand):
             ReducedResponse_Text.objects.exclude(
                 zoon_workflow_id__in=all_workflow_ids
             ).delete()
+
+        return True
 
     def sql_df_writer(self, conn, var_name, question_lookup, workflow):
         '''Help pandas return a sensible response for each question that can be joined back to a unique subject id. Scores are put into percentages to handle possible changes to what's required to retire.'''
@@ -191,7 +231,7 @@ class Command(BaseCommand):
             'subject_ids',
             'subject_data_flat__pk',
             'subject_data_flat__doc_num',
-            'subject_data_flat__#s3_lookup',
+            'subject_data_flat__s3_lookup',
             'subject_data_flat__retired__retired_at',
             'subject_data_flat__image_ids',
             'subject_data_flat__image_1',
@@ -227,7 +267,7 @@ class Command(BaseCommand):
             'subject_data_flat__retired__retired_at': 'dt_retired',
             'subject_data_flat__pk': 'deedpage_pk',
             'subject_data_flat__doc_num': 'deedpage_doc_num',
-            'subject_data_flat__#s3_lookup': 'deedpage_s3_lookup',
+            'subject_data_flat__s3_lookup': 'deedpage_s3_lookup',
         }, inplace=True)
         print(subject_df)
 
@@ -540,7 +580,9 @@ class Command(BaseCommand):
             # raw_classifications_csv = os.path.join(
             #     self.batch_dir, f"{workflow.slug}-denested.csv")
 
-            self.clear_all_tables(workflow_name)
+            bool_cleared = self.clear_all_tables(workflow_name)
+            if not bool_cleared:
+                return False
             if bool_use_slow:
                 self.load_csv_by_record(raw_classifications_csv, workflow)
             else:
@@ -558,6 +600,3 @@ class Command(BaseCommand):
 
             self.extract_individual_responses(
                 workflow, self.batch_config['zooniverse_config'])
-
-            # management.call_command(
-            #     'connect_manual_corrections', workflow=workflow_name)

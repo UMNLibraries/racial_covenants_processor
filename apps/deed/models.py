@@ -97,18 +97,18 @@ class DeedPage(models.Model):
     """Same idea as next_next_page_image_web, except this is the s3_lookup of the previous page rather than a link to the image."""
 
     zooniverse_subject = models.ForeignKey(
-        ZooniverseSubject, on_delete=models.SET_NULL, related_name='subject_legacy', null=True)
+        ZooniverseSubject, on_delete=models.DO_NOTHING, related_name='subject_legacy', null=True)
     """After post-Zooniverse ingestion of subjects, used to join to the matching subject for this if it's a hit"""
 
     # This is assuming that each page can only be in a given position for a single Zooniverse Subject, even though the same page could be part of each Zooniverse Subject's prev/next images
     zooniverse_subject_1st_page = models.ForeignKey(
-        ZooniverseSubject, on_delete=models.SET_NULL, related_name='subject_1st_page', null=True)
+        ZooniverseSubject, on_delete=models.DO_NOTHING, related_name='subject_1st_page', null=True)
     """After post-Zooniverse ingestion of subjects, used to join to the matching subject for this if it's a hit. Assists in giving access to DeedPage record for editors in the manual correction process. This is assuming that each page can only be in a given position for a single Zooniverse Subject, even though the same page could be part of each Zooniverse Subject's prev/next images"""
     zooniverse_subject_2nd_page = models.ForeignKey(
-        ZooniverseSubject, on_delete=models.SET_NULL, related_name='subject_2nd_page', null=True)
+        ZooniverseSubject, on_delete=models.DO_NOTHING, related_name='subject_2nd_page', null=True)
     """After post-Zooniverse ingestion of subjects, used to join to the matching subject for this if it's a hit. Assists in giving access to DeedPage record for editors in the manual correction process. This is assuming that each page can only be in a given position for a single Zooniverse Subject, even though the same page could be part of each Zooniverse Subject's prev/next images"""
     zooniverse_subject_3rd_page = models.ForeignKey(
-        ZooniverseSubject, on_delete=models.SET_NULL, related_name='subject_3rd_page', null=True)
+        ZooniverseSubject, on_delete=models.DO_NOTHING, related_name='subject_3rd_page', null=True)
     """After post-Zooniverse ingestion of subjects, used to join to the matching subject for this if it's a hit. Assists in giving access to DeedPage record for editors in the manual correction process. This is assuming that each page can only be in a given position for a single Zooniverse Subject, even though the same page could be part of each Zooniverse Subject's prev/next images"""
     objects = CopyManager()
 
@@ -117,7 +117,14 @@ class DeedPage(models.Model):
             models.Index(fields=['-id'], name='id_desc'),
             models.Index(fields=['-id', 'workflow_id'], name='id_workflow_index'),
             models.Index(fields=['workflow_id', '-id'], name='workflow_id_index'),
-            models.Index(fields=['workflow_id'], name='workflow_only_index')
+            models.Index(fields=['workflow_id'], name='workflow_only_index'),
+            models.Index(fields=['workflow_id', 'bool_match'], name='workflow_plus_match_index'),
+            models.Index(fields=['zooniverse_subject_id'], name='zpage_index'),
+            models.Index(fields=['zooniverse_subject_1st_page_id'], name='zpage_1_index'),
+            models.Index(fields=['zooniverse_subject_2nd_page_id'], name='zpage_2_index'),
+            models.Index(fields=['zooniverse_subject_3rd_page_id'], name='zpage_3_index'),
+            models.Index(fields=['workflow_id', 's3_lookup'], name='s3_lookup_workflow_index'),
+            models.Index(fields=['workflow_id', 'batch_id', 'book_id', 'doc_num', 'doc_type', 'page_num'], name='workflow_pagination_index')
         ]
 
     @property
