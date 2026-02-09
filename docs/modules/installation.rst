@@ -45,7 +45,8 @@ The psql command will vary slightly with different OSes. For Mac:
 
 4. Create your Django settings file:
 
-.. code-block::
+.. code-block:: bash
+    
     cp racial_covenants_processor/settings/local_settings.py.sample racial_covenants_processor/settings/local_settings.py
 
 
