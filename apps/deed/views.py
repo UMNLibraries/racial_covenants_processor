@@ -110,54 +110,76 @@ class DeedPageViewSet(PaginatedElasticSearchAPIView):
         
         # Check if search term is numeric
         is_numeric = search_terms.strip().isdigit()
-
-        text_search_fields = [
+        
+        # Separate fields by type
+        keyword_fields = [
             "s3_lookup",
             "doc_num",
             "doc_alt_id",
-            "doc_type",
-            "matched_terms",
-            "workflow",
             "book_id",
             "public_uuid",
         ]
+        
+        text_fields = [
+            "doc_type",
+        ]
+        
         numeric_fields = [
             "page_num",
         ]
-
-        fuzzy_query = Q(
-            "multi_match",
-            query=search_terms,
-            fields=text_search_fields,
-            fuzziness="auto",
-            minimum_should_match="70%"
-        )
         
-        # Only create exact_query for numeric searches to avoid parsing errors
+        # Build queries for different field types
+        queries = []
+        
+        # Text field query (only doc_type)
+        if text_fields:
+            queries.append(Q(
+                "multi_match",
+                query=search_terms,
+                fields=text_fields,
+                fuzziness="auto",
+                minimum_should_match="70%"
+            ))
+        
+        # Keyword field queries (wildcard for partial matches)
+        keyword_queries = [
+            Q("wildcard", **{field: f"*{search_terms.lower()}*"}) 
+            for field in keyword_fields
+        ]
+        if keyword_queries:
+            queries.append(Q("bool", should=keyword_queries, minimum_should_match=1))
+        
+        # Nested field queries
+        # Workflow nested query
+        queries.append(Q(
+            "nested",
+            path="workflow",
+            query=Q("match", **{"workflow.workflow_name": search_terms})
+        ))
+        
+        # Matched terms nested query
+        queries.append(Q(
+            "nested",
+            path="matched_terms",
+            query=Q("match", **{"matched_terms.term": search_terms})
+        ))
+        
+        # Numeric field query (if numeric search)
         if is_numeric:
-            exact_query = Q(
+            queries.append(Q(
                 "multi_match",
                 query=search_terms,
                 fields=numeric_fields
-            )
-        else:
-            exact_query = None
-            
-        wildcard_query = Q(
-            "bool",
-            should=[
-                Q("wildcard", **{field: f"*{search_terms.lower()}*"}) 
-                for field in text_search_fields
-            ],
-        )
-
-        # Conditionally combine queries based on whether search is numeric
-        if is_numeric:
-            query = fuzzy_query | exact_query | wildcard_query
-        else:
-            query = fuzzy_query | wildcard_query
-
-        return query
+            ))
+        
+        # Combine all queries with OR
+        if queries:
+            query = queries[0]
+            for q in queries[1:]:
+                query = query | q
+            return query
+        
+        return Q("match_all")
     
 
 def deed_search_page(request):
