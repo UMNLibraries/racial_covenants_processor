@@ -94,6 +94,59 @@
         return params;
     }
 
+    function buildURLParams(offset) {
+        const params = new URLSearchParams();
+
+        const q = document.getElementById("{{ form.q.id_for_label }}").value.trim();
+        if (q) params.append("search", q);
+
+        const workflow = document.getElementById("{{ form.workflow.id_for_label }}").value;
+        if (workflow) params.append("workflow", workflow);
+
+        const boolMatch = document.getElementById("{{ form.bool_match.id_for_label }}");
+        if (boolMatch && boolMatch.checked) {
+            params.append("bool_match", "true");
+        }
+
+        // Only include offset in URL if it's not 0
+        if (offset > 0) {
+            params.append("offset", offset.toString());
+        }
+
+        return params;
+    }
+
+    function updateURL(offset = 0) {
+        const params = buildURLParams(offset);
+        const newURL = params.toString() 
+            ? `${window.location.pathname}?${params.toString()}`
+            : window.location.pathname;
+        
+        window.history.pushState({ offset: offset }, "", newURL);
+    }
+
+    function loadFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        const search = urlParams.get("search");
+        if (search) {
+            document.getElementById("{{ form.q.id_for_label }}").value = search;
+        }
+
+        const workflow = urlParams.get("workflow");
+        if (workflow) {
+            document.getElementById("{{ form.workflow.id_for_label }}").value = workflow;
+        }
+
+        const boolMatch = urlParams.get("bool_match");
+        if (boolMatch === "true") {
+            document.getElementById("{{ form.bool_match.id_for_label }}").checked = true;
+        }
+
+        const offset = parseInt(urlParams.get("offset") || "0", 10);
+        return offset;
+    }
+
     function renderPagination(data) {
         if (!data.previous && !data.next) {
             paginationContainer.innerHTML = "";
@@ -129,6 +182,7 @@
         paginationContainer.innerHTML = "";
 
         const params = buildSearchParams(offset);
+        updateURL(offset);
 
         try {
             const response = await fetch(`/api/deeds/search/?${params.toString()}`);
@@ -171,6 +225,20 @@
         e.preventDefault();
         await performSearch(0);
     });
+
+    // Handle browser back/forward buttons
+    window.addEventListener("popstate", function (e) {
+        const offset = loadFromURL();
+        performSearch(offset);
+    });
+
+    // Load from URL on page load
+    const initialOffset = loadFromURL();
+    const urlParams = new URLSearchParams(window.location.search);
+    // Only auto-search if there are search parameters in the URL
+    if (urlParams.has("search") || urlParams.has("workflow") || urlParams.has("bool_match")) {
+        performSearch(initialOffset);
+    }
 })();
 </script>
 
