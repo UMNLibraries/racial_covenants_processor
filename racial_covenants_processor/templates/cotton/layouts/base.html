@@ -11,12 +11,12 @@
     
 	</head>
 	<body class="is-preload">
-    <div class="grid-xl">
-      <c-sidebar />
-      <c-main>
-        {{ slot }}
-      </c-main>
-    </div>
-    {% comment %} <script type="module" src="https://cdn.jsdelivr.net/npm/kelpui@1/js/kelp.js"></script> {% endcomment %}
+    <c-navbar />
+    <main class="container-xl padding-m">
+      {{ slot }}
+    </main>
+    <c-footer license="https://the-deed-machine.readthedocs.io/en/latest/modules/license.html" copyright="2026 Regents of the University of Minnesota" />
+    <script defer type="module" src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer type="module" src="https://cdn.jsdelivr.net/npm/kelpui@1/js/kelp.js"></script>
   </body>
 </html>

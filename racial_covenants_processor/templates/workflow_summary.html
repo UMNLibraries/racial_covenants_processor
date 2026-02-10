@@ -1,62 +1,82 @@
-
 {% load humanize %}
 <c-layouts.base>
-  <div class="stack">
-  <header>
-    <h3>{{workflow.workflow_name}} summary</h3>
-    <i>Last updated: {{last_update}}</i>
-  </header>
+  <div class="stack gap-l">
 
-  {% if pmtiles_url %}
-  <div>
-    <c-map pmtiles_url="{{ pmtiles_url }}"></c-map>
-  </div>
-  {% endif %}
+    <header class="stack gap-s">
+      <div class="split align-center">
+        <h1>{{ workflow.workflow_name }}</h1>
+        <a href="{% url 'workflow_matches' workflow.id %}" class="btn size-xs">View match status</a>
+      </div>
+      <small class="muted">Last updated: {{ last_update }}</small>
+    </header>
 
-  <p><a href="{% url 'workflow_matches' workflow.id %}">Workflow current match status</a></p>
-  <c-workflow.table
-    :subject_count="subject_count"
-    :covenants_count="covenants_count"
-    :mapped_count="mapped_count"
-    :covenants_maybe_count="covenants_maybe_count"
-  />
+    {% if pmtiles_url %}
+    <section class="grid-l gap-m">
+      <div class="item-third stack gap-s">
+        <c-workflow.stat_card :value="subject_count" label="Retired subjects" />
+        <c-workflow.stat_card :value="covenants_count" label="Subjects with covenants" subtitle="+{{ covenants_maybe_count|intcomma }} pending review" />
+        <c-workflow.stat_card :value="mapped_count" label="Covenants mapped" />
+      </div>
+      <div class="item-two-thirds" style="position: relative;">
+        <span class="badge muted" style="position: absolute; top: 0.5em; left: 0.5em; z-index: 10;">Mapped covenants</span>
+        <c-map pmtiles_url="{{ pmtiles_url }}"></c-map>
+      </div>
+    </section>
 
-  <c-workflow.charts
-    :deed_year_data_json="deed_year_data_json"
-    :city_data_json="city_data_json"
-  />
+    <c-workflow.charts
+      :deed_year_data_json="deed_year_data_json"
+      :city_data_json="city_data_json"
+    />
+    {% else %}
+    <section class="grid-l gap-m">
+      <div class="item-third"><c-workflow.stat_card :value="subject_count" label="Retired subjects" /></div>
+      <div class="item-third"><c-workflow.stat_card :value="covenants_count" label="Subjects with covenants" subtitle="+{{ covenants_maybe_count|intcomma }} pending review" /></div>
+      <div class="item-third"><c-workflow.stat_card :value="mapped_count" label="Covenants mapped" /></div>
+    </section>
+    {% endif %}
 
-  <h3>Admin links</h3>
-  <ul>
-    <li><a href="/admin/zoon/zooniversesubject/?workflow__workflow_name={{workflow.workflow_name}}">Zooniverse subjects</a></li>
-    <li><a href="/admin/zoon/manualcovenant/?workflow__workflow_name={{workflow.workflow_name}}">Manual covenants</a></li>
-    <li><a href="/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}">Deed pages</a></li>
-    <ul><li><a href="/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}&bool_match__exact=1">Flagged matches only</a></li></ul>
-    <li><a href="/admin/parcel/parcel/?workflow__id__exact={{workflow.id}}">Parcels</a></li>
-  </ul>
-
-  {% for section in export_sections %}
-    {% if section.exports %}
-      <div class="fill warning padding-m margin-start-m" style="border-left: 4px solid #ccc;">
-        <h3>{{ section.title }}</h3>
-        {% for export in section.exports %}
-          {% if forloop.first %}
-            <c-workflow.download-link :export="export" />
-          {% else %}
-            {% if forloop.counter == 2 %}
-              <details>
-                <summary>Show more exports</summary>
-            {% endif %}
-            <c-workflow.download-link :export="export" />
-            {% if forloop.last %}
-              </details>
-            {% endif %}
+    {% if export_sections %}
+    <section>
+      <h2 class="h4 margin-end-s">Downloads</h2>
+      <div class="stack gap-m">
+        {% for section in export_sections %}
+          {% if section.exports %}
+          <div class="callout stack gap-s">
+            <strong class="size-s">{{ section.title }}</strong>
+            {% for export in section.exports %}
+              {% if forloop.first %}
+                <c-workflow.download-link :export="export" />
+              {% else %}
+                {% if forloop.counter == 2 %}
+                  <details>
+                    <summary class="size-xs muted">Show {{ section.exports|length|add:"-1" }} older</summary>
+                    <div class="stack gap-s margin-start-s">
+                {% endif %}
+                <c-workflow.download-link :export="export" />
+                {% if forloop.last %}
+                    </div>
+                  </details>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
           {% endif %}
         {% endfor %}
       </div>
+    </section>
     {% endif %}
-  {% endfor %}
-</div>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    <hr>
+    <div class="sidecar align-center gap-m">
+      <span class="size-xs muted"><strong>Admin</strong></span>
+      <div class="cluster gap-s">
+        <a href="/admin/zoon/zooniversesubject/?workflow__workflow_name={{workflow.workflow_name}}" class="btn outline size-xs">Zooniverse subjects</a>
+        <a href="/admin/zoon/manualcovenant/?workflow__workflow_name={{workflow.workflow_name}}" class="btn outline size-xs">Manual covenants</a>
+        <a href="/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}" class="btn outline size-xs">Deed pages</a>
+        <a href="/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}&bool_match__exact=1" class="btn outline size-xs">Flagged matches</a>
+        <a href="/admin/parcel/parcel/?workflow__id__exact={{workflow.id}}" class="btn outline size-xs">Parcels</a>
+      </div>
+    </div>
+
+  </div>
 </c-layouts.base>

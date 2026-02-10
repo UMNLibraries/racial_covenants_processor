@@ -1,0 +1,50 @@
+{% load static %}
+<kelp-subnav>
+  <nav class="navbar fill">
+    <div class="container-xl split align-center" style="padding-inline: 1em;">
+      <div class="cluster align-center gap-s navbar-brand">
+        <div>
+          <a class="logo" href="{% url 'index' %}"><strong>The Deed Machine</strong></a>
+          <div class="size-2xs muted">by Mapping Prejudice</div>
+        </div>
+      </div>
+      <div class="menu">
+      <ul>
+        <li><a href="{% url 'index' %}">Home</a></li>
+        <li><a href="{% url 'admin:index' %}">Admin</a></li>
+        <li>
+          <details name="subnav">
+            <summary>Workflows</summary>
+            <ul style="min-width: 16em;">
+              {% for workflow in all_workflows %}
+                <li><a href="{% url 'workflow' workflow.id %}">{{ workflow }}</a></li>
+              {% endfor %}
+            </ul>
+          </details>
+        </li>
+        <li>
+          <details name="subnav">
+            <summary>Resources</summary>
+            <ul>
+              <li><a href="https://the-deed-machine.readthedocs.io/en/latest/index.html" target="_blank">Documentation</a></li>
+              <li><a href="https://github.com/UMNLibraries/racial_covenants_processor" target="_blank">Deed Machine code</a></li>
+              <li><a href="https://github.com/UMNLibraries/mp-us-racial-covenants" target="_blank">Public data</a></li>
+              <li><a href="https://github.com/UMNLibraries/mp-deed-machine-dailies" target="_blank">Hourly data</a></li>
+            </ul>
+          </details>
+        </li>
+        <li><a href="{% url 'deed_search_view' %}">Search</a></li>
+      </ul>
+      </div>
+    </div>
+  </nav>
+</kelp-subnav>
+
+<style>
+  @media (max-width: 768px) {
+    .navbar-brand {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>

@@ -8,37 +8,39 @@
 {{ city_data_json|safe }}
 </script>
 
-<div class="workflow-charts stack">
-  <div
-    x-data="barChart('deed-year-data', 'deedYearChart', {
-      title: 'Covenanted Parcels by Deed Year',
-      labelKey: 'deed_year',
-      dataKey: 'count',
-      xAxisLabel: 'Deed Year',
-      yAxisLabel: 'Number of Parcels',
-      backgroundColor: 'rgba(255, 99, 132, 0.7)',
-      borderColor: 'rgb(255, 99, 132)'
-    })"
-    class="chart-container"
-    style="position: relative; height: 400px; margin-bottom: 2rem;"
-  >
-    <canvas x-ref="chartCanvas"></canvas>
+<div class="workflow-charts grid-l gap-m">
+  <div class="chart-wrapper item-half">
+    <div
+      x-data="barChart('deed-year-data', 'deedYearChart', {
+        title: 'Covenanted Parcels by Deed Year',
+        labelKey: 'deed_year',
+        dataKey: 'count',
+        xAxisLabel: 'Deed Year',
+        yAxisLabel: 'Number of Parcels',
+        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+        borderColor: 'rgb(255, 99, 132)'
+      })"
+      class="chart-container"
+    >
+      <canvas x-ref="chartCanvas"></canvas>
+    </div>
   </div>
 
-  <div
-    x-data="barChart('city-data', 'cityChart', {
-      title: 'Covenanted Parcels by City',
-      labelKey: 'city',
-      dataKey: 'count',
-      xAxisLabel: 'City',
-      yAxisLabel: 'Number of Parcels',
-      backgroundColor: 'rgba(54, 162, 235, 0.7)',
-      borderColor: 'rgb(54, 162, 235)'
-    })"
-    class="chart-container"
-    style="position: relative; height: 400px; margin-bottom: 2rem;"
-  >
-    <canvas x-ref="chartCanvas"></canvas>
+  <div class="chart-wrapper item-half">
+    <div
+      x-data="barChart('city-data', 'cityChart', {
+        title: 'Covenanted Parcels by City',
+        labelKey: 'city',
+        dataKey: 'count',
+        xAxisLabel: 'City',
+        yAxisLabel: 'Number of Parcels',
+        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+        borderColor: 'rgb(54, 162, 235)'
+      })"
+      class="chart-container"
+    >
+      <canvas x-ref="chartCanvas"></canvas>
+    </div>
   </div>
 </div>
 
@@ -120,5 +122,13 @@
 <style>
   .workflow-charts {
     margin: 2rem 0;
+  }
+  .workflow-charts .chart-wrapper {
+    min-width: 0;
+  }
+  .workflow-charts .chart-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
   }
 </style>
