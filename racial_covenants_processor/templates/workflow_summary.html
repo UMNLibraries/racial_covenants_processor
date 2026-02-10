@@ -7,9 +7,11 @@
     <i>Last updated: {{last_update}}</i>
   </header>
 
+  {% if pmtiles_url %}
   <div>
-    <c-map></c-map>
+    <c-map pmtiles_url="{{ pmtiles_url }}"></c-map>
   </div>
+  {% endif %}
 
   <p><a href="{% url 'workflow_matches' workflow.id %}">Workflow current match status</a></p>
   <c-workflow.table
@@ -55,4 +57,6 @@
     {% endif %}
   {% endfor %}
 </div>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 </c-layouts.base>

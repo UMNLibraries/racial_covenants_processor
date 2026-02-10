@@ -1,12 +1,13 @@
 {% load static %}
+<c-vars sidebar="" geoman="" pmtiles_url="" />
 
-<div x-data="mapApp()" x-init="initMap()" style="display: flex; height: 50vh">
+<div x-data="mapApp({ geoman: '{{ geoman }}' === 'true', pmtilesUrl: '{{ pmtiles_url }}' })" x-init="initMap()" style="display: flex; height: 50vh">
     <!-- Map Container -->
     <div style="width: 100%; position: relative;">
         <div id="map" style="width: 100%; height: 100%"></div>
     </div>
 
-    {% if sidebar %}
+    {% if sidebar == "true" %}
     <div class="w-96 bg-white shadow-lg overflow-y-auto p-4">
         <div class="mb-6">
             <h2 class="text-xl font-bold text-blue-600 mb-2">Covenant data</h2>
@@ -129,10 +130,13 @@
     {% endif %}
 </div>
 <script>
-function mapApp() {
+function mapApp(options = {}) {
   return {
     map: null,
     geoman: null,
+    geomanEnabled: options.geoman || false,
+    pmtilesUrl: options.pmtilesUrl || "",
+    sourceLayer: null,
     hoveredFeatureId: null,
     selectedFeatureIds: new Set(),
     selectedFeatures: [],
@@ -149,39 +153,49 @@ function mapApp() {
      * Initialize the map and all event listeners
      * Called by Alpine.js x-init directive
      */
-    initMap() {
+    async initMap() {
       // Initialize PMTiles protocol
       const protocol = new pmtiles.Protocol();
       maplibregl.addProtocol("pmtiles", protocol.tile);
 
-      // Create map
+      // Get PMTiles metadata to determine bounds and source layer
+      const pm = new pmtiles.PMTiles(this.pmtilesUrl);
+      const header = await pm.getHeader();
+      const metadata = await pm.getMetadata();
+      this.sourceLayer = metadata.vector_layers[0].id;
+
+      // Create map and fit to PMTiles bounds
       this.map = new maplibregl.Map({
         container: "map",
         style: this.getMapStyle(),
-        center: [-93.05, 44.7],
-        zoom: 10,
+        bounds: [[header.minLon, header.minLat], [header.maxLon, header.maxLat]],
+        fitBoundsOptions: { padding: 20 },
         fadeDuration: 50,
         minZoom: 0,
         maxZoom: 18,
       });
 
-      // Initialize Geoman
-      const gmOptions = {
-        controls: {
-          helper: {
-            snapping: {
-              uiEnabled: true,
-              active: false,
+      // Initialize Geoman if enabled
+      if (this.geomanEnabled) {
+        const gmOptions = {
+          controls: {
+            helper: {
+              snapping: {
+                uiEnabled: true,
+                active: false,
+              },
             },
           },
-        },
-      };
-      this.geoman = new window.Geoman.Geoman(this.map, gmOptions);
+        };
+        this.geoman = new window.Geoman.Geoman(this.map, gmOptions);
+      }
 
       // Setup event listeners
       this.map.on("load", () => {
         this.setupMapListeners();
-        this.setupGeomanListeners();
+        if (this.geomanEnabled) {
+          this.setupGeomanListeners();
+        }
         this.checkPlatQueryParam();
       });
 
@@ -192,7 +206,6 @@ function mapApp() {
 
     /**
      * Define the MapLibre style specification
-     * TODO: Change the PMTiles URL to point to Django static/media files
      */
     getMapStyle() {
       return {
@@ -207,8 +220,8 @@ function mapApp() {
           },
           protomaps: {
             type: "vector",
-            url: "/parcel.pmtiles",
-            promoteId: "TAXPIN",
+            url: `pmtiles://${this.pmtilesUrl}`,
+            promoteId: "db_id",
           },
         },
         layers: [
@@ -222,7 +235,7 @@ function mapApp() {
           {
             id: "pmtiles-fill-default",
             source: "protomaps",
-            "source-layer": "DAK_Parcel_Data_ENHANCED",
+            "source-layer": this.sourceLayer,
             type: "fill",
             paint: {
               "fill-color": [
@@ -272,14 +285,14 @@ function mapApp() {
 
         if (features.length > 0) {
           const feature = features[0];
-          const featureId = feature.properties?.TAXPIN || feature.id;
+          const featureId = feature.properties?.db_id || feature.id;
 
           if (featureId !== this.hoveredFeatureId) {
             if (this.hoveredFeatureId !== null) {
               this.map.setFeatureState(
                 {
                   source: "protomaps",
-                  sourceLayer: "DAK_Parcel_Data_ENHANCED",
+                  sourceLayer: this.sourceLayer,
                   id: this.hoveredFeatureId,
                 },
                 { hover: false }
@@ -289,7 +302,7 @@ function mapApp() {
             this.map.setFeatureState(
               {
                 source: "protomaps",
-                sourceLayer: "DAK_Parcel_Data_ENHANCED",
+                sourceLayer: this.sourceLayer,
                 id: featureId,
               },
               { hover: true }
@@ -325,7 +338,7 @@ function mapApp() {
 
         if (features.length > 0) {
           const feature = features[0];
-          const featureId = feature.properties?.TAXPIN || feature.id;
+          const featureId = feature.properties?.db_id || feature.id;
           const isCtrlOrCmd =
             e.originalEvent.ctrlKey || e.originalEvent.metaKey;
 
@@ -335,12 +348,12 @@ function mapApp() {
               // Deselect
               this.selectedFeatureIds.delete(featureId);
               this.selectedFeatures = this.selectedFeatures.filter(
-                (f) => (f.properties?.TAXPIN || f.id) !== featureId
+                (f) => (f.properties?.db_id || f.id) !== featureId
               );
               this.map.setFeatureState(
                 {
                   source: "protomaps",
-                  sourceLayer: "DAK_Parcel_Data_ENHANCED",
+                  sourceLayer: this.sourceLayer,
                   id: featureId,
                 },
                 { selected: false }
@@ -352,7 +365,7 @@ function mapApp() {
               this.map.setFeatureState(
                 {
                   source: "protomaps",
-                  sourceLayer: "DAK_Parcel_Data_ENHANCED",
+                  sourceLayer: this.sourceLayer,
                   id: featureId,
                 },
                 { selected: true }
@@ -366,7 +379,7 @@ function mapApp() {
             this.map.setFeatureState(
               {
                 source: "protomaps",
-                sourceLayer: "DAK_Parcel_Data_ENHANCED",
+                sourceLayer: this.sourceLayer,
                 id: featureId,
               },
               { selected: true }
@@ -469,7 +482,7 @@ function mapApp() {
         this.map.setFeatureState(
           {
             source: "protomaps",
-            sourceLayer: "DAK_Parcel_Data_ENHANCED",
+            sourceLayer: this.sourceLayer,
             id: this.hoveredFeatureId,
           },
           { hover: false }
@@ -488,7 +501,7 @@ function mapApp() {
         this.map.setFeatureState(
           {
             source: "protomaps",
-            sourceLayer: "DAK_Parcel_Data_ENHANCED",
+            sourceLayer: this.sourceLayer,
             id: id,
           },
           { selected: false }
@@ -724,7 +737,7 @@ function mapApp() {
       }
 
       const features = this.map.querySourceFeatures("protomaps", {
-        sourceLayer: "DAK_Parcel_Data_ENHANCED",
+        sourceLayer: this.sourceLayer,
       });
 
       const matchingFeatures = features.filter(
@@ -775,4 +788,3 @@ function mapApp() {
 <script src="https://unpkg.com/@geoman-io/maplibre-geoman-free@latest/dist/maplibre-geoman.umd.js"></script>
 <script src="https://unpkg.com/pmtiles@3.0.7/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
