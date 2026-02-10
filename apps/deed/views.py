@@ -36,6 +36,11 @@ class PaginatedElasticSearchAPIView(ModelViewSet, LimitOffsetPagination):
             )
 
             search = self.document_class.search().query(query)
+            
+            # Apply filters from param_filters
+            bool_match = params.get("bool_match")
+            if bool_match == "true":
+                search = search.filter("term", bool_match=True)
 
             # Get pagination bounds
             limit = int(request.query_params.get("limit", 10))

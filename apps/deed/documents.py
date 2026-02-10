@@ -16,6 +16,9 @@ class DeedPageDocument(Document):
     # Numeric field
     page_num = fields.IntegerField()
     
+    # Boolean field for filtering
+    bool_match = fields.BooleanField()
+    
     # Text field for full-text search
     doc_type = fields.TextField()
     
@@ -72,5 +75,6 @@ class DeedPageDocument(Document):
                     'page_num',
                     'doc_type',
                     'public_uuid',
+                    'bool_match',
                 )
             )
