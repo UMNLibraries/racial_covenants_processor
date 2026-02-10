@@ -4,12 +4,14 @@
         <li><a class="link-subtle" href="{% url 'index' %}">Homepage</a></li>
         <li><a class="link-subtle" href="{% url 'admin:index' %}">Admin home</a></li>
         <li>
-            <span>Workflows</span>
+            <details>
+            <summary>Workflows</summary>
             <ul style="list-style: none;">
             {% for workflow in all_workflows %}
                 <li><a class="link-subtle" href="{% url 'workflow' workflow.id %}">{{ workflow }}</a></li>
             {% endfor %}
             </ul>
+            </details>
         </li>
         <li><a class="link-subtle" href="{% url 'deed_search_view' %}">DeedPage search</a></li>
         <li><a class="link-subtle" href="https://the-deed-machine.readthedocs.io/en/latest/index.html" target="_blank">Documentation</a></li>

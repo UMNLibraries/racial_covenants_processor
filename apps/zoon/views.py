@@ -17,6 +17,7 @@ from apps.parcel.models import (
     JoinReport,
     Parcel,
     CovenantedParcel,
+    PMTilesExport,
 )
 
 
@@ -47,6 +48,28 @@ def generate_workflow_summary_context(request, workflow):
 
     # Create standardized export format with url, created, count, label
     export_sections = []
+
+    # PMTiles exports
+    pmtiles_exports = PMTilesExport.objects.filter(workflow=workflow).order_by(
+        "-created_at"
+    )
+    first_pmtiles = pmtiles_exports.first()
+    pmtiles_url = first_pmtiles.pmtiles.url if first_pmtiles else None
+
+    export_sections.append(
+        {
+            "title": "Download in-progress PMTiles exports",
+            "exports": [
+                {
+                    "url": exp.pmtiles.url,
+                    "created": exp.created_at,
+                    "count": exp.covenant_count,
+                    "label": "mapped covenants",
+                }
+                for exp in pmtiles_exports
+            ],
+        }
+    )
 
     # GeoJSON exports
     geojson_exports = GeoJSONExport.objects.filter(workflow=workflow).order_by(
@@ -217,6 +240,7 @@ def generate_workflow_summary_context(request, workflow):
     context = {
         "workflow": workflow,
         "export_sections": export_sections,
+        "pmtiles_url": pmtiles_url,
         "last_update": last_update,
         "subject_count": subjects.count(),
         "covenants_count": subjects.filter(bool_covenant_final=True).count(),
@@ -264,7 +288,10 @@ def workflow_summary(request, workflow_id):
 def workflow_summary_slug(request, workflow_slug):
     workflow = ZooniverseWorkflow.objects.get(slug=workflow_slug)
 
-    context = generate_workflow_summary_context(request, workflow)
+    summary = generate_workflow_summary_context(request, workflow)
+    charts = generate_workflow_summary_chart_data(request, workflow)
+
+    context = summary | charts
 
     return render(request, "workflow_summary.html", context)
 
