@@ -73,6 +73,32 @@
     const statusContainer = document.getElementById("search-status");
     const paginationContainer = document.getElementById("pagination-container");
     const limit = 24;
+    
+    // Cache to store search results by cache key
+    const resultCache = new Map();
+
+    function getSearchKey() {
+        // Create a cache key based on search parameters (excluding offset)
+        const params = new URLSearchParams();
+
+        const q = document.getElementById("{{ form.q.id_for_label }}").value.trim();
+        if (q) params.append("search", q);
+
+        const workflow = document.getElementById("{{ form.workflow.id_for_label }}").value;
+        if (workflow) params.append("workflow", workflow);
+
+        const boolMatch = document.getElementById("{{ form.bool_match.id_for_label }}");
+        if (boolMatch && boolMatch.checked) {
+            params.append("bool_match", "true");
+        }
+
+        return params.toString();
+    }
+
+    function getCacheKey(offset) {
+        const searchKey = getSearchKey();
+        return `${searchKey}|offset:${offset}`;
+    }
 
     function buildSearchParams(offset) {
         const params = new URLSearchParams();
@@ -147,6 +173,33 @@
         return offset;
     }
 
+    function renderResults(data) {
+        resultsContainer.innerHTML = "";
+
+        if (!data.results || data.results.length === 0) {
+            statusContainer.innerHTML = "<p>No results found.</p>";
+            return;
+        }
+
+        data.results.forEach(result => {
+            const col = document.createElement("div");
+            col.className = "col-3 deedpage-result";
+
+            col.innerHTML = `
+                <div class="box">
+                    ${result.thumbnail_preview ? `<span class="image">${result.thumbnail_preview}</span>` : ""}
+                    <div class="record-link">${result.workflow?.workflow_name ?? ""}</div>
+                    <div class="record-link"><strong>Full record:</strong></div>
+                    <div class="record-link">
+                        ${result.record_link ?? ""}
+                    </div>
+                </div>
+            `;
+
+            resultsContainer.appendChild(col);
+        });
+    }
+
     function renderPagination(data) {
         if (!data.previous && !data.next) {
             paginationContainer.innerHTML = "";
@@ -176,44 +229,75 @@
         });
     }
 
+    async function fetchSearchResults(offset) {
+        const params = buildSearchParams(offset);
+        const response = await fetch(`/api/deeds/search/?${params.toString()}`);
+        const data = await response.json();
+        return data;
+    }
+
+    async function prefetchAdjacentPages(currentOffset, data) {
+        // Prefetch next page if available
+        if (data.next !== null) {
+            const nextCacheKey = getCacheKey(data.next);
+            if (!resultCache.has(nextCacheKey)) {
+                // Prefetch in background without blocking
+                fetchSearchResults(data.next).then(nextData => {
+                    resultCache.set(nextCacheKey, nextData);
+                }).catch(err => {
+                    console.warn("Failed to prefetch next page:", err);
+                });
+            }
+        }
+
+        // Prefetch previous page if available
+        if (data.previous !== null) {
+            const prevCacheKey = getCacheKey(data.previous);
+            if (!resultCache.has(prevCacheKey)) {
+                // Prefetch in background without blocking
+                fetchSearchResults(data.previous).then(prevData => {
+                    resultCache.set(prevCacheKey, prevData);
+                }).catch(err => {
+                    console.warn("Failed to prefetch previous page:", err);
+                });
+            }
+        }
+    }
+
     async function performSearch(offset = 0) {
+        const cacheKey = getCacheKey(offset);
+        
+        // Check cache first
+        if (resultCache.has(cacheKey)) {
+            const cachedData = resultCache.get(cacheKey);
+            statusContainer.innerHTML = "";
+            renderResults(cachedData);
+            renderPagination(cachedData);
+            updateURL(offset);
+            
+            // Prefetch adjacent pages in background
+            prefetchAdjacentPages(offset, cachedData);
+            return;
+        }
+
+        // Not in cache, fetch from API
         resultsContainer.innerHTML = "";
         statusContainer.innerHTML = "<p>Searching…</p>";
         paginationContainer.innerHTML = "";
-
-        const params = buildSearchParams(offset);
         updateURL(offset);
 
         try {
-            const response = await fetch(`/api/deeds/search/?${params.toString()}`);
-            const data = await response.json();
+            const data = await fetchSearchResults(offset);
+            
+            // Store in cache
+            resultCache.set(cacheKey, data);
 
             statusContainer.innerHTML = "";
-
-            if (!data.results || data.results.length === 0) {
-                statusContainer.innerHTML = "<p>No results found.</p>";
-                return;
-            }
-
-            data.results.forEach(result => {
-                const col = document.createElement("div");
-                col.className = "col-3 deedpage-result";
-
-                col.innerHTML = `
-                    <div class="box">
-                        ${result.thumbnail_preview ? `<span class="image">${result.thumbnail_preview}</span>` : ""}
-                        <div class="record-link">${result.workflow?.workflow_name ?? ""}</div>
-                        <div class="record-link"><strong>Full record:</strong></div>
-                        <div class="record-link">
-                            ${result.record_link ?? ""}
-                        </div>
-                    </div>
-                `;
-
-                resultsContainer.appendChild(col);
-            });
-
+            renderResults(data);
             renderPagination(data);
+
+            // Prefetch adjacent pages in background
+            prefetchAdjacentPages(offset, data);
 
         } catch (err) {
             console.error(err);
@@ -223,6 +307,8 @@
 
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
+        // Clear cache when starting a new search
+        resultCache.clear();
         await performSearch(0);
     });
 
