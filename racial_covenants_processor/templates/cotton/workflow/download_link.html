@@ -1,7 +1,8 @@
 {% load humanize %}
-
-<p>
-  <a href="{{ export.url }}">{{ export.created }}</a>
-  {{ export.count|intcomma }} {{ export.label }}
-</p>
-  
+<div class="split align-center gap-s">
+  <div>
+    <div><a href="{{ export.url }}" class="link-subtle"><strong>{{ export.created }}</strong></a></div>
+    <small class="muted">{{ export.count|intcomma }} {{ export.label }}</small>
+  </div>
+  <a href="{{ export.url }}" class="btn outline size-xs">Download</a>
+</div>

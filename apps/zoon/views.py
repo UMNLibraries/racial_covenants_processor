@@ -24,8 +24,26 @@ from apps.parcel.models import (
 @login_required(login_url="/admin/login/")
 def index(request):
     workflows = ZooniverseWorkflow.objects.all()
+
+    # Annotate each workflow with last_update and mapped_count
+    workflows_with_stats = []
+    for workflow in workflows:
+        subjects = ZooniverseSubject.objects.filter(workflow=workflow)
+        last_update = subjects.aggregate(last_update=Max("date_updated"))["last_update"]
+        mapped_count = Parcel.covenant_objects.filter(workflow=workflow).count()
+
+        workflows_with_stats.append({
+            "obj": workflow,
+            "last_update": last_update,
+            "mapped_count": mapped_count,
+        })
+
+    # Sort by workflow name
+    workflows_with_stats.sort(key=lambda x: x["obj"].workflow_name)
+
     context = {
-        "all_workflows": workflows,
+        "all_workflows": workflows,  # For nav template
+        "workflow_cards": workflows_with_stats,  # For index page cards
     }
     return render(request, "index.html", context)
 
