@@ -1,0 +1,22 @@
+{% load static %}
+
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>The Deed Machine - By Mapping Prejudice</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/kelpui@1/css/kelp.css">
+    <link href="{% static 'css/deed-machine.css' %}" rel="stylesheet" media="screen">
+    
+	</head>
+	<body class="is-preload">
+    <c-navbar />
+    <main class="container-xl padding-m">
+      {{ slot }}
+    </main>
+    <c-footer license="https://the-deed-machine.readthedocs.io/en/latest/modules/license.html" copyright="2026 Regents of the University of Minnesota" />
+    <script defer type="module" src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer type="module" src="https://cdn.jsdelivr.net/npm/kelpui@1/js/kelp.js"></script>
+  </body>
+</html>

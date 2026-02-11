@@ -1,10 +1,8 @@
-{% extends 'base.html' %}
 
 {% load humanize %}
 
-{% block content %}
+<c-layouts.base>
     <style>
-
         .font-tester:before {
             font-family: 'Font Awesome 5 Free';
             /* content: '\f078'; */
@@ -15,74 +13,19 @@
         }
     </style>
 
-    <header class="main">
-        <h2>DeedPage search</h2>
+    <header>
+        <h3>DeedPage search</h3>
     </header>
 
-    <!-- <div class="font-tester">Hello</div> -->
-
-    <form method="get" action=".">
-        <div class="row gtr-uniform">
-
-            {{ form.non_field_errors }}
-            <div class="col-6">
-                {{ form.q.errors }}
-                <label for="{{ form.q.id_for_label }}">Search</label>
-                {{ form.q }}
-            </div>
-
-            <div class="col-6">
-                {{ form.workflow.errors }}
-                <label for="{{ form.workflow.id_for_label }}">Workflow filter</label>
-                {{ form.workflow }}
-            </div>
-
-            <div class="col-6">
-                <ul class="actions">
-                    <li><input type="submit" value="Search" class="primary"></li>
-                </ul>
-            </div>
-
-            <div class="col-3">
-                {{ form.bool_match.errors }}
-                {{ form.bool_match }}
-                <label for="{{ form.bool_match.id_for_label }}">Matches only?</label>
-            </div>   
-        </div>
-    </form>
-
+    <c-search.form />
     {% if page_obj.has_previous or page_obj.has_next %}
-    <div class="row">
-        <h3>Results: Page {{ page_obj.number|intcomma }} of {{ page_obj.paginator.num_pages|intcomma }}</h3>
-    </div>
-
-    <ul class="pagination">
-        {% if page_obj.has_previous %}
-        <li><a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}" class="button{% if not page_obj.has_previous %} disabled{% endif %}">Previous</a>
-        {% else %}
-        <li><span class="button disabled">Previous</li>
-        {% endif %}
-
-        {% if page_obj.has_next %}
-        <li><a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}" class="button{% if not page_obj.has_next %} disabled{% endif %}">Next</a>
-        {% else %}
-        <li><span class="button disabled">Previous</li>
-        {% endif %}
-    </ul>
-
+    <c-search.pagination />
     {% endif %}
 
     <div class="box alt">
         <div class="row gtr-50 gtr-uniform">
         {% for result in page_obj.object_list %}
-            <div class="col-3 deedpage-result">
-                <div class="box">
-                    <span class="image">{{ result.object.thumbnail_preview }}</span>
-                    <div class="record-link">{{ result.object.workflow }}</div>
-                    <div class="record-link"><strong>Full record:</strong></div>
-                    <div class="record-link">{{ result.object.record_link }}</div>
-                </div>
-            </div>
+          <c-result :result="result" /> 
         {% empty %}
             <p>No results found.</p>
         {% endfor %}
@@ -90,20 +33,6 @@
     </div>
 
     {% if page_obj.has_previous or page_obj.has_next %}
-    <ul class="pagination">
-        {% if page_obj.has_previous %}
-        <li><a href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}" class="button{% if not page_obj.has_previous %} disabled{% endif %}">Previous</a>
-        {% else %}
-        <li><span class="button disabled">Previous</li>
-        {% endif %}
-
-        {% if page_obj.has_next %}
-        <li><a href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}" class="button{% if not page_obj.has_next %} disabled{% endif %}">Next</a>
-        {% else %}
-        <li><span class="button disabled">Previous</li>
-        {% endif %}
-    </ul>
-
+    <c-search.pagination />
     {% endif %}
-
-{% endblock %}
+</c-layouts.base>

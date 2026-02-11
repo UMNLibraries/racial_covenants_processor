@@ -1,0 +1,9 @@
+{% load humanize %}
+<c-vars value label subtitle />
+<div class="callout stack gap-4xs">
+  <span class="size-3xl"><strong>{{ value|intcomma }}</strong></span>
+  <span class="size-xs">{{ label }}</span>
+  {% if subtitle %}
+    <small class="size-2xs">{{ subtitle }}</small>
+  {% endif %}
+</div>
