@@ -3,7 +3,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.auth.decorators import login_required
 import json
 
-from django.db.models import Max, Count
+from django.db.models import Max, Count, OuterRef, Subquery
 from apps.deed.models import SearchHitReport
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject
 from apps.parcel.models import (
@@ -23,27 +23,35 @@ from apps.parcel.models import (
 
 @login_required(login_url="/admin/login/")
 def index(request):
-    workflows = ZooniverseWorkflow.objects.all()
+    last_update_subquery = (
+        ZooniverseSubject.objects.filter(workflow=OuterRef("pk"))
+        .values("workflow")
+        .annotate(last=Max("date_updated"))
+        .values("last")
+    )
 
-    # Annotate each workflow with last_update and mapped_count
-    workflows_with_stats = []
-    for workflow in workflows:
-        subjects = ZooniverseSubject.objects.filter(workflow=workflow)
-        last_update = subjects.aggregate(last_update=Max("date_updated"))["last_update"]
-        mapped_count = Parcel.covenant_objects.filter(workflow=workflow).count()
+    mapped_count_subquery = (
+        Parcel.covenant_objects.filter(workflow=OuterRef("pk"))
+        .values("workflow")
+        .annotate(cnt=Count("id"))
+        .values("cnt")
+    )
 
-        workflows_with_stats.append({
-            "obj": workflow,
-            "last_update": last_update,
-            "mapped_count": mapped_count,
-        })
-
-    # Sort by workflow name
-    workflows_with_stats.sort(key=lambda x: x["obj"].workflow_name)
+    workflows = ZooniverseWorkflow.objects.annotate(
+        last_update=Subquery(last_update_subquery),
+        mapped_count=Subquery(mapped_count_subquery),
+    ).order_by("workflow_name")
 
     context = {
-        "all_workflows": workflows,  # For nav template
-        "workflow_cards": workflows_with_stats,  # For index page cards
+        "all_workflows": workflows,
+        "workflow_cards": [
+            {
+                "obj": w,
+                "last_update": w.last_update,
+                "mapped_count": w.mapped_count or 0,
+            }
+            for w in workflows
+        ],
     }
     return render(request, "index.html", context)
 
