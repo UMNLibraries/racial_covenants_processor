@@ -11,7 +11,7 @@ The Deed Machine
 
 Racial covenants are clauses that were inserted into property deeds to prevent people who are not white from buying or occupying land. As of June 2024, Mapping Prejudice volunteers have helped to map `more than 52,000 covenanted properties <https://github.com/umnlibraries/mp-us-racial-covenants>`_ across 3 states, with more on the way soon.
 
-The Deed Machine was created at `Mapping Prejudice <https://mappingprejudice.umn.edu/>`_ at the `University of Minnesota Libraries <https://www.lib.umn.edu/>`_. Current collaborators include Michael Corey, Suleman Diwan, Justin Schell, and the University of Minnesota Libraries IT staff.
+The Deed Machine was created at `Mapping Prejudice <https://mappingprejudice.umn.edu/>`_ at the `University of Minnesota Libraries <https://www.lib.umn.edu/>`_. Current collaborators include Michael Corey, David Naughton, Tyler Fisher, Katlyn Alapati, Mike Tigas, and the University of Minnesota Libraries IT staff.
 
 .. image:: _static/DeedMachineBasicSteps2023.png
   :width: 800
