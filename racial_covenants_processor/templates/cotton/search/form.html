@@ -1,0 +1,28 @@
+<form method="get" action=".">
+    <div class="grid">
+        {{ form.non_field_errors }}
+        <div class="item-half">
+            {{ form.q.errors }}
+            <label for="{{ form.q.id_for_label }}">Search</label>
+            {{ form.q }}
+        </div>
+
+        <div class="item-half">
+            {{ form.workflow.errors }}
+            <label for="{{ form.workflow.id_for_label }}">Workflow filter</label>
+            {{ form.workflow }}
+        </div>
+
+        <div class="item-half">
+            <ul class="list-unstyled">
+                <li><input type="submit" value="Search" class="primary"></li>
+            </ul>
+        </div>
+
+        <div class="item-fourth">
+            {{ form.bool_match.errors }}
+            
+            <label for="{{ form.bool_match.id_for_label }}">{{ form.bool_match }} Matches only? </label>
+        </div>   
+    </div>
+</form>
