@@ -1,0 +1,95 @@
+<div class="map-sidebar">
+    <template x-if="selectedFeatures.length === 0 && !hoveredFeature">
+        <div class="stack gap-s">
+            <p class="muted size-s">Click a parcel to view covenant details.</p>
+            <p class="muted size-xs">Hold Cmd/Ctrl to select multiple parcels.</p>
+        </div>
+    </template>
+
+    <template x-if="selectedFeatures.length > 0">
+        <div class="stack gap-m">
+            <div class="split align-center">
+                <strong class="size-s">Selected (<span x-text="selectedFeatures.length"></span>)</strong>
+                <button type="button" @click="clearAllSelections()" class="btn outline size-xs">Clear</button>
+            </div>
+            <template x-for="(feature, index) in selectedFeatures" :key="feature.properties?.db_id || index">
+                <div class="callout stack gap-s">
+                    <div>
+                        <strong x-text="feature.properties?.street_add || 'No address'"></strong>
+                        <div class="size-xs muted" x-text="[feature.properties?.city, feature.properties?.state].filter(Boolean).join(', ') || ''"></div>
+                    </div>
+                    <hr>
+                    <div class="stack gap-2xs size-xs">
+                        <div class="split">
+                            <span class="muted">Deed date</span>
+                            <span x-text="formatDate(feature.properties?.deed_date)"></span>
+                        </div>
+                        <div class="split">
+                            <span class="muted">Addition</span>
+                            <span x-text="feature.properties?.add_cov || '—'"></span>
+                        </div>
+                        <div class="split">
+                            <span class="muted">Lot / Block</span>
+                            <span x-text="[feature.properties?.lot_cov, feature.properties?.block_cov].filter(Boolean).join(' / ') || '—'"></span>
+                        </div>
+                        <div class="split">
+                            <span class="muted">Seller</span>
+                            <span x-text="feature.properties?.seller || '—'"></span>
+                        </div>
+                        <div class="split">
+                            <span class="muted">Buyer</span>
+                            <span x-text="feature.properties?.buyer || '—'"></span>
+                        </div>
+                        <div class="split">
+                            <span class="muted">Doc #</span>
+                            <span x-text="feature.properties?.doc_num || '—'"></span>
+                        </div>
+                        <div class="split">
+                            <span class="muted">PIN</span>
+                            <span x-text="feature.properties?.cnty_pin || '—'"></span>
+                        </div>
+                    </div>
+                    <template x-if="feature.properties?.cov_text">
+                        <details class="size-xs">
+                            <summary>Covenant text</summary>
+                            <p class="muted" style="white-space: pre-wrap; margin-top: 0.5em;" x-text="feature.properties?.cov_text"></p>
+                        </details>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <template x-if="hoveredFeature && selectedFeatures.length === 0">
+        <div class="callout stack gap-s">
+            <div>
+                <strong x-text="hoveredFeature.properties?.street_add || 'No address'"></strong>
+                <div class="size-xs muted" x-text="[hoveredFeature.properties?.city, hoveredFeature.properties?.state].filter(Boolean).join(', ') || ''"></div>
+            </div>
+            <hr>
+            <div class="stack gap-2xs size-xs">
+                <div class="split">
+                    <span class="muted">Deed date</span>
+                    <span x-text="formatDate(hoveredFeature.properties?.deed_date)"></span>
+                </div>
+                <div class="split">
+                    <span class="muted">Addition</span>
+                    <span x-text="hoveredFeature.properties?.add_cov || '—'"></span>
+                </div>
+                <div class="split">
+                    <span class="muted">Lot / Block</span>
+                    <span x-text="[hoveredFeature.properties?.lot_cov, hoveredFeature.properties?.block_cov].filter(Boolean).join(' / ') || '—'"></span>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+<style>
+    .map-sidebar {
+        width: 20em;
+        padding: 1em;
+        overflow-y: auto;
+        background: var(--surface-1, #fff);
+        border-left: 1px solid var(--border, #e5e5e5);
+    }
+</style>

@@ -1,0 +1,528 @@
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@geoman-io/maplibre-geoman-free@latest/dist/maplibre-geoman.css">
+<script src="https://unpkg.com/@geoman-io/maplibre-geoman-free@latest/dist/maplibre-geoman.umd.js"></script>
+<script src="https://unpkg.com/pmtiles@3.0.7/dist/pmtiles.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+<script>
+function mapApp(options = {}) {
+  return {
+    map: null,
+    geoman: null,
+    geomanEnabled: options.geoman || false,
+    pmtilesUrl: options.pmtilesUrl || "",
+    sourceLayer: null,
+    hoveredFeatureId: null,
+    selectedFeatureIds: new Set(),
+    selectedFeatures: [],
+    hoveredFeature: null,
+    gmEvents: [],
+    expandedGeoJsonIndex: -1,
+    isAnyGeomanModeActive: false,
+    measurementPopup: null,
+    isDrawingMode: false,
+    currentDrawingCoordinates: [],
+    drawingShape: null,
+
+    formatDate(dateStr) {
+      if (!dateStr) return '—';
+      const date = new Date(dateStr);
+      if (isNaN(date)) return dateStr;
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    },
+
+    async initMap() {
+      const protocol = new pmtiles.Protocol();
+      maplibregl.addProtocol("pmtiles", protocol.tile);
+
+      const pm = new pmtiles.PMTiles(this.pmtilesUrl);
+      const header = await pm.getHeader();
+      const metadata = await pm.getMetadata();
+      this.sourceLayer = metadata.vector_layers[0].id;
+
+      this.map = new maplibregl.Map({
+        container: "map",
+        style: this.getMapStyle(),
+        bounds: [[header.minLon, header.minLat], [header.maxLon, header.maxLat]],
+        fitBoundsOptions: { padding: 20 },
+        fadeDuration: 50,
+        minZoom: 0,
+        maxZoom: 18,
+      });
+
+      if (this.geomanEnabled) {
+        const gmOptions = {
+          controls: {
+            helper: {
+              snapping: {
+                uiEnabled: true,
+                active: false,
+              },
+            },
+          },
+        };
+        this.geoman = new window.Geoman.Geoman(this.map, gmOptions);
+      }
+
+      this.map.on("load", () => {
+        this.setupMapListeners();
+        if (this.geomanEnabled) {
+          this.setupGeomanListeners();
+        }
+        this.checkPlatQueryParam();
+      });
+
+      this.map.on("error", (e) => {
+        console.error("Map error:", e);
+      });
+    },
+
+    getMapStyle() {
+      return {
+        version: 8,
+        glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+        sources: {
+          "osm-tiles": {
+            type: "raster",
+            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+            tileSize: 256,
+            attribution: "© OpenStreetMap contributors",
+          },
+          protomaps: {
+            type: "vector",
+            url: `pmtiles://${this.pmtilesUrl}`,
+            promoteId: "db_id",
+          },
+        },
+        layers: [
+          {
+            id: "osm-tiles-layer",
+            type: "raster",
+            source: "osm-tiles",
+            minzoom: 0,
+            maxzoom: 19,
+          },
+          {
+            id: "pmtiles-fill-default",
+            source: "protomaps",
+            "source-layer": this.sourceLayer,
+            type: "fill",
+            paint: {
+              "fill-color": [
+                "case",
+                ["boolean", ["feature-state", "selected"], false],
+                "rgba(0, 100, 255, 0.7)",
+                ["boolean", ["feature-state", "hover"], false],
+                "rgba(114, 155, 111, 1)",
+                "rgba(114, 155, 111, 0.7)",
+              ],
+              "fill-outline-color": [
+                "case",
+                ["boolean", ["feature-state", "selected"], false],
+                "#0064ff",
+                "rgb(75, 100, 73)",
+              ],
+            },
+            minzoom: 0,
+            maxzoom: 18,
+          },
+        ],
+      };
+    },
+
+    setupMapListeners() {
+      this.map.on("mousemove", (e) => {
+        if (this.isDrawingMode) {
+          this.showLiveDrawingMeasurement([e.lngLat.lng, e.lngLat.lat]);
+        }
+
+        if (this.isAnyGeomanModeActive) {
+          if (this.hoveredFeatureId !== null) {
+            this.clearHover();
+          }
+          return;
+        }
+
+        const features = this.map.queryRenderedFeatures(e.point, {
+          layers: ["pmtiles-fill-default"],
+        });
+
+        if (features.length > 0) {
+          const feature = features[0];
+          const featureId = feature.properties?.db_id || feature.id;
+
+          if (featureId !== this.hoveredFeatureId) {
+            if (this.hoveredFeatureId !== null) {
+              this.map.setFeatureState(
+                { source: "protomaps", sourceLayer: this.sourceLayer, id: this.hoveredFeatureId },
+                { hover: false }
+              );
+            }
+
+            this.map.setFeatureState(
+              { source: "protomaps", sourceLayer: this.sourceLayer, id: featureId },
+              { hover: true }
+            );
+
+            this.hoveredFeatureId = featureId;
+            this.hoveredFeature = feature;
+            this.map.getCanvas().style.cursor = "pointer";
+          }
+        } else {
+          if (this.hoveredFeatureId !== null) {
+            this.clearHover();
+          }
+        }
+      });
+
+      this.map.on("click", (e) => {
+        if (this.isDrawingMode) {
+          this.currentDrawingCoordinates.push([e.lngLat.lng, e.lngLat.lat]);
+          return;
+        }
+
+        if (this.isAnyGeomanModeActive) {
+          return;
+        }
+
+        const features = this.map.queryRenderedFeatures(e.point, {
+          layers: ["pmtiles-fill-default"],
+        });
+
+        if (features.length > 0) {
+          const feature = features[0];
+          const featureId = feature.properties?.db_id || feature.id;
+          const isCtrlOrCmd = e.originalEvent.ctrlKey || e.originalEvent.metaKey;
+
+          if (isCtrlOrCmd) {
+            if (this.selectedFeatureIds.has(featureId)) {
+              this.selectedFeatureIds.delete(featureId);
+              this.selectedFeatures = this.selectedFeatures.filter(
+                (f) => (f.properties?.db_id || f.id) !== featureId
+              );
+              this.map.setFeatureState(
+                { source: "protomaps", sourceLayer: this.sourceLayer, id: featureId },
+                { selected: false }
+              );
+            } else {
+              this.selectedFeatureIds.add(featureId);
+              this.selectedFeatures.push(feature);
+              this.map.setFeatureState(
+                { source: "protomaps", sourceLayer: this.sourceLayer, id: featureId },
+                { selected: true }
+              );
+            }
+          } else {
+            this.clearAllSelections();
+            this.selectedFeatureIds.add(featureId);
+            this.selectedFeatures = [feature];
+            this.map.setFeatureState(
+              { source: "protomaps", sourceLayer: this.sourceLayer, id: featureId },
+              { selected: true }
+            );
+          }
+        } else {
+          if (!e.originalEvent.ctrlKey && !e.originalEvent.metaKey) {
+            this.clearAllSelections();
+          }
+        }
+      });
+    },
+
+    setupGeomanListeners() {
+      this.map.on("gm:globaldrawmodetoggled", (e) => {
+        this.isAnyGeomanModeActive = e.enabled;
+        this.isDrawingMode = e.enabled;
+
+        if (e.enabled) {
+          this.currentDrawingCoordinates = [];
+          this.drawingShape = e.shape || null;
+        } else {
+          this.isDrawingMode = false;
+          this.currentDrawingCoordinates = [];
+          this.drawingShape = null;
+          this.hideMeasurementPopup();
+        }
+
+        this.logEvent(e);
+      });
+
+      this.map.on("gm:globaleditmodetoggled", (e) => {
+        this.isAnyGeomanModeActive = e.enabled;
+        this.logEvent(e);
+      });
+
+      this.map.on("gm:globalremovemodetoggled", (e) => {
+        this.isAnyGeomanModeActive = e.enabled;
+        this.logEvent(e);
+      });
+
+      this.map.on("gm:globalrotatemodetoggled", (e) => {
+        this.isAnyGeomanModeActive = e.enabled;
+        this.logEvent(e);
+      });
+
+      this.map.on("gm:globaldragmodetoggled", (e) => {
+        this.isAnyGeomanModeActive = e.enabled;
+        this.logEvent(e);
+      });
+
+      this.map.on("gm:globalcutmodetoggled", (e) => {
+        this.isAnyGeomanModeActive = e.enabled;
+        this.logEvent(e);
+      });
+
+      this.map.on("gm:create", (e) => {
+        this.isDrawingMode = false;
+        this.currentDrawingCoordinates = [];
+        this.drawingShape = null;
+        this.logEvent(e);
+        this.handleMeasurementForFeature(e);
+      });
+
+      this.map.on("gm:editstart", (e) => {
+        this.logEvent(e);
+        this.hideMeasurementPopup();
+      });
+
+      this.map.on("gm:editend", (e) => {
+        this.logEvent(e);
+        this.handleMeasurementForFeature(e);
+      });
+
+      this.map.on("gm:remove", (e) => {
+        this.logEvent(e);
+        this.hideMeasurementPopup();
+      });
+
+      this.map.on("gm:dragstart", (e) => {
+        this.logEvent(e);
+        this.hideMeasurementPopup();
+      });
+
+      this.map.on("gm:dragend", (e) => {
+        this.logEvent(e);
+        this.handleMeasurementForFeature(e);
+      });
+    },
+
+    clearHover() {
+      if (this.hoveredFeatureId !== null) {
+        this.map.setFeatureState(
+          { source: "protomaps", sourceLayer: this.sourceLayer, id: this.hoveredFeatureId },
+          { hover: false }
+        );
+        this.hoveredFeatureId = null;
+        this.hoveredFeature = null;
+        this.map.getCanvas().style.cursor = "";
+      }
+    },
+
+    clearAllSelections() {
+      for (const id of this.selectedFeatureIds) {
+        this.map.setFeatureState(
+          { source: "protomaps", sourceLayer: this.sourceLayer, id: id },
+          { selected: false }
+        );
+      }
+      this.selectedFeatureIds.clear();
+      this.selectedFeatures = [];
+    },
+
+    logEvent(e) {
+      const eventData = {
+        id: e.feature?.id || Date.now(),
+        timestamp: new Date().toISOString(),
+        type: e.type,
+        shape: e.shape,
+        enabled: e.enabled,
+      };
+
+      if (e.type === "gm:create" && e.feature?.source?.sourceInstance?._data?.features) {
+        const features = e.feature.source.sourceInstance._data.features;
+        if (features.length > 0) {
+          eventData.geojson = JSON.stringify(features[features.length - 1], null, 2);
+        }
+      }
+
+      this.gmEvents.unshift(eventData);
+    },
+
+    toggleGeoJson(index) {
+      this.expandedGeoJsonIndex = this.expandedGeoJsonIndex === index ? -1 : index;
+    },
+
+    formatDistance(meters) {
+      if (meters < 1000) {
+        return `${meters.toFixed(2)} m`;
+      }
+      return `${(meters / 1000).toFixed(2)} km`;
+    },
+
+    formatArea(squareMeters) {
+      if (squareMeters < 10000) {
+        return `${squareMeters.toFixed(2)} m²`;
+      }
+      return `${(squareMeters / 10000).toFixed(2)} ha`;
+    },
+
+    showMeasurementPopup(feature, lngLat) {
+      let measurement = "";
+
+      if (feature.geometry.type === "LineString") {
+        const distance = turf.length(feature, { units: "meters" });
+        measurement = `Distance: ${this.formatDistance(distance)}`;
+      } else if (feature.geometry.type === "Polygon") {
+        const area = turf.area(feature);
+        const perimeter = turf.length(turf.polygonToLine(feature), { units: "meters" });
+        measurement = `Area: ${this.formatArea(area)}<br/>Perimeter: ${this.formatDistance(perimeter)}`;
+      }
+
+      if (measurement) {
+        this.hideMeasurementPopup();
+        this.measurementPopup = new maplibregl.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          className: "measurement-popup",
+        })
+          .setLngLat(lngLat)
+          .setHTML(`<div style="font-size: 12px; padding: 4px;">${measurement}</div>`)
+          .addTo(this.map);
+      }
+    },
+
+    hideMeasurementPopup() {
+      if (this.measurementPopup) {
+        this.measurementPopup.remove();
+        this.measurementPopup = null;
+      }
+    },
+
+    showLiveDrawingMeasurement(mouseCoords) {
+      if (!this.isDrawingMode || this.currentDrawingCoordinates.length === 0) return;
+
+      const coords = [...this.currentDrawingCoordinates, mouseCoords];
+      let measurement = "";
+
+      if (this.drawingShape === "line" || this.drawingShape === "Line") {
+        if (coords.length >= 2) {
+          const lineFeature = {
+            type: "Feature",
+            properties: {},
+            geometry: { type: "LineString", coordinates: coords },
+          };
+          const distance = turf.length(lineFeature, { units: "meters" });
+          measurement = `Distance: ${this.formatDistance(distance)}`;
+        }
+      } else if (this.drawingShape === "polygon" || this.drawingShape === "Polygon") {
+        if (coords.length >= 3) {
+          const closedCoords = [...coords, coords[0]];
+          const polygonFeature = {
+            type: "Feature",
+            properties: {},
+            geometry: { type: "Polygon", coordinates: [closedCoords] },
+          };
+          const area = turf.area(polygonFeature);
+          const perimeter = turf.length(turf.polygonToLine(polygonFeature), { units: "meters" });
+          measurement = `Area: ${this.formatArea(area)}<br/>Perimeter: ${this.formatDistance(perimeter)}`;
+        } else if (coords.length >= 2) {
+          const lineFeature = {
+            type: "Feature",
+            properties: {},
+            geometry: { type: "LineString", coordinates: coords },
+          };
+          const distance = turf.length(lineFeature, { units: "meters" });
+          measurement = `Distance: ${this.formatDistance(distance)}`;
+        }
+      }
+
+      if (measurement) {
+        this.hideMeasurementPopup();
+        this.measurementPopup = new maplibregl.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          className: "measurement-popup",
+        })
+          .setLngLat(mouseCoords)
+          .setHTML(`<div style="font-size: 12px; padding: 4px;">${measurement}</div>`)
+          .addTo(this.map);
+      }
+    },
+
+    handleMeasurementForFeature(e) {
+      if (e.feature?.source?.sourceInstance?._data?.features) {
+        const features = e.feature.source.sourceInstance._data.features;
+        if (features.length > 0) {
+          const feature = features[features.length - 1];
+          if (feature.geometry.type === "LineString" || feature.geometry.type === "Polygon") {
+            const coords = feature.geometry.coordinates;
+            let lngLat;
+
+            if (feature.geometry.type === "LineString") {
+              lngLat = coords[coords.length - 1];
+            } else {
+              const center = turf.centroid(feature);
+              lngLat = center.geometry.coordinates;
+            }
+
+            this.showMeasurementPopup(feature, lngLat);
+          }
+        }
+      }
+    },
+
+    checkPlatQueryParam() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const platParam = urlParams.get("plat");
+      if (platParam) {
+        this.searchAndCenterOnPlat(platParam);
+      }
+    },
+
+    searchAndCenterOnPlat(platValue) {
+      if (!this.map.isStyleLoaded()) {
+        this.map.on("styledata", () => {
+          this.searchAndCenterOnPlat(platValue);
+        });
+        return;
+      }
+
+      const features = this.map.querySourceFeatures("protomaps", {
+        sourceLayer: this.sourceLayer,
+      });
+
+      const matchingFeatures = features.filter(
+        (feature) => feature.properties?.Plat === platValue
+      );
+
+      if (matchingFeatures.length > 0) {
+        const bounds = new maplibregl.LngLatBounds();
+
+        for (const feature of matchingFeatures) {
+          if (feature.geometry.type === "Polygon") {
+            for (const coord of feature.geometry.coordinates[0]) {
+              bounds.extend(coord);
+            }
+          } else if (feature.geometry.type === "MultiPolygon") {
+            for (const polygon of feature.geometry.coordinates) {
+              for (const coord of polygon[0]) {
+                bounds.extend(coord);
+              }
+            }
+          }
+        }
+
+        this.map.fitBounds(bounds, { padding: 50, zoom: 16 });
+      } else {
+        console.warn(`No features found with plat value: ${platValue}`);
+      }
+    },
+
+    saveCovenant() {
+      console.log("Save covenant clicked");
+      console.log("Selected features:", this.selectedFeatures);
+      console.log("Events:", this.gmEvents);
+    },
+  };
+}
+</script>
