@@ -34,6 +34,18 @@
       <div class="item-third"><c-workflow.stat_card :value="mapped_count" label="Covenants mapped" /></div>
     </section>
     {% endif %}
+  
+    <hr>
+    <div class="sidecar align-center gap-m">
+      <span class="size-xs muted"><strong>Admin</strong></span>
+      <div class="cluster gap-s">
+        <a href="/admin/zoon/zooniversesubject/?workflow__workflow_name={{workflow.workflow_name}}" class="btn outline size-xs">Zooniverse subjects</a>
+        <a href="/admin/zoon/manualcovenant/?workflow__workflow_name={{workflow.workflow_name}}" class="btn outline size-xs">Manual covenants</a>
+        <a href="/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}" class="btn outline size-xs">Deed pages</a>
+        <a href="/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}&bool_match__exact=1" class="btn outline size-xs">Flagged matches</a>
+        <a href="/admin/parcel/parcel/?workflow__id__exact={{workflow.id}}" class="btn outline size-xs">Parcels</a>
+      </div>
+    </div>
 
     {% if export_sections %}
     <section>
@@ -65,18 +77,6 @@
       </div>
     </section>
     {% endif %}
-
-    <hr>
-    <div class="sidecar align-center gap-m">
-      <span class="size-xs muted"><strong>Admin</strong></span>
-      <div class="cluster gap-s">
-        <a href="/admin/zoon/zooniversesubject/?workflow__workflow_name={{workflow.workflow_name}}" class="btn outline size-xs">Zooniverse subjects</a>
-        <a href="/admin/zoon/manualcovenant/?workflow__workflow_name={{workflow.workflow_name}}" class="btn outline size-xs">Manual covenants</a>
-        <a href="/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}" class="btn outline size-xs">Deed pages</a>
-        <a href="/admin/deed/deedpage/?workflow__id__exact={{workflow.id}}&bool_match__exact=1" class="btn outline size-xs">Flagged matches</a>
-        <a href="/admin/parcel/parcel/?workflow__id__exact={{workflow.id}}" class="btn outline size-xs">Parcels</a>
-      </div>
-    </div>
 
   </div>
 </c-layouts.base>
