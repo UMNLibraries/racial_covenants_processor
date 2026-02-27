@@ -135,3 +135,5 @@ dmypy.json
 racial_covenants_processor/data/*
 racial_covenants_processor/staticfiles/
 .DS_Store
+.env
+elastic-start-local/
