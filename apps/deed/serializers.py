@@ -17,4 +17,10 @@ class DeedPageSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = DeedPage
-        fields = ['s3_lookup', 'thumbnail_preview', 'workflow', 'record_link']
+        fields = [
+            's3_lookup',
+            'thumbnail_preview',
+            'workflow',
+            'record_link',
+            'bool_match',
+        ]
