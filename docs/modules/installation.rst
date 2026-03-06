@@ -70,7 +70,7 @@ The psql command will vary slightly with different OSes. For Mac:
 
     curl -fsSL https://elastic.co/start-local | sh
 
-The Elasticsearch endpoint will be available at `http://127.0.0.1:9200/<http://127.0.0.1:9200/>`__.
+The Elasticsearch API endpoint will be available at `http://127.0.0.1:9200/<http://127.0.0.1:9200/>`__ and the Kibana dashboard will be available at `http://127.0.0.1:5601/<http://127.0.0.1:5601/>`__.
 
 8. Spin up the application
 
@@ -79,3 +79,9 @@ The Elasticsearch endpoint will be available at `http://127.0.0.1:9200/<http://1
     python manage.py runserver
 
 You can view the app at `http://127.0.0.1:8000/<http://127.0.0.1:8000/>`__.
+
+9. Any newly created records will be indexed on save. But, if you want to seed your database with a dump of the deployed database, you will need to run this command to index all those records:
+
+.. code-block:: bash
+
+    python manage.py rebuild_index --workers 4
