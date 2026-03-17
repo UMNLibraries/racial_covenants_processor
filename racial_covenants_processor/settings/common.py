@@ -75,6 +75,18 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+ELASTICSEARCH_DSL = {
+    "default": {
+        "hosts": [os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")],
+        'basic_auth': ('elastic', os.environ.get("ELASTICSEARCH_PASSWORD")),
+    },
+}
+ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
+ELASTICSEARCH_DSL_INDEX_SETTINGS = {}
+ELASTICSEARCH_DSL_AUTOSYNC = True
+ELASTICSEARCH_DSL_AUTO_REFRESH = True
+ELASTICSEARCH_DSL_PARALLEL = False
+
 ROOT_URLCONF = "racial_covenants_processor.urls"
 
 TEMPLATES = [
