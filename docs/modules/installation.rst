@@ -84,4 +84,4 @@ You can view the app at `http://127.0.0.1:8000/<http://127.0.0.1:8000/>`__.
 
 .. code-block:: bash
 
-    python manage.py rebuild_index --workers 4
+    python manage.py search_index --rebuild
