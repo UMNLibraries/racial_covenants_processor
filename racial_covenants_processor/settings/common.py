@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     "django_filters",
     "django_cotton",
     # 'django_extensions',
-    # 'debug_toolbar'
+    # 'debug_toolbar',
+    'django_elasticsearch_dsl',
 ]
 
 MIDDLEWARE = [
