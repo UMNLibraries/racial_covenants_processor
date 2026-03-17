@@ -13,6 +13,7 @@ from django.db.models import Case, When
 from .documents import DeedPageDocument
 from .serializers import DeedPageSerializer
 from .models import DeedPage
+from .forms import DeedSearchForm
 
 class PaginatedElasticSearchAPIView(ModelViewSet, LimitOffsetPagination):
     document_class: Document = None
@@ -184,3 +185,13 @@ class DeedPageViewSet(PaginatedElasticSearchAPIView):
             return query
         
         return Q("match_all")
+
+def deed_search_page(request):
+    form = DeedSearchForm(request.GET or None)
+    return render(
+        request, 
+        "search/search.html", 
+        {
+            "form": form,
+        }
+    )
