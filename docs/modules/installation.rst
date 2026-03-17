@@ -72,7 +72,33 @@ The psql command will vary slightly with different OSes. For Mac:
 
 The Elasticsearch API endpoint will be available at `http://127.0.0.1:9200/<http://127.0.0.1:9200/>`__ and the Kibana dashboard will be available at `http://127.0.0.1:5601/<http://127.0.0.1:5601/>`__.
 
-8. Spin up the application
+8. Note the Elasticsearch authentication credentials in your terminal. They should look something like:
+
+.. code-block:: bash
+    🎉 Congrats, Elasticsearch and Kibana are installed and running in Docker!
+
+    🌐 Open your browser at http://localhost:5601
+
+    Username: elastic
+    Password: <password>
+
+    🔌 Elasticsearch API endpoint: http://localhost:9200
+    🔑 API key: <api_key>
+
+Create a new .env file in the root directory (i.e. outside of `racial_covenants_processor/` and next to the Pipfile):
+
+.. code-block:: bash
+
+    cp .env.example .env
+
+Populate `ELASTICSEARCH_PASSWORD` and `ELASTICSEARCH_API_KEY` in the .env file using the credentials from the terminal output. Note: you may need to kill and restart your pipenv shell for the new environment variables to be available:
+
+.. code-block:: bash
+
+    exit
+    pipenv shell
+
+9. Spin up the application
 
 .. code-block:: bash
 
@@ -80,7 +106,7 @@ The Elasticsearch API endpoint will be available at `http://127.0.0.1:9200/<http
 
 You can view the app at `http://127.0.0.1:8000/<http://127.0.0.1:8000/>`__.
 
-9. Any newly created records will be indexed on save. But, if you want to seed your database with a dump of the deployed database, you will need to run this command to index all those records:
+10. Any newly created records will be indexed on save. But, if you want to seed your database with a dump of the deployed database, you will need to run this command to index all those records:
 
 .. code-block:: bash
 
