@@ -1,8 +1,11 @@
-<div class="col-3 deedpage-result">
+<c-vars result />
+<div class="item-fourth deedpage-result">
     <div class="box">
-        <span class="image">{{ result.object.thumbnail_preview }}</span>
-        <div class="record-link">{{ result.object.workflow }}</div>
+        {% if result.thumbnail_preview %}
+        <span class="image">{{ result.thumbnail_preview|safe }}</span>
+        {% endif %}
+        <div class="record-link">{{ result.workflow.workflow_name|default:"" }}</div>
         <div class="record-link"><strong>Full record:</strong></div>
-        <div class="record-link">{{ result.object.record_link }}</div>
+        <div class="record-link">{{ result.record_link|safe }}</div>
     </div>
 </div>

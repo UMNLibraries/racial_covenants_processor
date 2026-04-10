@@ -190,7 +190,7 @@ def deed_search_page(request):
     form = DeedSearchForm(request.GET or None)
     return render(
         request, 
-        "search/search.html", 
+        "cotton/search/page.html",
         {
             "form": form,
         }

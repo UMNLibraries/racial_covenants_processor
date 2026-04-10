@@ -1,38 +1,331 @@
-
+{% extends 'base.html' %}
 {% load humanize %}
 
-<c-layouts.base>
-    <style>
-        .font-tester:before {
-            font-family: 'Font Awesome 5 Free';
-            /* content: '\f078'; */
-            content: '\f0c9';
-            color: #9fa3a6;
-            font-weight: 900;
-            display: inline-block;
-        }
-    </style>
+{% block content %}
+<style>
+    .font-tester:before {
+        font-family: 'Font Awesome 5 Free';
+        content: '\f0c9';
+        color: #9fa3a6;
+        font-weight: 900;
+        display: inline-block;
+    }
 
-    <header>
-        <h3>DeedPage search</h3>
-    </header>
+    .deedpage-result .box {
+        height: 100%;
+    }
+</style>
 
-    <c-search.form />
-    {% if page_obj.has_previous or page_obj.has_next %}
-    <c-search.pagination />
-    {% endif %}
+<header class="main">
+    <h2>DeedPage search</h2>
+</header>
 
-    <div class="box alt">
-        <div class="row gtr-50 gtr-uniform">
-        {% for result in page_obj.object_list %}
-          <c-result :result="result" /> 
-        {% empty %}
-            <p>No results found.</p>
-        {% endfor %}
+<form id="deed-search-form">
+    <div class="row gtr-uniform">
+
+        {{ form.non_field_errors }}
+
+        <div class="col-6">
+            {{ form.q.errors }}
+            <label for="{{ form.q.id_for_label }}">Search</label>
+            {{ form.q }}
         </div>
-    </div>
 
-    {% if page_obj.has_previous or page_obj.has_next %}
-    <c-search.pagination />
-    {% endif %}
-</c-layouts.base>
+        <div class="col-6">
+            {{ form.workflow.errors }}
+            <label for="{{ form.workflow.id_for_label }}">Workflow filter</label>
+            {{ form.workflow }}
+        </div>
+
+        <div class="col-3">
+            {{ form.bool_match.errors }}
+            {{ form.bool_match }}
+            <label for="{{ form.bool_match.id_for_label }}">Matches only?</label>
+        </div>
+
+        <div class="col-12">
+            <ul class="actions">
+                <li>
+                    <input type="submit" value="Search" class="primary">
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</form>
+
+<hr>
+
+<div id="search-status"></div>
+
+<div class="box alt">
+    <div id="search-results" class="row gtr-50 gtr-uniform">
+        <!-- Results injected here -->
+    </div>
+</div>
+
+<div id="pagination-container"></div>
+
+<script>
+(function () {
+    const form = document.getElementById("deed-search-form");
+    const resultsContainer = document.getElementById("search-results");
+    const statusContainer = document.getElementById("search-status");
+    const paginationContainer = document.getElementById("pagination-container");
+    const limit = 24;
+    
+    // Cache to store search results by cache key
+    const resultCache = new Map();
+
+    function getSearchKey() {
+        // Create a cache key based on search parameters (excluding offset)
+        const params = new URLSearchParams();
+
+        const q = document.getElementById("{{ form.q.id_for_label }}").value.trim();
+        if (q) params.append("search", q);
+
+        const workflow = document.getElementById("{{ form.workflow.id_for_label }}").value;
+        if (workflow) params.append("workflow", workflow);
+
+        const boolMatch = document.getElementById("{{ form.bool_match.id_for_label }}");
+        if (boolMatch && boolMatch.checked) {
+            params.append("bool_match", "true");
+        }
+
+        return params.toString();
+    }
+
+    function getCacheKey(offset) {
+        const searchKey = getSearchKey();
+        return `${searchKey}|offset:${offset}`;
+    }
+
+    function buildSearchParams(offset) {
+        const params = new URLSearchParams();
+
+        const q = document.getElementById("{{ form.q.id_for_label }}").value.trim();
+        if (q) params.append("search", q);
+
+        const workflow = document.getElementById("{{ form.workflow.id_for_label }}").value;
+        if (workflow) params.append("workflow", workflow);
+
+        const boolMatch = document.getElementById("{{ form.bool_match.id_for_label }}");
+        if (boolMatch && boolMatch.checked) {
+            params.append("bool_match", "true");
+        }
+
+        params.append("limit", limit.toString());
+        params.append("offset", offset.toString());
+
+        return params;
+    }
+
+    function buildURLParams(offset) {
+        const params = new URLSearchParams();
+
+        const q = document.getElementById("{{ form.q.id_for_label }}").value.trim();
+        if (q) params.append("search", q);
+
+        const workflow = document.getElementById("{{ form.workflow.id_for_label }}").value;
+        if (workflow) params.append("workflow", workflow);
+
+        const boolMatch = document.getElementById("{{ form.bool_match.id_for_label }}");
+        if (boolMatch && boolMatch.checked) {
+            params.append("bool_match", "true");
+        }
+
+        // Only include offset in URL if it's not 0
+        if (offset > 0) {
+            params.append("offset", offset.toString());
+        }
+
+        return params;
+    }
+
+    function updateURL(offset = 0) {
+        const params = buildURLParams(offset);
+        const newURL = params.toString() 
+            ? `${window.location.pathname}?${params.toString()}`
+            : window.location.pathname;
+        
+        window.history.pushState({ offset: offset }, "", newURL);
+    }
+
+    function loadFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        const search = urlParams.get("search");
+        if (search) {
+            document.getElementById("{{ form.q.id_for_label }}").value = search;
+        }
+
+        const workflow = urlParams.get("workflow");
+        if (workflow) {
+            document.getElementById("{{ form.workflow.id_for_label }}").value = workflow;
+        }
+
+        const boolMatch = urlParams.get("bool_match");
+        if (boolMatch === "true") {
+            document.getElementById("{{ form.bool_match.id_for_label }}").checked = true;
+        }
+
+        const offset = parseInt(urlParams.get("offset") || "0", 10);
+        return offset;
+    }
+
+    function renderResults(data) {
+        resultsContainer.innerHTML = "";
+
+        if (!data.results || data.results.length === 0) {
+            statusContainer.innerHTML = "<p>No results found.</p>";
+            return;
+        }
+
+        data.results.forEach(result => {
+            const col = document.createElement("div");
+            col.className = "col-3 deedpage-result";
+
+            col.innerHTML = `
+                <div class="box">
+                    ${result.thumbnail_preview ? `<span class="image">${result.thumbnail_preview}</span>` : ""}
+                    <div class="record-link">${result.workflow?.workflow_name ?? ""}</div>
+                    <div class="record-link"><strong>Full record:</strong></div>
+                    <div class="record-link">
+                        ${result.record_link ?? ""}
+                    </div>
+                </div>
+            `;
+
+            resultsContainer.appendChild(col);
+        });
+    }
+
+    function renderPagination(data) {
+        if (!data.previous && !data.next) {
+            paginationContainer.innerHTML = "";
+            return;
+        }
+
+        paginationContainer.innerHTML = `
+            <ul class="pagination">
+                <li>
+                    ${data.previous !== null 
+                        ? `<a href="#" class="button" data-offset="${data.previous}">Previous</a>`
+                        : `<span class="button disabled">Previous</span>`}
+                </li>
+                <li>
+                    ${data.next !== null 
+                        ? `<a href="#" class="button" data-offset="${data.next}">Next</a>`
+                        : `<span class="button disabled">Next</span>`}
+                </li>
+            </ul>
+        `;
+
+        paginationContainer.querySelectorAll("a[data-offset]").forEach(link => {
+            link.addEventListener("click", (e) => {
+                e.preventDefault();
+                performSearch(parseInt(link.dataset.offset));
+            });
+        });
+    }
+
+    async function fetchSearchResults(offset) {
+        const params = buildSearchParams(offset);
+        const response = await fetch(`/api/deeds/search/?${params.toString()}`);
+        const data = await response.json();
+        return data;
+    }
+
+    async function prefetchAdjacentPages(currentOffset, data) {
+        // Prefetch next page if available
+        if (data.next !== null) {
+            const nextCacheKey = getCacheKey(data.next);
+            if (!resultCache.has(nextCacheKey)) {
+                // Prefetch in background without blocking
+                fetchSearchResults(data.next).then(nextData => {
+                    resultCache.set(nextCacheKey, nextData);
+                }).catch(err => {
+                    console.warn("Failed to prefetch next page:", err);
+                });
+            }
+        }
+
+        // Prefetch previous page if available
+        if (data.previous !== null) {
+            const prevCacheKey = getCacheKey(data.previous);
+            if (!resultCache.has(prevCacheKey)) {
+                // Prefetch in background without blocking
+                fetchSearchResults(data.previous).then(prevData => {
+                    resultCache.set(prevCacheKey, prevData);
+                }).catch(err => {
+                    console.warn("Failed to prefetch previous page:", err);
+                });
+            }
+        }
+    }
+
+    async function performSearch(offset = 0) {
+        const cacheKey = getCacheKey(offset);
+        
+        // Check cache first
+        if (resultCache.has(cacheKey)) {
+            const cachedData = resultCache.get(cacheKey);
+            statusContainer.innerHTML = "";
+            renderResults(cachedData);
+            renderPagination(cachedData);
+            updateURL(offset);
+            
+            // Prefetch adjacent pages in background
+            prefetchAdjacentPages(offset, cachedData);
+            return;
+        }
+
+        // Not in cache, fetch from API
+        resultsContainer.innerHTML = "";
+        statusContainer.innerHTML = "<p>Searching…</p>";
+        paginationContainer.innerHTML = "";
+        updateURL(offset);
+
+        try {
+            const data = await fetchSearchResults(offset);
+            
+            // Store in cache
+            resultCache.set(cacheKey, data);
+
+            statusContainer.innerHTML = "";
+            renderResults(data);
+            renderPagination(data);
+
+            // Prefetch adjacent pages in background
+            prefetchAdjacentPages(offset, data);
+
+        } catch (err) {
+            console.error(err);
+            statusContainer.innerHTML = "<p class='error'>Search failed.</p>";
+        }
+    }
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        // Clear cache when starting a new search
+        resultCache.clear();
+        await performSearch(0);
+    });
+
+    // Handle browser back/forward buttons
+    window.addEventListener("popstate", function (e) {
+        const offset = loadFromURL();
+        performSearch(offset);
+    });
+
+    // Load from URL on page load
+    const initialOffset = loadFromURL();
+    const urlParams = new URLSearchParams(window.location.search);
+    // Only auto-search if there are search parameters in the URL
+    if (urlParams.has("search") || urlParams.has("workflow") || urlParams.has("bool_match")) {
+        performSearch(initialOffset);
+    }
+})();
+</script>
+
+{% endblock %}

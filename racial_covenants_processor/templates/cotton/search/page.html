@@ -1,0 +1,227 @@
+<c-layouts.base>
+<style>
+  .deedpage-result .box {
+    height: 100%;
+  }
+</style>
+
+<div class="stack gap-m">
+  <header>
+    <h1 class="h3">DeedPage search</h1>
+  </header>
+
+  <c-search.form :form="form" />
+
+  <hr>
+
+  <div id="search-status"></div>
+
+  <div class="box">
+    <div id="search-results" class="grid-l gap-m"></div>
+  </div>
+
+  <div id="pagination-container">
+    <c-search.pagination />
+  </div>
+</div>
+
+<script>
+(function () {
+  const form = document.getElementById("deed-search-form");
+  const resultsContainer = document.getElementById("search-results");
+  const statusContainer = document.getElementById("search-status");
+  const paginationSummary = document.getElementById("pagination-summary");
+  const paginationControls = document.getElementById("pagination-controls");
+  const limit = 24;
+  const resultCache = new Map();
+
+  function getFieldValues() {
+    const q = document.getElementById("{{ form.q.id_for_label }}").value.trim();
+    const workflow = document.getElementById("{{ form.workflow.id_for_label }}").value;
+    const boolMatchField = document.getElementById("{{ form.bool_match.id_for_label }}");
+    const boolMatch = Boolean(boolMatchField && boolMatchField.checked);
+    return { q, workflow, boolMatch };
+  }
+
+  function buildBaseParams() {
+    const params = new URLSearchParams();
+    const { q, workflow, boolMatch } = getFieldValues();
+    if (q) params.append("search", q);
+    if (workflow) params.append("workflow", workflow);
+    if (boolMatch) params.append("bool_match", "true");
+    return params;
+  }
+
+  function getCacheKey(offset) {
+    const params = buildBaseParams();
+    params.append("offset", offset.toString());
+    return params.toString();
+  }
+
+  function buildSearchParams(offset) {
+    const params = buildBaseParams();
+    params.append("limit", limit.toString());
+    params.append("offset", offset.toString());
+    return params;
+  }
+
+  function updateURL(offset) {
+    const params = buildBaseParams();
+    if (offset > 0) {
+      params.append("offset", offset.toString());
+    }
+    const nextUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+    window.history.pushState({ offset: offset }, "", nextUrl);
+  }
+
+  function loadFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    document.getElementById("{{ form.q.id_for_label }}").value = urlParams.get("search") || "";
+    document.getElementById("{{ form.workflow.id_for_label }}").value = urlParams.get("workflow") || "";
+    document.getElementById("{{ form.bool_match.id_for_label }}").checked = urlParams.get("bool_match") === "true";
+    return Number.parseInt(urlParams.get("offset") || "0", 10) || 0;
+  }
+
+  function renderResults(data) {
+    resultsContainer.innerHTML = "";
+    if (!data.results || data.results.length === 0) {
+      statusContainer.innerHTML = "<p>No results found.</p>";
+      return;
+    }
+
+    data.results.forEach((result) => {
+      const item = document.createElement("div");
+      item.className = "item-fourth deedpage-result";
+      item.innerHTML = `
+        <div class="box">
+          ${result.thumbnail_preview ? `<span class="image">${result.thumbnail_preview}</span>` : ""}
+          <div class="record-link">${result.workflow?.workflow_name ?? ""}</div>
+          <div class="record-link"><strong>Full record:</strong></div>
+          <div class="record-link">${result.record_link ?? ""}</div>
+        </div>
+      `;
+      resultsContainer.appendChild(item);
+    });
+  }
+
+  function pageNumber(offset) {
+    return Math.floor(offset / limit) + 1;
+  }
+
+  function renderPagination(data) {
+    const totalPages = Math.max(1, Math.ceil((data.count || 0) / limit));
+    const currentPage = pageNumber(data.offset || 0);
+
+    paginationSummary.innerHTML = data.count
+      ? `<h3>Results: Page ${currentPage.toLocaleString()} of ${totalPages.toLocaleString()}</h3>`
+      : "";
+
+    if (data.previous === null && data.next === null) {
+      paginationControls.innerHTML = "";
+      return;
+    }
+
+    paginationControls.innerHTML = `
+      <li>
+        ${data.previous !== null
+          ? `<a href="#" class="button" data-offset="${data.previous}">Previous</a>`
+          : `<span class="button disabled">Previous</span>`}
+      </li>
+      <li>
+        ${data.next !== null
+          ? `<a href="#" class="button" data-offset="${data.next}">Next</a>`
+          : `<span class="button disabled">Next</span>`}
+      </li>
+    `;
+
+    paginationControls.querySelectorAll("a[data-offset]").forEach((link) => {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+        performSearch(Number.parseInt(link.dataset.offset, 10) || 0);
+      });
+    });
+  }
+
+  async function fetchSearchResults(offset) {
+    const response = await fetch(`/api/deeds/search/?${buildSearchParams(offset).toString()}`);
+    if (!response.ok) {
+      throw new Error("Search request failed");
+    }
+    return response.json();
+  }
+
+  function prefetchAdjacentPages(data) {
+    [data.previous, data.next].forEach((adjacentOffset) => {
+      if (adjacentOffset === null) {
+        return;
+      }
+      const cacheKey = getCacheKey(adjacentOffset);
+      if (resultCache.has(cacheKey)) {
+        return;
+      }
+      fetchSearchResults(adjacentOffset)
+        .then((adjacentData) => {
+          resultCache.set(cacheKey, adjacentData);
+        })
+        .catch(() => {
+          // Ignore prefetch failures to keep navigation responsive.
+        });
+    });
+  }
+
+  async function performSearch(offset) {
+    const cacheKey = getCacheKey(offset);
+    updateURL(offset);
+
+    if (resultCache.has(cacheKey)) {
+      const cachedData = resultCache.get(cacheKey);
+      statusContainer.innerHTML = "";
+      renderResults(cachedData);
+      renderPagination(cachedData);
+      prefetchAdjacentPages(cachedData);
+      return;
+    }
+
+    resultsContainer.innerHTML = "";
+    paginationSummary.innerHTML = "";
+    paginationControls.innerHTML = "";
+    statusContainer.innerHTML = "<p>Searching...</p>";
+
+    try {
+      const data = await fetchSearchResults(offset);
+      resultCache.set(cacheKey, data);
+      statusContainer.innerHTML = "";
+      renderResults(data);
+      renderPagination(data);
+      prefetchAdjacentPages(data);
+    } catch (error) {
+      console.error(error);
+      statusContainer.innerHTML = "<p class='error'>Search failed.</p>";
+    }
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    resultCache.clear();
+    performSearch(0);
+  });
+
+  window.addEventListener("popstate", function () {
+    const offset = loadFromURL();
+    performSearch(offset);
+  });
+
+  const initialOffset = loadFromURL();
+  const initialParams = new URLSearchParams(window.location.search);
+  if (
+    initialParams.has("search") ||
+    initialParams.has("workflow") ||
+    initialParams.has("bool_match")
+  ) {
+    performSearch(initialOffset);
+  }
+})();
+</script>
+</c-layouts.base>
