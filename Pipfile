@@ -45,6 +45,7 @@ typing-extensions = "*"
 django-libsass = "*"
 django-cotton = "*"
 django-elasticsearch-dsl = "*"
+elasticsearch_dsl = "*"
 
 [dev-packages]
 csvkit = "*"
