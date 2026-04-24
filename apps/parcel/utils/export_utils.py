@@ -22,7 +22,7 @@ EXPORT_FIELDS_ORDERED = [
     'main_image',
     'deed_year',
     'deed_date',
-    'exec_date',
+    # 'exec_date',
     'cov_text',
     'seller',
     'buyer',
@@ -200,13 +200,13 @@ def build_gdf(workflow):
     # Currently blank fields in existing workflows
     covenants_df[[
         # 'doc_num',
-        'exec_date',
+        # 'exec_date',
         'geocd_addr',
         'geocd_dist',
     ]] = ''
 
     # Convert datetime fields to true date
-    date_fields = ['exec_date', 'deed_date']
+    date_fields = ['deed_date']
     # print(covenants_df[date_fields])
     covenants_df[date_fields] = covenants_df[date_fields].apply(lambda x: pd.to_datetime(x,errors = 'coerce', format = '%Y-%m-%d'))
 
