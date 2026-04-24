@@ -10,17 +10,21 @@
     <h1 class="h3">DeedPage search</h1>
   </header>
 
+  <!-- Search controls live in a shared cotton component. -->
   <c-search.form :form="form" />
 
   <hr>
 
+  <!-- Async status + errors are rendered here so form/results stay stable. -->
   <div id="search-status"></div>
 
   <div class="box">
+    <!-- Result cards are injected client-side by renderResults(). -->
     <div id="search-results" class="grid-l gap-m"></div>
   </div>
 
   <div id="pagination-container">
+    <!-- Server-rendered shell; controls are updated in-place by JS. -->
     <c-search.pagination />
   </div>
 </div>
@@ -34,42 +38,36 @@
   const paginationControls = document.getElementById("pagination-controls");
   const limit = 24;
   const resultCache = new Map();
+  const SEARCHING_MESSAGE = "<p>Searching...</p>";
+  const EMPTY_RESULTS_MESSAGE = "<p>No results found.</p>";
+  const FAILED_SEARCH_MESSAGE = "<p class='error'>Search failed.</p>";
 
-  function getFieldValues() {
-    const q = document.getElementById("{{ form.q.id_for_label }}").value.trim();
-    const workflow = document.getElementById("{{ form.workflow.id_for_label }}").value;
-    const boolMatchField = document.getElementById("{{ form.bool_match.id_for_label }}");
-    const boolMatch = Boolean(boolMatchField && boolMatchField.checked);
+  // Keep all user-facing request state derived from the form in one place.
+  function getSearchState() {
+    const formData = new FormData(form);
+    const q = (formData.get("q") || "").toString().trim();
+    const workflow = (formData.get("workflow") || "").toString();
+    const boolMatch = formData.get("bool_match") !== null;
     return { q, workflow, boolMatch };
   }
 
-  function buildBaseParams() {
+  function buildQueryParams(offset = null, includeLimit = false) {
     const params = new URLSearchParams();
-    const { q, workflow, boolMatch } = getFieldValues();
+    const { q, workflow, boolMatch } = getSearchState();
     if (q) params.append("search", q);
     if (workflow) params.append("workflow", workflow);
     if (boolMatch) params.append("bool_match", "true");
+    if (includeLimit) params.append("limit", limit.toString());
+    if (offset !== null) params.append("offset", offset.toString());
     return params;
   }
 
   function getCacheKey(offset) {
-    const params = buildBaseParams();
-    params.append("offset", offset.toString());
-    return params.toString();
-  }
-
-  function buildSearchParams(offset) {
-    const params = buildBaseParams();
-    params.append("limit", limit.toString());
-    params.append("offset", offset.toString());
-    return params;
+    return buildQueryParams(offset).toString();
   }
 
   function updateURL(offset) {
-    const params = buildBaseParams();
-    if (offset > 0) {
-      params.append("offset", offset.toString());
-    }
+    const params = buildQueryParams(offset > 0 ? offset : null);
     const nextUrl = params.toString()
       ? `${window.location.pathname}?${params.toString()}`
       : window.location.pathname;
@@ -87,7 +85,7 @@
   function renderResults(data) {
     resultsContainer.innerHTML = "";
     if (!data.results || data.results.length === 0) {
-      statusContainer.innerHTML = "<p>No results found.</p>";
+      statusContainer.innerHTML = EMPTY_RESULTS_MESSAGE;
       return;
     }
 
@@ -124,16 +122,8 @@
     }
 
     paginationControls.innerHTML = `
-      <li>
-        ${data.previous !== null
-          ? `<a href="#" class="button" data-offset="${data.previous}">Previous</a>`
-          : `<span class="button disabled">Previous</span>`}
-      </li>
-      <li>
-        ${data.next !== null
-          ? `<a href="#" class="button" data-offset="${data.next}">Next</a>`
-          : `<span class="button disabled">Next</span>`}
-      </li>
+      ${buildPaginationItem("Previous", data.previous)}
+      ${buildPaginationItem("Next", data.next)}
     `;
 
     paginationControls.querySelectorAll("a[data-offset]").forEach((link) => {
@@ -145,11 +135,35 @@
   }
 
   async function fetchSearchResults(offset) {
-    const response = await fetch(`/api/deeds/search/?${buildSearchParams(offset).toString()}`);
+    const response = await fetch(`/api/deeds/search/?${buildQueryParams(offset, true).toString()}`);
     if (!response.ok) {
       throw new Error("Search request failed");
     }
     return response.json();
+  }
+
+  function buildPaginationItem(label, offset) {
+    return `
+      <li>
+        ${offset !== null
+          ? `<a href="#" class="button" data-offset="${offset}">${label}</a>`
+          : `<span class="button disabled">${label}</span>`}
+      </li>
+    `;
+  }
+
+  function clearSearchUI() {
+    resultsContainer.innerHTML = "";
+    paginationSummary.innerHTML = "";
+    paginationControls.innerHTML = "";
+  }
+
+  // Shared render path so cached and fresh responses stay visually identical.
+  function renderSearchResponse(data) {
+    statusContainer.innerHTML = "";
+    renderResults(data);
+    renderPagination(data);
+    prefetchAdjacentPages(data);
   }
 
   function prefetchAdjacentPages(data) {
@@ -176,29 +190,20 @@
     updateURL(offset);
 
     if (resultCache.has(cacheKey)) {
-      const cachedData = resultCache.get(cacheKey);
-      statusContainer.innerHTML = "";
-      renderResults(cachedData);
-      renderPagination(cachedData);
-      prefetchAdjacentPages(cachedData);
+      renderSearchResponse(resultCache.get(cacheKey));
       return;
     }
 
-    resultsContainer.innerHTML = "";
-    paginationSummary.innerHTML = "";
-    paginationControls.innerHTML = "";
-    statusContainer.innerHTML = "<p>Searching...</p>";
+    clearSearchUI();
+    statusContainer.innerHTML = SEARCHING_MESSAGE;
 
     try {
       const data = await fetchSearchResults(offset);
       resultCache.set(cacheKey, data);
-      statusContainer.innerHTML = "";
-      renderResults(data);
-      renderPagination(data);
-      prefetchAdjacentPages(data);
+      renderSearchResponse(data);
     } catch (error) {
       console.error(error);
-      statusContainer.innerHTML = "<p class='error'>Search failed.</p>";
+      statusContainer.innerHTML = FAILED_SEARCH_MESSAGE;
     }
   }
 
