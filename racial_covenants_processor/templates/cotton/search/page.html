@@ -1,0 +1,232 @@
+<c-layouts.base>
+<style>
+  .deedpage-result .box {
+    height: 100%;
+  }
+</style>
+
+<div class="stack gap-m">
+  <header>
+    <h1 class="h3">DeedPage search</h1>
+  </header>
+
+  <!-- Search controls live in a shared cotton component. -->
+  <c-search.form :form="form" />
+
+  <hr>
+
+  <!-- Async status + errors are rendered here so form/results stay stable. -->
+  <div id="search-status"></div>
+
+  <div class="box">
+    <!-- Result cards are injected client-side by renderResults(). -->
+    <div id="search-results" class="grid-l gap-m"></div>
+  </div>
+
+  <div id="pagination-container">
+    <!-- Server-rendered shell; controls are updated in-place by JS. -->
+    <c-search.pagination />
+  </div>
+</div>
+
+<script>
+(function () {
+  const form = document.getElementById("deed-search-form");
+  const resultsContainer = document.getElementById("search-results");
+  const statusContainer = document.getElementById("search-status");
+  const paginationSummary = document.getElementById("pagination-summary");
+  const paginationControls = document.getElementById("pagination-controls");
+  const limit = 24;
+  const resultCache = new Map();
+  const SEARCHING_MESSAGE = "<p>Searching...</p>";
+  const EMPTY_RESULTS_MESSAGE = "<p>No results found.</p>";
+  const FAILED_SEARCH_MESSAGE = "<p class='error'>Search failed.</p>";
+
+  // Keep all user-facing request state derived from the form in one place.
+  function getSearchState() {
+    const formData = new FormData(form);
+    const q = (formData.get("q") || "").toString().trim();
+    const workflow = (formData.get("workflow") || "").toString();
+    const boolMatch = formData.get("bool_match") !== null;
+    return { q, workflow, boolMatch };
+  }
+
+  function buildQueryParams(offset = null, includeLimit = false) {
+    const params = new URLSearchParams();
+    const { q, workflow, boolMatch } = getSearchState();
+    if (q) params.append("search", q);
+    if (workflow) params.append("workflow", workflow);
+    if (boolMatch) params.append("bool_match", "true");
+    if (includeLimit) params.append("limit", limit.toString());
+    if (offset !== null) params.append("offset", offset.toString());
+    return params;
+  }
+
+  function getCacheKey(offset) {
+    return buildQueryParams(offset).toString();
+  }
+
+  function updateURL(offset) {
+    const params = buildQueryParams(offset > 0 ? offset : null);
+    const nextUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+    window.history.pushState({ offset: offset }, "", nextUrl);
+  }
+
+  function loadFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    document.getElementById("{{ form.q.id_for_label }}").value = urlParams.get("search") || "";
+    document.getElementById("{{ form.workflow.id_for_label }}").value = urlParams.get("workflow") || "";
+    document.getElementById("{{ form.bool_match.id_for_label }}").checked = urlParams.get("bool_match") === "true";
+    return Number.parseInt(urlParams.get("offset") || "0", 10) || 0;
+  }
+
+  function renderResults(data) {
+    resultsContainer.innerHTML = "";
+    if (!data.results || data.results.length === 0) {
+      statusContainer.innerHTML = EMPTY_RESULTS_MESSAGE;
+      return;
+    }
+
+    data.results.forEach((result) => {
+      const item = document.createElement("div");
+      item.className = "item-fourth deedpage-result";
+      item.innerHTML = `
+        <div class="box">
+          ${result.thumbnail_preview ? `<span class="image">${result.thumbnail_preview}</span>` : ""}
+          <div class="record-link">${result.workflow?.workflow_name ?? ""}</div>
+          <div class="record-link"><strong>Full record:</strong></div>
+          <div class="record-link">${result.record_link ?? ""}</div>
+        </div>
+      `;
+      resultsContainer.appendChild(item);
+    });
+  }
+
+  function pageNumber(offset) {
+    return Math.floor(offset / limit) + 1;
+  }
+
+  function renderPagination(data) {
+    const totalPages = Math.max(1, Math.ceil((data.count || 0) / limit));
+    const currentPage = pageNumber(data.offset || 0);
+
+    paginationSummary.innerHTML = data.count
+      ? `<h3>Results: Page ${currentPage.toLocaleString()} of ${totalPages.toLocaleString()}</h3>`
+      : "";
+
+    if (data.previous === null && data.next === null) {
+      paginationControls.innerHTML = "";
+      return;
+    }
+
+    paginationControls.innerHTML = `
+      ${buildPaginationItem("Previous", data.previous)}
+      ${buildPaginationItem("Next", data.next)}
+    `;
+
+    paginationControls.querySelectorAll("a[data-offset]").forEach((link) => {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+        performSearch(Number.parseInt(link.dataset.offset, 10) || 0);
+      });
+    });
+  }
+
+  async function fetchSearchResults(offset) {
+    const response = await fetch(`/api/deeds/search/?${buildQueryParams(offset, true).toString()}`);
+    if (!response.ok) {
+      throw new Error("Search request failed");
+    }
+    return response.json();
+  }
+
+  function buildPaginationItem(label, offset) {
+    return `
+      <li>
+        ${offset !== null
+          ? `<a href="#" class="button" data-offset="${offset}">${label}</a>`
+          : `<span class="button disabled">${label}</span>`}
+      </li>
+    `;
+  }
+
+  function clearSearchUI() {
+    resultsContainer.innerHTML = "";
+    paginationSummary.innerHTML = "";
+    paginationControls.innerHTML = "";
+  }
+
+  // Shared render path so cached and fresh responses stay visually identical.
+  function renderSearchResponse(data) {
+    statusContainer.innerHTML = "";
+    renderResults(data);
+    renderPagination(data);
+    prefetchAdjacentPages(data);
+  }
+
+  function prefetchAdjacentPages(data) {
+    [data.previous, data.next].forEach((adjacentOffset) => {
+      if (adjacentOffset === null) {
+        return;
+      }
+      const cacheKey = getCacheKey(adjacentOffset);
+      if (resultCache.has(cacheKey)) {
+        return;
+      }
+      fetchSearchResults(adjacentOffset)
+        .then((adjacentData) => {
+          resultCache.set(cacheKey, adjacentData);
+        })
+        .catch(() => {
+          // Ignore prefetch failures to keep navigation responsive.
+        });
+    });
+  }
+
+  async function performSearch(offset) {
+    const cacheKey = getCacheKey(offset);
+    updateURL(offset);
+
+    if (resultCache.has(cacheKey)) {
+      renderSearchResponse(resultCache.get(cacheKey));
+      return;
+    }
+
+    clearSearchUI();
+    statusContainer.innerHTML = SEARCHING_MESSAGE;
+
+    try {
+      const data = await fetchSearchResults(offset);
+      resultCache.set(cacheKey, data);
+      renderSearchResponse(data);
+    } catch (error) {
+      console.error(error);
+      statusContainer.innerHTML = FAILED_SEARCH_MESSAGE;
+    }
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    resultCache.clear();
+    performSearch(0);
+  });
+
+  window.addEventListener("popstate", function () {
+    const offset = loadFromURL();
+    performSearch(offset);
+  });
+
+  const initialOffset = loadFromURL();
+  const initialParams = new URLSearchParams(window.location.search);
+  if (
+    initialParams.has("search") ||
+    initialParams.has("workflow") ||
+    initialParams.has("bool_match")
+  ) {
+    performSearch(initialOffset);
+  }
+})();
+</script>
+</c-layouts.base>
