@@ -1,7 +1,7 @@
 import copy
 from abc import abstractmethod
 
-from elasticsearch_dsl import Document, Q
+from elasticsearch.dsl import Document, Q
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
