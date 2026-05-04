@@ -25,7 +25,7 @@
     <div class="box alt">
         <div class="row gtr-50 gtr-uniform">
         {% for result in page_obj.object_list %}
-          <c-result :result="result" /> 
+          <c-search.result :result="result" />
         {% empty %}
             <p>No results found.</p>
         {% endfor %}
