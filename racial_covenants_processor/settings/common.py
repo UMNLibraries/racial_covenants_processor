@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_gis",
     "django_filters",
+    "django_tasks_db",
     "django_cotton",
     # 'django_extensions',
     # 'debug_toolbar'
@@ -231,9 +232,7 @@ CACHES = {
 }
 
 TASKS = {
-    "default": {
-        "BACKEND": "django.tasks.backends.immediate.ImmediateBackend",
-    }
+    "default": {"BACKEND": "django_tasks_db.DatabaseBackend", "QUEUES": ["default"]}
 }
 
 REST_FRAMEWORK = {
@@ -253,6 +252,6 @@ AWS_SECRET_ACCESS_KEY = ""
 AWS_S3_REGION_NAME = "us-east-2"
 
 try:
-    from .local_settings import *
+    from .local_settings_ca import *
 except:
     pass

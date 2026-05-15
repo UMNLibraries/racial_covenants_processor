@@ -44,6 +44,7 @@ django-compressor = "*"
 typing-extensions = "*"
 django-libsass = "*"
 django-cotton = "*"
+django-tasks-db = "*"
 
 [dev-packages]
 csvkit = "*"
