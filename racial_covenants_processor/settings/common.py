@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_gis",
     "django_filters",
+    "django_tasks_db",
     "django_cotton",
     # 'django_extensions',
     # 'debug_toolbar'
@@ -228,6 +229,10 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         # "LOCATION": "unique-snowflake",
     }
+}
+
+TASKS = {
+    "default": {"BACKEND": "django_tasks_db.DatabaseBackend", "QUEUES": ["default"]}
 }
 
 REST_FRAMEWORK = {
