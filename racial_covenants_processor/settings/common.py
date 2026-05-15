@@ -252,6 +252,6 @@ AWS_SECRET_ACCESS_KEY = ""
 AWS_S3_REGION_NAME = "us-east-2"
 
 try:
-    from .local_settings_ca import *
+    from .local_settings import *
 except:
     pass
