@@ -682,3 +682,12 @@ class CovenantedParcel(models.Model):
     subd_dbid = models.IntegerField(null=True)
 
     geom_4326 = models.MultiPolygonField(srid=4326)
+
+
+@receiver(models.signals.post_save, sender=CovenantedParcel,
+          dispatch_uid="covenanted_parcel_pmtiles_export")
+def enqueue_pmtiles_export(sender, instance, **kwargs):
+    if instance.workflow_id is None:
+        return
+    from apps.parcel.tasks import generate_pmtiles_export
+    generate_pmtiles_export.enqueue(instance.workflow_id)
