@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     "django_filters",
     "django_cotton",
     # 'django_extensions',
-    # 'debug_toolbar'
+    # 'debug_toolbar',
+    'django_elasticsearch_dsl',
 ]
 
 MIDDLEWARE = [
@@ -73,6 +74,32 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+_elasticsearch_default = {
+    "hosts": [os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")],
+}
+_elasticsearch_password = os.environ.get("ELASTICSEARCH_PASSWORD")
+if _elasticsearch_password:
+    _elasticsearch_default["basic_auth"] = ("elastic", _elasticsearch_password)
+
+ELASTICSEARCH_DSL = {"default": _elasticsearch_default}
+ELASTICSEARCH_DSL_INDEX_SETTINGS = {}
+ELASTICSEARCH_DSL_PARALLEL = False
+
+# Password set → local ES stack configured: real-time indexing. Unset → CI, tests, or
+# deployment without ES secrets: no signal-driven ES calls (use DB / management commands).
+if _elasticsearch_password:
+    ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
+        "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
+    )
+    ELASTICSEARCH_DSL_AUTOSYNC = True
+    ELASTICSEARCH_DSL_AUTO_REFRESH = True
+else:
+    ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
+        "django_elasticsearch_dsl.signals.BaseSignalProcessor"
+    )
+    ELASTICSEARCH_DSL_AUTOSYNC = False
+    ELASTICSEARCH_DSL_AUTO_REFRESH = False
 
 ROOT_URLCONF = "racial_covenants_processor.urls"
 
