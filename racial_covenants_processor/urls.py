@@ -23,7 +23,7 @@ from apps.zoon import views
 from apps.zoon.serializers import SubjectNoGeoViewSet, SubjectGeoViewSet
 from apps.parcel.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet, ShpExportViewSet, GeoJSONExportViewSet, CSVExportViewSet
 
-from apps.deed.views import DeedPageViewSet
+from apps.deed.views import DeedPageViewSet, DeedSearchView
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
@@ -53,6 +53,8 @@ urlpatterns = [
 
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls')),
+    # TODO: delete this once we have transitioned to elasticsearch
+    path('deed_search/', DeedSearchView.as_view(), name='deed_search_view'),
     # path('search/', include('haystack.urls')),
 
     # path('__debug__/', include('debug_toolbar.urls')),
