@@ -184,3 +184,14 @@ class DeedPageViewSet(PaginatedElasticSearchAPIView):
             return query
         
         return Q("match_all")
+
+# TODO: delete this once we have transitioned to elasticsearch
+class DeedSearchView(SearchView):
+    template_name = 'search/search.html'
+    # queryset = SearchQuerySet().all()
+    form_class = DeedSearchForm
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['all_workflows'] = ZooniverseWorkflow.objects.all()
+        return data
