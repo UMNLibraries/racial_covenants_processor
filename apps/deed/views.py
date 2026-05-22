@@ -7,8 +7,13 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from django.shortcuts import render
+from django import forms
 from django.db.models import Case, When
+
+from haystack.generic_views import SearchView
+from haystack.forms import SearchForm
+
+from apps.zoon.models import ZooniverseWorkflow
 
 from .documents import DeedPageDocument
 from .serializers import DeedPageSerializer
@@ -185,7 +190,31 @@ class DeedPageViewSet(PaginatedElasticSearchAPIView):
         
         return Q("match_all")
 
+
 # TODO: delete this once we have transitioned to elasticsearch
+class DeedSearchForm(SearchForm):
+    bool_match = forms.BooleanField(required=False)
+    workflow = forms.ModelChoiceField(
+        queryset=ZooniverseWorkflow.objects.all(),
+        to_field_name="workflow_name",
+        required=False,
+    )
+
+    def search(self):
+        sqs = super().search()
+
+        if not self.is_valid():
+            return self.no_query_found()
+
+        if self.cleaned_data["workflow"]:
+            sqs = sqs.filter(workflow=self.cleaned_data["workflow"])
+
+        if self.cleaned_data["bool_match"]:
+            sqs = sqs.filter(bool_match=self.cleaned_data["bool_match"])
+
+        return sqs
+
+
 class DeedSearchView(SearchView):
     template_name = 'search/search.html'
     # queryset = SearchQuerySet().all()
