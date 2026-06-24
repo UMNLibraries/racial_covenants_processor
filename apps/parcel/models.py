@@ -659,7 +659,7 @@ class CovenantedParcel(models.Model):
     zip_code = models.CharField(max_length=25, null=True)
     add_cov = models.CharField(max_length=1200, null=True)
     block_cov = models.CharField(max_length=503, null=True)
-    lot_cov = models.CharField(max_length=1200, null=True)
+    lot_cov = models.TextField(null=True)
     map_book = models.CharField(max_length=255, null=True)
     map_page = models.CharField(max_length=255, null=True)
     cnty_pin = models.CharField(max_length=50, null=True)
