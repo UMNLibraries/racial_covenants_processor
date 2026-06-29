@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     "django_cotton",
     # 'django_extensions',
     # 'debug_toolbar',
-    'django_elasticsearch_dsl',
+    'django_opensearch_dsl',
 ]
 
 MIDDLEWARE = [
@@ -75,31 +75,34 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-_elasticsearch_default = {
-    "hosts": [os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")],
+_opensearch_default = {
+    "hosts": [os.environ.get("OPENSEARCH_URL", "http://localhost:9200")],
 }
-_elasticsearch_password = os.environ.get("ELASTICSEARCH_PASSWORD")
-if _elasticsearch_password:
-    _elasticsearch_default["basic_auth"] = ("elastic", _elasticsearch_password)
-
-ELASTICSEARCH_DSL = {"default": _elasticsearch_default}
-ELASTICSEARCH_DSL_INDEX_SETTINGS = {}
-ELASTICSEARCH_DSL_PARALLEL = False
-
-# Password set → local ES stack configured: real-time indexing. Unset → CI, tests, or
-# deployment without ES secrets: no signal-driven ES calls (use DB / management commands).
-if _elasticsearch_password:
-    ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
-        "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
+_opensearch_password = os.environ.get("OPENSEARCH_PASSWORD")
+if _opensearch_password:
+    # AWS OpenSearch fine-grained-access internal master user (or a local
+    # container's admin user). Username defaults to "admin"; override per env.
+    _opensearch_default["http_auth"] = (
+        os.environ.get("OPENSEARCH_USERNAME", "admin"),
+        _opensearch_password,
     )
-    ELASTICSEARCH_DSL_AUTOSYNC = True
-    ELASTICSEARCH_DSL_AUTO_REFRESH = True
+
+OPENSEARCH_DSL = {"default": _opensearch_default}
+OPENSEARCH_DSL_INDEX_SETTINGS = {}
+OPENSEARCH_DSL_PARALLEL = False
+
+# Password set → OpenSearch configured: real-time indexing. Unset → CI, tests, or
+# deployment without OpenSearch secrets: signal receivers are still wired but no-op,
+# because OPENSEARCH_DSL_AUTOSYNC=False makes registry update/delete early-return.
+# NOTE: do NOT point OPENSEARCH_DSL_SIGNAL_PROCESSOR at BaseSignalProcessor — it is
+# abstract in django-opensearch-dsl and cannot be instantiated (TypeError at boot).
+# Leave the default (RealTimeSignalProcessor) and gate behavior with AUTOSYNC.
+if _opensearch_password:
+    OPENSEARCH_DSL_AUTOSYNC = True
+    OPENSEARCH_DSL_AUTO_REFRESH = True
 else:
-    ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
-        "django_elasticsearch_dsl.signals.BaseSignalProcessor"
-    )
-    ELASTICSEARCH_DSL_AUTOSYNC = False
-    ELASTICSEARCH_DSL_AUTO_REFRESH = False
+    OPENSEARCH_DSL_AUTOSYNC = False
+    OPENSEARCH_DSL_AUTO_REFRESH = False
 
 ROOT_URLCONF = "racial_covenants_processor.urls"
 
