@@ -64,34 +64,25 @@ The psql command will vary slightly with different OSes. For Mac:
 
     python manage.py createsuperuser
 
-7. For search to work properly, you will need to set up Elasticsearch locally in a Docker container. With Docker Desktop running, run the following command to start the Elasticsearch container:
+7. For search to work, run a local OpenSearch instance in Docker. With Docker Desktop running:
 
 .. code-block:: bash
 
-    curl -fsSL https://elastic.co/start-local | sh
+    docker run -d --name opensearch-dev \
+        -p 9200:9200 -p 9600:9600 \
+        -e "discovery.type=single-node" \
+        -e "DISABLE_SECURITY_PLUGIN=true" \
+        opensearchproject/opensearch:2
 
-The Elasticsearch API endpoint will be available at `http://127.0.0.1:9200/<http://127.0.0.1:9200/>`__ and the Kibana dashboard will be available at `http://127.0.0.1:5601/<http://127.0.0.1:5601/>`__.
+The OpenSearch API endpoint will be available at `http://127.0.0.1:9200/<http://127.0.0.1:9200/>`__. The ``DISABLE_SECURITY_PLUGIN`` flag keeps local setup simple by serving plain HTTP with no authentication; production uses an Amazon OpenSearch Service domain with fine-grained access control.
 
-8. Note the Elasticsearch authentication credentials in your terminal. They should look something like:
-
-.. code-block:: bash
-    🎉 Congrats, Elasticsearch and Kibana are installed and running in Docker!
-
-    🌐 Open your browser at http://localhost:5601
-
-    Username: elastic
-    Password: <password>
-
-    🔌 Elasticsearch API endpoint: http://localhost:9200
-    🔑 API key: <api_key>
-
-Create a new .env file in the root directory (i.e. outside of `racial_covenants_processor/` and next to the Pipfile):
+8. Create a new .env file in the root directory (i.e. outside of `racial_covenants_processor/` and next to the Pipfile):
 
 .. code-block:: bash
 
     cp .env.example .env
 
-Populate `ELASTICSEARCH_PASSWORD` and `ELASTICSEARCH_API_KEY` in the .env file using the credentials from the terminal output. Note: you may need to kill and restart your pipenv shell for the new environment variables to be available:
+Set ``OPENSEARCH_URL=http://localhost:9200`` in the .env file. For the local no-auth container above you can leave ``OPENSEARCH_PASSWORD`` blank; setting it (to any value locally, or the master-user password for an Amazon OpenSearch domain) is what enables real-time indexing on save. When it is unset, the index is populated only via the management commands in step 10. You may need to kill and restart your pipenv shell for the new environment variables to be available:
 
 .. code-block:: bash
 
@@ -106,8 +97,11 @@ Populate `ELASTICSEARCH_PASSWORD` and `ELASTICSEARCH_API_KEY` in the .env file u
 
 You can view the app at `http://127.0.0.1:8000/<http://127.0.0.1:8000/>`__.
 
-10. Any newly created records will be indexed on save. But, if you want to seed your database with a dump of the deployed database, you will need to run this command to index all those records:
+10. Seed the search index. After loading data (for example a dump of the deployed database), create the index and populate it:
 
 .. code-block:: bash
 
-    python manage.py search_index --rebuild
+    python manage.py opensearch index create
+    python manage.py opensearch document index
+
+``opensearch index rebuild`` deletes and recreates the index mapping but does not re-populate it, so follow it with ``opensearch document index``. Add ``--parallel`` to the document command to speed up bulk indexing of large datasets.
