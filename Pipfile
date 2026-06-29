@@ -44,9 +44,8 @@ django-compressor = "*"
 typing-extensions = "*"
 django-libsass = "*"
 django-cotton = "*"
-django-elasticsearch-dsl = "==8.2"
-elasticsearch-dsl = "==8.18.0"
-elasticsearch = "==8.19.3"
+django-opensearch-dsl = "==0.8.0"
+opensearch-py = ">=2.2.0,<3"
 
 [dev-packages]
 csvkit = "*"
