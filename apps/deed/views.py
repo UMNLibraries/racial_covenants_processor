@@ -1,7 +1,8 @@
 import copy
 from abc import abstractmethod
 
-from elasticsearch.dsl import Document, Q
+from opensearchpy import Q
+from django_opensearch_dsl import Document
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
