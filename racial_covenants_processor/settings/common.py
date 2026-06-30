@@ -77,6 +77,12 @@ MIDDLEWARE = [
 
 _opensearch_default = {
     "hosts": [os.environ.get("OPENSEARCH_URL", "http://localhost:9200")],
+    # Bulk indexing over a network link (e.g. a VPC tunnel) to a single node can
+    # occasionally exceed opensearch-py's 10s default read timeout; raise it and
+    # retry transient timeouts so one slow batch doesn't abort a long index run.
+    "timeout": 60,
+    "max_retries": 5,
+    "retry_on_timeout": True,
 }
 _opensearch_password = os.environ.get("OPENSEARCH_PASSWORD")
 if _opensearch_password:
