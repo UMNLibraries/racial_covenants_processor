@@ -40,8 +40,10 @@ class PaginatedElasticSearchAPIView(ModelViewSet, LimitOffsetPagination):
                 search_terms_list=search_terms, param_filters=params
             )
 
-            search = self.document_class.search().query(query)
-            
+            # track_total_hits=True returns the exact total hit count instead of
+            # OpenSearch's default 10,000 cap, so the paginated "count" is accurate.
+            search = self.document_class.search().query(query).extra(track_total_hits=True)
+
             # Apply filters from param_filters
             bool_match = params.get("bool_match")
             if bool_match == "true":
