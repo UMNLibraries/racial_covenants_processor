@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import geopandas as gpd
 
+from django.db.models import F
+
 from django.contrib.gis.db.models.functions import AsWKT
 
 from apps.parcel.models import Parcel, CovenantedParcel
@@ -185,11 +187,19 @@ def save_flat_covenanted_parcels(parcels):
 
 
 
-def build_gdf(workflow):
+def build_gdf(workflow, exclude_child_workflows=False):
+    # TODO: Child workflow exports
+    child_workflows = workflow.child_export_workflows.all()
+    if child_workflows.count() > 0:
+        workflows = [workflow] + list(child_workflows)
+    else:
+        workflows = [workflow]
+
     joined_covenants = CovenantedParcel.objects.filter(
-        workflow=workflow
+        workflow__in=workflows
     ).annotate(
-        wkt_4326=AsWKT('geom_4326')
+        wkt_4326=AsWKT('geom_4326'),
+        workflow_slug=F('workflow__slug')
     ).values()
 
     covenants_df = pd.DataFrame(joined_covenants)
@@ -212,7 +222,7 @@ def build_gdf(workflow):
 
     covenants_df.rename(columns={
         'id': 'db_id',
-        'workflow_id': 'workflow',
+        'workflow_slug': 'workflow',
         'wkt_4326': 'geometry'
     }, inplace=True)
 
@@ -228,11 +238,18 @@ def build_gdf(workflow):
 
 
 def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
+    # TODO: Child workflow exports
+    child_workflows = workflow.child_export_workflows.all()
+    if child_workflows.count() > 0:
+        workflows = [workflow] + list(child_workflows)
+    else:
+        workflows = [workflow]
+
     unmapped_covenants = ZooniverseSubject.unmapped_objects.filter(
-        workflow=workflow
+        workflow__in=workflows
     ).values(
         'id',
-        'workflow',
+        'workflow__slug',
         'doc_num',
         'deed_date_final',
         'seller_final',
@@ -261,6 +278,7 @@ def build_unmapped_df(workflow, cnty_name=None, cnty_fips=None):
     unmapped_df = pd.DataFrame(unmapped_covenants)
     unmapped_df.rename(columns={
         'deed_date_final': 'deed_date',
+        'workflow__slug': 'workflow',
         'seller_final': 'seller',
         'buyer_final': 'buyer',
         'map_book_final': 'map_book',
