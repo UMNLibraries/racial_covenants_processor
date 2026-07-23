@@ -1,18 +1,18 @@
-import os
 import datetime
+import os
 import tempfile
-import geopandas as gpd
 from zipfile import ZipFile
 
-from django.core.management.base import BaseCommand
-from django.core.files.base import File
+import geopandas as gpd
 from django.conf import settings
+from django.core.files.base import File
+from django.core.management.base import BaseCommand
 
 from apps.parcel.models import ShpExport
 from apps.parcel.utils.export_utils import build_gdf
 from apps.parcel.utils.pmtiles_utils import (
-    build_pmtiles_export,
     save_pmtiles_local,
+    trigger_pmtiles_export,
 )
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
@@ -96,6 +96,14 @@ class Command(BaseCommand):
         else:
             workflow = get_workflow_obj(workflow_name)
 
+            if kwargs["pmtiles"] and not kwargs["local"]:
+                request_id = trigger_pmtiles_export(workflow)
+                if request_id:
+                    print(f"PMTiles bake dispatched to Lambda: {request_id}")
+                else:
+                    print("PMTILES_LAMBDA_NAME is not set, so no bake was dispatched.")
+                return
+
             covenants_geo_df = build_gdf(workflow)
 
             print(covenants_geo_df)
@@ -105,15 +113,10 @@ class Command(BaseCommand):
             version_slug = f"{workflow.slug}_covenants_{timestamp}"
 
             if kwargs["pmtiles"]:
-                # Export to PMTiles format
-                if kwargs["local"]:
-                    pmtiles_path = save_pmtiles_local(covenants_geo_df, version_slug)
-                    print(f"PMTiles saved to: {pmtiles_path}")
-                else:
-                    pmtiles_export_obj = build_pmtiles_export(
-                        workflow, gdf=covenants_geo_df, created_at=now
-                    )
-                    print(f"PMTiles export object created: {pmtiles_export_obj}")
+                pmtiles_path = save_pmtiles_local(
+                    covenants_geo_df, version_slug, workflow.slug
+                )
+                print(f"PMTiles saved to: {pmtiles_path}")
             elif kwargs["local"]:
                 # Export to shapefile locally
                 try:

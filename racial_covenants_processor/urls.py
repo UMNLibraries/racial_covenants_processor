@@ -22,6 +22,7 @@ from django.conf import settings
 from apps.zoon import views
 from apps.zoon.serializers import SubjectNoGeoViewSet, SubjectGeoViewSet
 from apps.parcel.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet, ShpExportViewSet, GeoJSONExportViewSet, CSVExportViewSet
+from apps.parcel.views import PMTilesCallbackView
 
 from apps.deed.views import DeedSearchView
 
@@ -48,6 +49,8 @@ urlpatterns = [
     path('zooniverse-subject-lookup/<int:zoon_subject_id>/', views.zoon_subject_lookup, name='zoon_subject_lookup'),
 
     path('', views.index, name='index'),
+
+    path('api/pmtiles-callback/', PMTilesCallbackView.as_view(), name='pmtiles_callback'),
 
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls')),
