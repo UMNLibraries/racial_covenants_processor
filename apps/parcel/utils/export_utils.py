@@ -183,8 +183,8 @@ def save_flat_covenanted_parcels(parcels):
 
         workflow = parcels.first().workflow
         if workflow is not None:
-            from apps.parcel.tasks import generate_pmtiles_export
-            generate_pmtiles_export.enqueue(workflow.pk)
+            from apps.parcel.utils.pmtiles_utils import trigger_pmtiles_export
+            trigger_pmtiles_export(workflow)
 
         return CovenantedParcel.objects.filter(parcel__pk__in=parcel_pks)
 
