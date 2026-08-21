@@ -44,6 +44,7 @@ class CSVExportSerializer(serializers.ModelSerializer):
 
 
 class CovenantFilter(FilterSet):
+    workflow_list = filters.BaseInFilter(field_name='workflow__id', lookup_expr='in')  # Can be used to get multiple workflows at a time, useful for child workflows
     min_deed_date = filters.IsoDateTimeFilter(field_name="deed_date", lookup_expr='gte')
     # min_exec_date = filters.IsoDateTimeFilter(field_name="exec_date", lookup_expr='gte')
     max_deed_date = filters.IsoDateTimeFilter(field_name="deed_date", lookup_expr='lte')
@@ -52,7 +53,7 @@ class CovenantFilter(FilterSet):
 
     class Meta:
         model = CovenantedParcel
-        fields = ['workflow', 'workflow__workflow_name', 'state']
+        fields = ['workflow', 'workflow__workflow_name', 'workflow_list', 'state']
 
 
 # ViewSets define the view behavior.
