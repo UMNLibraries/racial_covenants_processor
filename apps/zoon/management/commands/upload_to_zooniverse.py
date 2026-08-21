@@ -36,6 +36,9 @@ class Command(BaseCommand):
         parser.add_argument('-n', '--num_subjects', type=int,
                             help='Number of subjects to upload')
 
+        parser.add_argument('-t', '--testing', action='store_true',
+                                    help='Use testing project instead of main project. Requires additional ZOONIVERSE_TESTING_PROJECT_SLUG value in local_settings')
+
     def handle(self, *args, **kwargs):
         workflow_name = kwargs['workflow']
         num_subjects = kwargs['num_subjects']
@@ -51,7 +54,9 @@ class Command(BaseCommand):
             return False
         else:
 
-            zooniverse_project = connect_to_zooniverse()
+            use_testing_project = kwargs['testing']
+
+            zooniverse_project = connect_to_zooniverse(testing=use_testing_project)
             subject_set = get_or_create_subject_set(zooniverse_project, workflow)
 
             existing_subject_ids = get_existing_subjects(subject_set)
