@@ -2,12 +2,13 @@ import os
 import ast
 import json
 import pandas as pd
+from slugify import slugify
 from sqlalchemy import create_engine
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from apps.zoon.utils.zooniverse_config import parse_config_yaml
+from apps.zoon.utils.zooniverse_config import get_workflow_obj, parse_config_yaml
 
 
 class Command(BaseCommand):
@@ -46,16 +47,16 @@ class Command(BaseCommand):
 
         return sorted(joined, key=lambda i: i['votes'], reverse=True)
 
-    def load_questions_reduced(self, batch_dir: str, workflow_slug: str, master_config: dict):
+    def load_questions_reduced(self, batch_dir: str, import_file_slug: str, master_config: dict):
         '''Process reduced responses from the question reducer
         Arguments:
             batch_dir: Path to the export files for this batch
-            workflow_slug: The name of the workflow, lowercase with spaces replaced with hyphens
+            import_file_slug: The slugified root name of csv files from this Zooniverse workflow. This can be set in local_settings, but defaults to workflow.slug
             master_config: Question text and label lookup object
         '''
 
         df = pd.read_csv(os.path.join(
-            batch_dir, f'question_reducer_{workflow_slug}.csv'))
+            batch_dir, f'question_reducer_{import_file_slug}.csv'))
         config_df = pd.DataFrame(master_config)
         print(config_df)
 
@@ -141,18 +142,18 @@ class Command(BaseCommand):
         #     df.to_sql('zoon_reducedresponse_question',
         #             if_exists='append', index=False, con=conn.connection)
 
-    def load_dropdowns_reduced(self, batch_dir: str, workflow_slug: str, master_config: dict):
+    def load_dropdowns_reduced(self, batch_dir: str, import_file_slug: str, master_config: dict):
         '''Process reduced responses from the dropdown reducer. In at least some versions, you need to look up hashes for fields.
         Example: [{'adbad85a7b5ce': 1, '2b3caf88e1ee6': 2}] (In this case, 1 person chose the first, 2 people the second)
 
         Arguments:
             batch_dir: Path to the export files for this batch
-            workflow_slug: The name of the workflow, lowercase with spaces replaced with hyphens
+            import_file_slug: The slugified root name of csv files from this Zooniverse workflow. This can be set in local_settings, but defaults to workflow.slug
             master_config: Question text and label lookup object
         '''
 
         df = pd.read_csv(os.path.join(
-            batch_dir, f'dropdown_reducer_{workflow_slug}.csv'))
+            batch_dir, f'dropdown_reducer_{import_file_slug}.csv'))
         config_df = pd.DataFrame(master_config)
 
         # Join responses to config so we know the possible answers to each question
@@ -200,18 +201,17 @@ class Command(BaseCommand):
         df.to_sql('zoon_reducedresponse_question',
                   if_exists='append', index=False, con=sa_engine)
 
-    def load_texts_reduced(self, batch_dir: str, workflow_slug: str, master_config: dict):
+    def load_texts_reduced(self, batch_dir: str, import_file_slug: str, master_config: dict):
         '''Process reduced responses from the text reducer.
 
         Arguments:
             batch_dir: Path to the export files for this batch
-            workflow_slug: The name of the workflow, lowercase
-            with spaces replaced with hyphens
+            import_file_slug: The slugified root name of csv files from this Zooniverse workflow. This can be set in local_settings, but defaults to workflow.slug
             master_config: Question text and label lookup object
         '''
 
         df = pd.read_csv(os.path.join(
-            batch_dir, f'text_reducer_{workflow_slug}.csv'))
+            batch_dir, f'text_reducer_{import_file_slug}.csv'))
         config_df = pd.DataFrame(master_config)
 
         # We're not really doing anything with the config data for text-type questions, but just to maintain parallel structure...
@@ -263,6 +263,9 @@ class Command(BaseCommand):
         if not workflow_name:
             print('Missing workflow name. Please specify with --workflow.')
         else:
+
+            workflow = get_workflow_obj(workflow_name)
+
             self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
             self.batch_dir = os.path.join(
                 settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
@@ -270,19 +273,24 @@ class Command(BaseCommand):
             # self.config_yaml = os.path.join(
             #     self.batch_dir, self.batch_config['config_yaml'])
 
-            workflow_version = self.batch_config['zoon_workflow_version']
+            # workflow_version = self.batch_config['zoon_workflow_version']
 
             self.config_yaml = os.path.join(
-                self.batch_dir, f"Extractor_config_workflow_{self.batch_config['zoon_workflow_id']}_V{workflow_version}.yaml")
+                self.batch_dir, f"Extractor_config_workflow_{self.batch_config['zoon_workflow_id']}_V{workflow.version}.yaml")
 
             master_config = parse_config_yaml(self.config_yaml)
 
-            workflow_slug = workflow_name.lower().replace(" ", "-")
+            if 'zooniverse_project_name' in self.batch_config:
+                import_file_slug = slugify(self.batch_config['zooniverse_project_name'])
+            else:
+                import_file_slug = workflow.slug
+
+            # workflow_slug = workflow_name.lower().replace(" ", "-")
 
             self.load_questions_reduced(
-                self.batch_dir, workflow_slug, master_config)
+                self.batch_dir, import_file_slug, master_config)
             self.load_dropdowns_reduced(
-                self.batch_dir, workflow_slug, master_config)
+                self.batch_dir, import_file_slug, master_config)
             self.load_texts_reduced(
-                self.batch_dir, workflow_slug, master_config)
+                self.batch_dir, import_file_slug, master_config)
             

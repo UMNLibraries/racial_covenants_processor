@@ -1,6 +1,7 @@
 import os
 import csv
 import json
+from slugify import slugify
 # import argparse
 
 from django.core.management.base import BaseCommand
@@ -31,11 +32,16 @@ class Command(BaseCommand):
             self.batch_dir = os.path.join(
                 settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
+            if 'zooniverse_workflow_name' in self.batch_config:
+                import_classifications_slug = slugify(self.batch_config['zooniverse_workflow_name'])
+            else:
+                import_classifications_slug = self.workflow.slug
+
             file_input = os.path.join(
-                self.batch_dir, f"{workflow.slug}-classifications.csv")
+                self.batch_dir, f"{import_classifications_slug}-classifications.csv")
 
             file_output = os.path.join(
-                self.batch_dir, f"{workflow.slug}-denested.csv")
+                self.batch_dir, f"{import_classifications_slug}-denested.csv")
 
             combo_task_ids = self.batch_config['zooniverse_config']['combo_task_ids']
 
