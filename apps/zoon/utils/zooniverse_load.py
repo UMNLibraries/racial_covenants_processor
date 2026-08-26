@@ -244,9 +244,13 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
     return pd.DataFrame()
 
 
-def connect_to_zooniverse():
+def connect_to_zooniverse(testing=False):
+    if testing:
+        project_slug = settings.ZOONIVERSE_TESTING_PROJECT_SLUG
+    else:
+        project_slug = settings.ZOONIVERSE_PROJECT_SLUG
     Panoptes.connect(username=settings.ZOONIVERSE_USERNAME, password=settings.ZOONIVERSE_PASSWORD)
-    project = Project.find(slug=settings.ZOONIVERSE_PROJECT_SLUG)
+    project = Project.find(slug=project_slug)
 
     return project
 
