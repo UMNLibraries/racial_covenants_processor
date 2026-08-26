@@ -5,6 +5,7 @@ import json
 import datetime
 import numpy as np
 import pandas as pd
+from slugify import slugify
 from itertools import chain
 from sqlalchemy import create_engine
 
@@ -574,9 +575,13 @@ class Command(BaseCommand):
                 settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
             # workflow_slug = workflow_name.lower().replace(" ", "-")
+            if 'zooniverse_workflow_name' in self.batch_config:
+                import_classifications_slug = slugify(self.batch_config['zooniverse_workflow_name'])
+            else:
+                import_classifications_slug = self.workflow.slug
 
             raw_classifications_csv = os.path.join(
-                self.batch_dir, f"{workflow.slug}-classifications.csv")
+                self.batch_dir, f"{import_classifications_slug}-classifications.csv")
             # raw_classifications_csv = os.path.join(
             #     self.batch_dir, f"{workflow.slug}-denested.csv")
 
