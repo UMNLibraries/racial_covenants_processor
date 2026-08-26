@@ -44,13 +44,17 @@ class Command(BaseCommand):
             self.batch_config = settings.ZOONIVERSE_QUESTION_LOOKUP[workflow_name]
             workflow_slug = workflow_name.lower().replace(" ", "-")
 
-            if 'panoptes_folder' in self.batch_config:
-                self.batch_dir = os.path.join(
-                    settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
+            # if 'panoptes_folder' in self.batch_config:
+            #     self.batch_dir = os.path.join(
+            #         settings.BASE_DIR, 'data', 'zooniverse_exports', self.batch_config['panoptes_folder'])
 
-                # Get workflow version from config yaml, or set to None for now
-                workflow_version = get_workflow_version(
-                    self.batch_dir, self.batch_config['config_yaml'])
+            #     # Get workflow version from config yaml, or set to None for now
+            #     workflow_version = get_workflow_version(
+            #         self.batch_dir, self.batch_config['config_yaml'])
+            # else:
+            #     workflow_version = None
+            if 'zoon_workflow_version' in self.batch_config:
+                workflow_version = self.batch_config['zoon_workflow_version']
             else:
                 workflow_version = None
 
