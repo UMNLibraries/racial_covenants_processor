@@ -46,6 +46,7 @@ Downloading new batches of Zooniverse results
 .. code-block:: bash
 
     python manage.py load_django_zooniversesubjects --workflow "WI Milwaukee County" --infile path/to/csv.csv
+    python manage.py load_django_individual_responses --workflow WI Milwaukee County" --infile path/to/csv.csv
 
 6. Join deed images to zooniverse subjects
 
@@ -77,6 +78,7 @@ Downloading new batches of Zooniverse results
     python manage.py dump_covenants_shapefile --workflow "WI Milwaukee County"
     python manage.py dump_covenants_geojson --workflow "WI Milwaukee County"
     python manage.py dump_covenants_csv --workflow "WI Milwaukee County"
+    python manage.py dump_covenants_shapefile --workflow "WI Milwaukee County" --pmtiles
 
 11. These exports are slightly different. Each row in these exports represents a covenanted document, not a modern parcel. These may be useful for covenants discharge or for identifying covenants that could not (so far) be mapped. They are not used for our count of racial covenants.
 
