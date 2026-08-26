@@ -578,7 +578,7 @@ class Command(BaseCommand):
             if 'zooniverse_workflow_name' in self.batch_config:
                 import_classifications_slug = slugify(self.batch_config['zooniverse_workflow_name'])
             else:
-                import_classifications_slug = self.workflow.slug
+                import_classifications_slug = workflow.slug
 
             raw_classifications_csv = os.path.join(
                 self.batch_dir, f"{import_classifications_slug}-classifications.csv")
