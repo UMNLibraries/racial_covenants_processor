@@ -1,0 +1,50 @@
+<c-layouts.base>
+  <div class="stack gap-l">
+
+    <header class="stack gap-s">
+      <div class="split align-center">
+        <h1>Edit map: {{ workflow.workflow_name }}</h1>
+        <a href="{% url 'workflow' workflow.id %}" class="btn size-xs">Back to summary</a>
+      </div>
+    </header>
+
+    {% if pmtiles_url %}
+
+    {% if parcel_pmtiles_url and not parcel_index_url %}
+    <div class="callout">
+      <p>No parcel search index exists for this workflow, so parcels can only be found by panning the map. Build one with
+        <code>dump_covenants_shapefile --workflow "{{ workflow.workflow_name }}" --parcel-search-index</code>.
+        No tiles are re-baked, so this is quick.</p>
+    </div>
+    {% endif %}
+
+    {% if not parcel_pmtiles_url %}
+    <div class="callout">
+      <p>No parcel tileset exists for this workflow yet, so there is nothing to select. Bake one with
+        <code>dump_covenants_shapefile --workflow "{{ workflow.workflow_name }}" --all-parcels --pmtiles</code>.
+        Parcels change rarely, so this only needs re-running when new parcels are loaded.</p>
+    </div>
+    {% endif %}
+
+    <section style="position: relative;">
+      <c-map
+        pmtiles_url="{{ pmtiles_url }}"
+        sidebar="edit"
+        geoman="true"
+        height="75vh"
+        parcel_pmtiles_url="{{ parcel_pmtiles_url }}"
+        parcel_index_url="{{ parcel_index_url }}"
+        save_url="{% url 'workflow_link_covenant_parcels' workflow.id %}"
+        covenant_search_url="{% url 'workflow_covenant_search' workflow.id %}"
+      ></c-map>
+    </section>
+
+    {% else %}
+    <div class="callout">
+      <p>No PMTiles export exists yet for this workflow, so there is no map to edit. Bake one with
+        <code>dump_covenants_shapefile --workflow "{{ workflow.workflow_name }}" --pmtiles</code> first.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</c-layouts.base>

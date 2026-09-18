@@ -1,14 +1,30 @@
-<c-vars sidebar="" geoman="" pmtiles_url="" />
+<c-vars sidebar="" geoman="" pmtiles_url="" height="50vh" parcel_pmtiles_url="" parcel_index_url="" save_url="" covenant_search_url="" />
 
 <c-map.scripts />
+{% if sidebar == "edit" %}<c-map.edit-scripts />{% endif %}
 
-<div x-data="mapApp({ geoman: '{{ geoman }}' === 'true', pmtilesUrl: '{{ pmtiles_url }}' })" x-init="initMap()" style="display: flex; height: 50vh">
+{% if sidebar == "edit" %}
+<div x-data="mapEditApp({
+        geoman: '{{ geoman }}' === 'true',
+        pmtilesUrl: '{{ pmtiles_url }}',
+        parcelPmtilesUrl: '{{ parcel_pmtiles_url }}',
+        parcelIndexUrl: '{{ parcel_index_url }}',
+        saveUrl: '{{ save_url }}',
+        csrfToken: '{{ csrf_token }}',
+        covenantSearchUrl: '{{ covenant_search_url }}'
+     })" x-init="initMap(); searchCovenants()" style="display: flex; height: {{ height }}">
+{% else %}
+<div x-data="mapApp({ geoman: '{{ geoman }}' === 'true', pmtilesUrl: '{{ pmtiles_url }}' })" x-init="initMap()" style="display: flex; height: {{ height }}">
+{% endif %}
     <!-- Map Container -->
     <div style="width: 100%; position: relative;">
         <div id="map" style="width: 100%; height: 100%"></div>
+        {% if sidebar == "edit" %}<c-map.legend />{% endif %}
     </div>
 
-    {% if sidebar == "true" %}
+    {% if sidebar == "edit" %}
+    <c-map.edit-sidebar />
+    {% elif sidebar == "true" %}
     <c-map.sidebar />
     {% endif %}
 </div>
