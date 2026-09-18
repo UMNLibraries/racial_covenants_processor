@@ -5,7 +5,10 @@
     <header class="stack gap-s">
       <div class="split align-center">
         <h1>{{ workflow.workflow_name }}</h1>
-        <a href="{% url 'workflow_matches' workflow.id %}" class="btn size-xs">View match status</a>
+        <div class="cluster gap-s">
+          {% if pmtiles_url %}<a href="{% url 'workflow_map_edit' workflow.id %}" class="btn size-xs">Edit map</a>{% endif %}
+          <a href="{% url 'workflow_matches' workflow.id %}" class="btn size-xs">View match status</a>
+        </div>
       </div>
       <small class="muted">Last updated: {{ last_update }}</small>
     </header>

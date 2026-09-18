@@ -9,12 +9,24 @@ from django.core.files.base import File
 from django.core.management.base import BaseCommand
 
 from apps.parcel.models import ShpExport
-from apps.parcel.utils.export_utils import build_gdf
+from apps.parcel.utils.export_utils import (
+    build_gdf,
+    build_parcel_gdf,
+    build_parcel_search_index,
+)
 from apps.parcel.utils.pmtiles_utils import (
+    save_pmtiles_export,
     save_pmtiles_local,
     trigger_pmtiles_export,
 )
+from apps.parcel.utils.search_index_utils import (
+    save_search_index_export,
+    save_search_index_local,
+)
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
+
+PARCEL_TILES_MIN_ZOOM = 13
+PARCEL_TILES_MAX_ZOOM = 16
 
 
 class Command(BaseCommand):
@@ -38,6 +50,20 @@ class Command(BaseCommand):
             "--pmtiles",
             action="store_true",
             help="Export to PMTiles format instead of shapefile",
+        )
+        parser.add_argument(
+            "-s",
+            "--parcel-search-index",
+            action="store_true",
+            help="Build the map editor's parcel search sidecar (join strings, PIN, "
+            "address, centroid) for this workflow. Cheap -- no tiles are baked -- so "
+            "it can be re-run on its own whenever parcels or join candidates change.",
+        )
+        parser.add_argument(
+            "-a",
+            "--all-parcels",
+            action="store_true",
+            help="Bake every parcel in the workflow rather than covenants only. Requires --pmtiles.",
         )
 
     def save_shp_local(self, gdf, version_slug, schema=None):
@@ -89,12 +115,86 @@ class Command(BaseCommand):
             shp_export_obj.save()
             return shp_export_obj
 
+    def dump_all_parcels(self, workflow, local=False):
+        """Bake a PMTiles layer of every parcel in the workflow."""
+        parcels_geo_df = build_parcel_gdf(workflow)
+
+        if parcels_geo_df.shape[0] == 0:
+            print(f"No parcels loaded for {workflow}, so there is nothing to bake.")
+            return
+
+        now = datetime.datetime.now()
+        version_slug = f"{workflow.slug}_parcels_{now.strftime('%Y%m%d_%H%M')}"
+        layer_name = f"{workflow.slug}_parcels"
+
+        print(f"Baking {parcels_geo_df.shape[0]} parcels to PMTiles...")
+
+        tippecanoe_options = {
+            "min_zoom": PARCEL_TILES_MIN_ZOOM,
+            "max_zoom": PARCEL_TILES_MAX_ZOOM,
+            "drop_densest": False,
+        }
+
+        if local:
+            pmtiles_path = save_pmtiles_local(
+                parcels_geo_df, version_slug, layer_name, **tippecanoe_options
+            )
+            print(f"Parcel PMTiles saved to: {pmtiles_path}")
+            return
+
+        export_obj = save_pmtiles_export(
+            parcels_geo_df,
+            workflow,
+            version_slug,
+            layer_name,
+            now,
+            **tippecanoe_options,
+        )
+        print(f"Parcel PMTiles export object created: {export_obj.pmtiles.url}")
+
+    def dump_parcel_search_index(self, workflow, local=False):
+        """Build the map editor's parcel search sidecar."""
+        print(f"Building parcel search index for {workflow}...")
+        index = build_parcel_search_index(workflow)
+
+        if len(index["parcels"]) == 0:
+            print(f"No parcels loaded for {workflow}, so there is nothing to index.")
+            return
+
+        now = datetime.datetime.now()
+        version_slug = (
+            f"{workflow.slug}_parcel_search_{now.strftime('%Y%m%d_%H%M')}"
+        )
+
+        if local:
+            index_path = save_search_index_local(index, version_slug)
+            print(f"Parcel search index saved to: {index_path}")
+            return
+
+        export_obj = save_search_index_export(index, workflow, version_slug, now)
+        print(
+            f"Parcel search index created for {export_obj.parcel_count} parcels: "
+            f"{export_obj.index_file.url}"
+        )
+
     def handle(self, *args, **kwargs):
         workflow_name = kwargs["workflow"]
         if not workflow_name:
             print("Missing workflow name. Please specify with --workflow.")
         else:
             workflow = get_workflow_obj(workflow_name)
+
+            if kwargs["all_parcels"]:
+                if not kwargs["pmtiles"]:
+                    print("--all-parcels requires --pmtiles.")
+                    return
+                self.dump_all_parcels(workflow, local=kwargs["local"])
+                self.dump_parcel_search_index(workflow, local=kwargs["local"])
+                return
+
+            if kwargs["parcel_search_index"]:
+                self.dump_parcel_search_index(workflow, local=kwargs["local"])
+                return
 
             if kwargs["pmtiles"] and not kwargs["local"]:
                 request_id = trigger_pmtiles_export(workflow)

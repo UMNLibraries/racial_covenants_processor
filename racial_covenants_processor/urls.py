@@ -24,7 +24,7 @@ from apps.zoon.serializers import SubjectNoGeoViewSet, SubjectGeoViewSet
 from apps.parcel.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet, ShpExportViewSet, GeoJSONExportViewSet, CSVExportViewSet
 from apps.parcel.views import PMTilesCallbackView
 
-from apps.deed.views import DeedSearchView
+from apps.deed.views import DeedPageViewSet, DeedSearchView
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
@@ -38,11 +38,16 @@ router.register(r'shp-exports', ShpExportViewSet)
 router.register(r'geojson-exports', GeoJSONExportViewSet)
 router.register(r'csv-exports', CSVExportViewSet)
 
+router.register(r'deeds', DeedPageViewSet)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('workflow/<int:workflow_id>/', views.workflow_summary, name='workflow'),
     path('workflow/<int:workflow_id>/matches/', views.covenant_matches, name='workflow_matches'),
+    path('workflow/<int:workflow_id>/edit/', views.workflow_map_edit, name='workflow_map_edit'),
+    path('workflow/<int:workflow_id>/edit/save/', views.workflow_link_covenant_parcels, name='workflow_link_covenant_parcels'),
+    path('workflow/<int:workflow_id>/covenants/search/', views.workflow_covenant_search, name='workflow_covenant_search'),
 
     path('workflow/<str:workflow_slug>/', views.workflow_summary_slug, name='workflow_slug'),
 
@@ -54,9 +59,10 @@ urlpatterns = [
 
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls')),
+    # TODO: delete this once we have transitioned to elasticsearch
+    path('deed_search/', DeedSearchView.as_view(), name='deed_search_view'),
     # path('search/', include('haystack.urls')),
 
-    path('deed_search/', DeedSearchView.as_view(), name='deed_search_view'),
     # path('__debug__/', include('debug_toolbar.urls')),
 ]
 
