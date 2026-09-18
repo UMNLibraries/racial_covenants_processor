@@ -205,3 +205,61 @@
         bool_parcel_match: False
         date_added: '2024-07-18 00:00:00.123456+00:00'
         date_updated: '2024-07-18 00:00:00.123456+00:00'
+
+# For testing the selection of earliest possible ZooniverseSubject OR ManualCovenant
+-   model: zoon.zooniversesubject
+    pk: 8
+    fields:
+        workflow: 1
+        zoon_subject_id: 6
+        bool_covenant: True
+        bool_covenant_final: True
+        deed_date_final: '2026-04-10'
+        covenant_text_final: This covenant is a ZooniverseSubject and is one day later than the ManualCovenant
+        addition_final: Covenanted Parcel Addition
+        image_ids: ''
+        lot_final: 10
+        block_final: 10
+        bool_parcel_match: False
+-   model: zoon.manualcovenant
+    pk: 6
+    fields:
+        workflow: 1
+        bool_confirmed: True
+        deed_date: '2026-04-09'
+        covenant_text: This covenant is a ManualCovenant and is one day earlier than the ZooniverseSubject
+        addition: Covenanted Parcel Addition
+        lot: 10
+        block: 10
+        cov_type: SE
+        bool_parcel_match: False
+        date_added: '2024-07-18 00:00:00.123456+00:00'
+        date_updated: '2024-07-18 00:00:00.123456+00:00'
+-   model: zoon.zooniversesubject
+    pk: 9
+    fields:
+        workflow: 1
+        zoon_subject_id: 9
+        bool_covenant: True
+        bool_covenant_final: True
+        deed_date_final: '2026-04-07'
+        covenant_text_final: This covenant is a ZooniverseSubject and is one day earlier than the ManualCovenant
+        addition_final: Covenanted Parcel Addition
+        image_ids: ''
+        lot_final: 11
+        block_final: 10
+        bool_parcel_match: False
+-   model: zoon.manualcovenant
+    pk: 7
+    fields:
+        workflow: 1
+        bool_confirmed: True
+        deed_date: '2026-04-08'
+        covenant_text: This covenant is a ManualCovenant and is one day later than the ZooniverseSubject
+        addition: Covenanted Parcel Addition
+        lot: 11
+        block: 10
+        cov_type: SE
+        bool_parcel_match: False
+        date_added: '2024-07-18 00:00:00.123456+00:00'
+        date_updated: '2024-07-18 00:00:00.123456+00:00'
