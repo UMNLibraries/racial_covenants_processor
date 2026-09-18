@@ -72,9 +72,11 @@ class Command(BaseCommand):
             pk__in=[c['subject_id'] for c in self.matched_lots_zoon])
 
         # Update boolean for subjects with matching parcels in bulk
+        print("Setting bool_parcel_match to True (Zooniverse)...")
         matched_qs.update(bool_parcel_match=True)
 
         # Update geo union fields for final export
+        print("Updating geom_unions (Zooniverse)...")
         update_objs = []
         for z in matched_qs:
             z.set_geom_union()
@@ -98,9 +100,11 @@ class Command(BaseCommand):
             pk__in=[c['subject_id'] for c in self.matched_lots_manual])
 
         # Update boolean for subjects with matching parcels in bulk
+        print("Setting bool_parcel_match to True (ManualCovenant)...")
         matched_qs.update(bool_parcel_match=True)
 
         # Update geo union fields for final export
+        print("Updating geom_unions (ManualCovenant)...")
         update_objs = []
         for m in matched_qs:
             set_addresses(m)
