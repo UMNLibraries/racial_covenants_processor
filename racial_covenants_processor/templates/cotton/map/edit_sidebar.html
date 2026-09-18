@@ -1,0 +1,251 @@
+<div class="map-sidebar stack gap-m">
+
+    <template x-if="statusMessage">
+        <div class="callout size-xs" :class="statusType === 'error' ? 'error' : 'success'">
+            <p x-text="statusMessage"></p>
+        </div>
+    </template>
+
+    <!-- Step 1: pick the covenant being mapped -->
+    <div class="stack gap-s">
+        <strong class="size-s">1. Choose a covenant</strong>
+
+        <template x-if="selectedCovenant">
+            <div class="callout stack gap-2xs size-xs">
+                <div class="stack gap-2xs">
+                    <span class="muted">Join strings</span>
+                    <template x-if="joinStrings(selectedCovenant).length === 0">
+                        <span class="muted">No join strings</span>
+                    </template>
+                    <template x-for="joinString in joinStrings(selectedCovenant)" :key="joinString">
+                        <button type="button" class="join-string join-string-button"
+                                :disabled="!indexReady"
+                                :title="indexReady ? 'Search parcels for this join string' : 'Loading the parcel search index…'"
+                                @click="searchParcelsForJoinString(joinString)"
+                                x-text="joinString"></button>
+                    </template>
+                </div>
+                <hr>
+                <div class="split">
+                    <span class="muted">Type</span>
+                    <span x-text="selectedCovenant.type === 'manual' ? 'Manual covenant' : selectedCovenant.match_type"></span>
+                </div>
+                <div class="split">
+                    <span class="muted">Deed date</span>
+                    <span x-text="formatDate(selectedCovenant.deed_date)"></span>
+                </div>
+                <div class="split">
+                  <a :href="adminUrl(selectedCovenant)" target="_blank" class="size-xs">Open in admin</a>
+                  <button type="button" @click="clearCovenant()" class="btn outline size-xs">Change</button>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="!selectedCovenant">
+            <div class="stack gap-s">
+                <input type="search" x-model="covenantQuery" @input="onCovenantQueryInput()"
+                       placeholder="Search join string, addition, lot, doc #…" class="size-xs">
+
+                <template x-if="covenantSearchLoading">
+                    <p class="muted size-2xs">Searching…</p>
+                </template>
+
+                <template x-if="!covenantSearchLoading && covenantResults.length === 0">
+                    <p class="muted size-xs"
+                       x-text="covenantQuery.trim() ? 'No unmapped covenant matches that search.' : 'No unmapped covenants left in this workflow.'"></p>
+                </template>
+
+                <template x-if="covenantResults.length > 0">
+                    <div class="stack gap-s">
+                        <p class="muted size-2xs">
+                            <span x-text="covenantResults.length"></span> shown<span
+                                x-text="covenantTotal !== null ? ' of ' + covenantTotal + ' unmapped' : ''"></span>.
+                        </p>
+                        <div class="stack gap-2xs" style="max-height: 22em; overflow-y: auto;">
+                            <template x-for="covenant in covenantResults" :key="covenant.type + covenant.doc_num">
+                                <button type="button" @click="selectCovenant(covenant)" class="btn outline size-xs covenant-option">
+                                    <template x-if="joinStrings(covenant).length > 0">
+                                        <span class="stack gap-3xs">
+                                            <template x-for="joinString in joinStrings(covenant)" :key="joinString">
+                                                <span class="join-string" x-text="joinString"></span>
+                                            </template>
+                                        </span>
+                                    </template>
+                                    <template x-if="joinStrings(covenant).length === 0">
+                                        <span class="muted">No join strings</span>
+                                    </template>
+                                    <span class="muted covenant-option-meta"
+                                          x-text="(covenant.type === 'manual' ? 'Manual #' : '#') + covenant.doc_num"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+
+    <hr>
+
+    <!-- Step 2: pick the parcels it covers -->
+    <div class="stack gap-s">
+        <div class="split align-center">
+            <strong class="size-s">2. Select parcels (<span x-text="selectedParcels.length"></span>)</strong>
+            <template x-if="selectedParcels.length > 1">
+                <button type="button" @click="clearParcelSelection()" class="btn outline size-xs">Clear all</button>
+            </template>
+        </div>
+
+        <!-- Clearing the box empties the matches, so there is no separate dismiss -->
+        <input type="search" x-model="parcelQuery" @input="onParcelQueryInput()"
+               placeholder="Search join string, address, PIN, plat…"
+               class="size-xs" :disabled="!indexReady">
+
+        <template x-if="indexLoading">
+            <p class="muted size-2xs">Loading the parcel search index…</p>
+        </template>
+
+        <template x-if="!parcelsReady">
+            <p class="muted size-xs">Loading the parcel layer…</p>
+        </template>
+
+        <template x-if="parcelsReady && !zoomedInEnough && parcelResults.length === 0">
+            <p class="muted size-xs">Zoom in to click parcels on the map, or search above.</p>
+        </template>
+
+        <template x-if="parcelResults.length > 0">
+            <div class="split align-center">
+                <span class="muted size-2xs">
+                    <span x-text="parcelResults.length"></span> match<span x-text="parcelResults.length === 1 ? '' : 'es'"></span><span
+                        x-text="parcelResultsTruncated ? ' (first ' + parcelResultLimit + ')' : ''"></span>
+                </span>
+                <template x-if="unselectedResultCount() > 1">
+                    <button type="button" @click="selectAllResults()" class="btn outline size-xs">Add all</button>
+                </template>
+            </div>
+        </template>
+
+        <template x-if="parcelRows().length === 0">
+            <p class="muted size-xs">Click a parcel on the map to select it, or search for one above.</p>
+        </template>
+
+        <div class="stack gap-2xs" style="max-height: 24em; overflow-y: auto;">
+            <template x-for="row in parcelRows()" :key="row.parcel.db_id">
+                <div class="callout stack gap-2xs size-xs" :class="row.selected ? 'parcel-selected' : ''">
+                    <div class="split align-center gap-s">
+                        <strong x-text="parcelLabel(row.parcel)"></strong>
+                        <button type="button" class="btn outline size-xs"
+                                @click="toggleParcel(row.parcel)"
+                                x-text="row.selected ? 'Remove' : 'Add'"></button>
+                    </div>
+                    <span class="muted size-2xs" x-text="row.selected ? 'Selected' : 'Search match'"></span>
+                    <template x-for="joinString in row.parcel.join_strings" :key="joinString">
+                        <code class="join-string" x-text="joinString"></code>
+                    </template>
+                    <template x-if="row.parcel.bool_cov">
+                        <span class="muted">Already carries a covenant</span>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+    </div>
+
+    <!-- Step 3: draw anything the parcels do not cover -->
+    <template x-if="drawnFeatures.length > 0">
+      <!-- x-if renders one root element only: the hr has to live inside it -->
+      <div class="stack gap-s">
+        <hr>
+        <strong class="size-s">3. Custom shapes (<span x-text="drawnFeatures.length"></span>)</strong>
+            <div class="stack gap-2xs">
+                <template x-for="(shape, index) in drawnFeatures" :key="shape.id ?? index">
+                    <div class="callout stack gap-2xs size-xs">
+                        <strong x-text="'Shape ' + (index + 1)"></strong>
+                        <div class="split">
+                            <span class="muted">Area</span>
+                            <span x-text="formatShapeArea(shape)"></span>
+                        </div>
+                        <div class="split">
+                            <span class="muted">Perimeter</span>
+                            <span x-text="formatShapePerimeter(shape)"></span>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="drawnFeatures.length > 1">
+                    <p class="split size-xs">
+                        <span class="muted">Total area</span>
+                        <span x-text="totalDrawnArea()"></span>
+                    </p>
+                </template>
+            </div>
+      </div>
+    </template>
+
+
+
+    <hr>
+
+    <div class="stack gap-2xs">
+        <button type="button" @click="saveCovenant()" class="btn size-s"
+                :disabled="!canSave()">
+            <span x-text="saving ? 'Saving…' : 'Save covenanted parcel'"></span>
+        </button>
+    </div>
+</div>
+<style>
+    .covenant-option {
+        text-align: left;
+        display: block;
+        width: 100%;
+    }
+
+    .covenant-option-meta {
+        display: block;
+    }
+
+    /* Kelp drives .callout off these custom properties, so a selected row is
+       the same component recoloured with the framework's own highlight tokens */
+    .parcel-selected {
+        --background-color: var(--color-fill-highlight);
+        --color: var(--color-on-highlight);
+        --border-color: var(--color-highlight);
+    }
+
+    .join-string {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+
+    .join-string-button {
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: 0;
+        padding: 0;
+        font: inherit;
+        font-family: monospace;
+        color: inherit;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    .join-string-button:hover:not(:disabled) {
+        color: var(--color-text-link);
+    }
+
+    .join-string-button:disabled {
+        color: inherit;
+        cursor: default;
+        text-decoration: none;
+        opacity: 0.6;
+    }
+
+    .map-sidebar {
+        width: 24em;
+        padding: 1em;
+        overflow-y: auto;
+        background: var(--color-background);
+        border-left: 1px solid var(--color-border-muted);
+    }
+</style>

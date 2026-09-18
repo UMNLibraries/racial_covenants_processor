@@ -1,9 +1,18 @@
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/@geoman-io/maplibre-geoman-free@latest/dist/maplibre-geoman.css">
-<script src="https://unpkg.com/@geoman-io/maplibre-geoman-free@latest/dist/maplibre-geoman.umd.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@geoman-io/maplibre-geoman-free@0.8.4/dist/maplibre-geoman.css">
+<script src="https://unpkg.com/@geoman-io/maplibre-geoman-free@0.8.4/dist/maplibre-geoman.umd.js"></script>
 <script src="https://unpkg.com/pmtiles@3.0.7/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+<style>
+  /* override kelp container styles */
+  .gm-control-container,
+  .gm-canvas-container {
+    width: auto !important;
+    max-width: none;
+    margin-inline: 0;
+  }
+</style>
 <script>
 function mapApp(options = {}) {
   return {
@@ -50,9 +59,22 @@ function mapApp(options = {}) {
         maxZoom: 18,
       });
 
+      if (this.geomanEnabled && !window.Geoman) {
+        console.error(
+          "Geoman failed to load, so drawing tools are unavailable. The rest of the map still works."
+        );
+        this.geomanEnabled = false;
+      }
+
       if (this.geomanEnabled) {
         const gmOptions = {
           controls: {
+            draw: {
+              marker: { uiEnabled: false },
+              circle_marker: { uiEnabled: false },
+              text_marker: { uiEnabled: false },
+              line: { uiEnabled: false },
+            },
             helper: {
               snapping: {
                 uiEnabled: true,
@@ -70,6 +92,9 @@ function mapApp(options = {}) {
           this.setupGeomanListeners();
         }
         this.checkPlatQueryParam();
+        if (this.onMapReady) {
+          this.onMapReady();
+        }
       });
 
       this.map.on("error", (e) => {
@@ -182,6 +207,11 @@ function mapApp(options = {}) {
         }
 
         if (this.isAnyGeomanModeActive) {
+          return;
+        }
+
+        // In edit mode, clicks pick parcels rather than baked covenant tiles.
+        if (this.handleEditClick && this.handleEditClick(e)) {
           return;
         }
 

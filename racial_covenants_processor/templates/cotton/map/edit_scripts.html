@@ -1,0 +1,695 @@
+<script>
+function mapEditApp(options = {}) {
+  return Object.assign(mapApp(options), {
+    parcelPmtilesUrl: options.parcelPmtilesUrl || "",
+    parcelIndexUrl: options.parcelIndexUrl || "",
+    drawnFeatures: [],
+    drawnUnsupportedCount: 0,
+    saveUrl: options.saveUrl || "",
+    csrfToken: options.csrfToken || "",
+    covenantSearchUrl: options.covenantSearchUrl || "",
+
+    covenantQuery: "",
+    covenantResults: [],
+    covenantResultsTruncated: false,
+    covenantLimit: 0,
+    covenantTotal: null,
+    covenantSearchLoading: false,
+    covenantSearchDebounce: null,
+    covenantSearchRequest: 0,
+    selectedCovenant: null,
+    selectedParcels: [],
+    hoveredParcel: null,
+
+    // One source of truth for the layer paint and the map key
+    parcelPalette: {
+      selected: "rgba(0, 100, 255, 0.8)",
+      selectedLine: "#0064ff",
+      match: "rgba(224, 112, 0, 0.8)",
+      matchLine: "#e07000",
+      covenanted: "rgba(114, 155, 111, 0.6)",
+      parcel: "rgba(200, 200, 200, 0.5)",
+    },
+
+    parcelSourceLayer: null,
+    parcelMinZoom: 13,
+    parcelsReady: false,
+    zoomedInEnough: false,
+
+    parcelIndex: [],
+    parcelIndexFields: {},
+    parcelIndexById: new Map(),
+    parcelHaystack: [],
+    indexLoading: false,
+    indexReady: false,
+    parcelQuery: "",
+    parcelResults: [],
+    parcelResultsTruncated: false,
+    searchDebounce: null,
+    parcelResultLimit: 50,
+
+    saving: false,
+    statusMessage: "",
+    statusType: "",
+
+    onCovenantQueryInput() {
+      clearTimeout(this.covenantSearchDebounce);
+      this.covenantSearchDebounce = setTimeout(() => this.searchCovenants(), 250);
+    },
+
+    async searchCovenants() {
+      if (!this.covenantSearchUrl) return;
+
+      const requestId = ++this.covenantSearchRequest;
+      this.covenantSearchLoading = true;
+
+      try {
+        const url = `${this.covenantSearchUrl}?q=${encodeURIComponent(this.covenantQuery.trim())}`;
+        const response = await fetch(url, { headers: { Accept: "application/json" } });
+        if (!response.ok) throw new Error(`Covenant search failed: ${response.status}`);
+        const data = await response.json();
+
+        if (requestId !== this.covenantSearchRequest) return;
+
+        this.covenantResults = data.results;
+        this.covenantResultsTruncated = data.truncated;
+        this.covenantLimit = data.limit;
+        if (data.total !== null && data.total !== undefined) {
+          this.covenantTotal = data.total;
+        }
+      } catch (err) {
+        console.error(err);
+        if (requestId === this.covenantSearchRequest) {
+          this.statusType = "error";
+          this.statusMessage = `Could not search covenants: ${err.message}`;
+        }
+      } finally {
+        if (requestId === this.covenantSearchRequest) {
+          this.covenantSearchLoading = false;
+        }
+      }
+    },
+
+    adminUrl(covenant) {
+      if (!covenant) return "";
+      const model =
+        covenant.type === "manual" ? "manualcovenant" : "zooniversesubject";
+      return `/admin/zoon/${model}/${covenant.id}/change/`;
+    },
+
+    joinStrings(covenant) {
+      return (covenant && covenant.join_strings) || [];
+    },
+
+    selectedParcelIds() {
+      return this.selectedParcels.map((p) => p.db_id);
+    },
+
+    covenantLabel(covenant) {
+      if (!covenant) return "";
+      const lotBlock = [
+        covenant.lot ? `Lot ${covenant.lot}` : null,
+        covenant.block ? `Block ${covenant.block}` : null,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      const described = [covenant.addition, lotBlock].filter(Boolean).join(" — ");
+      if (described) return described;
+
+      const model =
+        covenant.type === "manual" ? "Manual covenant" : "Zooniverse subject";
+      return `${model} ${covenant.id}`;
+    },
+
+    parcelLabel(parcel) {
+      const lotBlock = [
+        parcel.lot ? `Lot ${parcel.lot}` : null,
+        parcel.block ? `Block ${parcel.block}` : null,
+      ]
+        .filter(Boolean)
+        .join(", ");
+      return (
+        parcel.street_add ||
+        [parcel.plat_name, lotBlock].filter(Boolean).join(" ") ||
+        `Parcel ${parcel.db_id}`
+      );
+    },
+
+    syncDrawnFeatures() {
+      const collection = this.geoman?.features?.getAll?.();
+      const features = Array.isArray(collection?.features) ? collection.features : [];
+
+      this.drawnFeatures = features.filter(
+        (f) =>
+          f?.geometry?.type === "Polygon" || f?.geometry?.type === "MultiPolygon"
+      );
+      // Markers and lines are in the toolbar but a covenant covers ground
+      this.drawnUnsupportedCount = features.length - this.drawnFeatures.length;
+    },
+
+    setupDrawingListeners() {
+      const events = [
+        "gm:create",
+        "gm:remove",
+        "gm:selection",
+        "gm:editend",
+        "gm:dragend",
+        "gm:cut",
+        "gm:rotate",
+      ];
+      for (const event of events) {
+        this.map.on(event, () => this.syncDrawnFeatures());
+      }
+
+      this.map.on("gm:create", () => {
+        const latest = this.drawnFeatures[this.drawnFeatures.length - 1];
+        if (latest) this.showShapeMeasurement(latest);
+      });
+      this.map.on("gm:remove", () => this.hideMeasurementPopup());
+    },
+
+    measureFeature(feature) {
+      const squareMeters = turf.area(feature);
+      const meters = turf.length(turf.polygonToLine(feature), {
+        units: "meters",
+      });
+      return {
+        acres: squareMeters / 4046.8564224,
+        squareFeet: squareMeters * 10.7639104167,
+        feet: meters * 3.280839895,
+      };
+    },
+
+    formatShapeArea(feature) {
+      const { acres, squareFeet } = this.measureFeature(feature);
+      if (acres < 0.1) {
+        return `${Math.round(squareFeet).toLocaleString()} sq ft`;
+      }
+      return `${acres.toFixed(2)} acres`;
+    },
+
+    formatShapePerimeter(feature) {
+      const { feet } = this.measureFeature(feature);
+      return `${Math.round(feet).toLocaleString()} ft`;
+    },
+
+    totalDrawnArea() {
+      const acres = this.drawnFeatures.reduce(
+        (sum, f) => sum + this.measureFeature(f).acres,
+        0
+      );
+      return acres < 0.1
+        ? `${Math.round(acres * 43560).toLocaleString()} sq ft`
+        : `${acres.toFixed(2)} acres`;
+    },
+
+    showShapeMeasurement(feature) {
+      try {
+        const center = turf.centroid(feature).geometry.coordinates;
+        this.hideMeasurementPopup();
+        this.measurementPopup = new maplibregl.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          className: "measurement-popup",
+        })
+          .setLngLat(center)
+          .setHTML(
+            `<div style="font-size: 12px; padding: 4px;">` +
+              `Area: ${this.formatShapeArea(feature)}<br/>` +
+              `Perimeter: ${this.formatShapePerimeter(feature)}</div>`
+          )
+          .addTo(this.map);
+      } catch (err) {
+        console.warn("Could not measure the drawn shape:", err);
+      }
+    },
+
+    async onMapReady() {
+      this.map.on("zoomend", () => this.updateZoomState());
+      this.updateZoomState();
+
+      if (this.geomanEnabled) {
+        this.setupDrawingListeners();
+      }
+
+      this.loadParcelIndex();
+
+      if (!this.parcelPmtilesUrl) {
+        console.warn("No parcel PMTiles URL, so no parcels can be selected.");
+        return;
+      }
+
+      try {
+        const pm = new pmtiles.PMTiles(this.parcelPmtilesUrl);
+        const metadata = await pm.getMetadata();
+        this.parcelSourceLayer = metadata.vector_layers[0].id;
+      } catch (err) {
+        console.error("Could not read the parcel PMTiles:", err);
+        this.statusType = "error";
+        this.statusMessage = "Could not load the parcel layer.";
+        return;
+      }
+
+      this.addParcelLayers();
+      this.parcelsReady = true;
+    },
+
+    updateZoomState() {
+      this.zoomedInEnough = this.map.getZoom() >= this.parcelMinZoom;
+    },
+
+    addParcelLayers() {
+      this.map.addSource("workflow-parcels", {
+        type: "vector",
+        url: `pmtiles://${this.parcelPmtilesUrl}`,
+        promoteId: "db_id",
+      });
+
+      // Parcels sit under the covenant tiles so existing covenants stay visible.
+      this.map.addLayer(
+        {
+          id: "parcel-fill",
+          type: "fill",
+          source: "workflow-parcels",
+          "source-layer": this.parcelSourceLayer,
+          minzoom: this.parcelMinZoom,
+          paint: {
+            "fill-color": this.parcelFillColor(),
+            "fill-opacity": 0.45,
+          },
+        },
+        "pmtiles-fill-default"
+      );
+
+      this.map.addLayer(
+        {
+          id: "parcel-line",
+          type: "line",
+          source: "workflow-parcels",
+          "source-layer": this.parcelSourceLayer,
+          minzoom: this.parcelMinZoom,
+          paint: {
+            "line-color": "rgb(90, 90, 90)",
+            "line-width": 0.5,
+          },
+        },
+        "pmtiles-fill-default"
+      );
+
+      // Search results and selection both outline on top of everything so they
+      // read over the covenant tiles; selection is added last so it wins.
+      this.map.addLayer({
+        id: "parcel-result-line",
+        type: "line",
+        source: "workflow-parcels",
+        "source-layer": this.parcelSourceLayer,
+        minzoom: this.parcelMinZoom,
+        filter: this.parcelResultFilter(),
+        paint: {
+          "line-color": this.parcelPalette.matchLine,
+          "line-width": 2,
+        },
+      });
+
+      this.map.addLayer({
+        id: "parcel-selected-line",
+        type: "line",
+        source: "workflow-parcels",
+        "source-layer": this.parcelSourceLayer,
+        minzoom: this.parcelMinZoom,
+        filter: this.selectedParcelFilter(),
+        paint: {
+          "line-color": this.parcelPalette.selectedLine,
+          "line-width": 3,
+        },
+      });
+    },
+
+    parcelResultIds() {
+      return this.parcelResults.map((p) => p.db_id);
+    },
+
+    parcelFillColor() {
+      return [
+        "case",
+        ["in", ["get", "db_id"], ["literal", this.selectedParcelIds()]],
+        this.parcelPalette.selected,
+        ["in", ["get", "db_id"], ["literal", this.parcelResultIds()]],
+        this.parcelPalette.match,
+        ["boolean", ["get", "bool_cov"], false],
+        this.parcelPalette.covenanted,
+        this.parcelPalette.parcel,
+      ];
+    },
+
+    // Drawn straight from the paint values above, so the key cannot drift
+    legendItems() {
+      return [
+        { label: "Selected parcel", color: this.parcelPalette.selected },
+        { label: "Search match", color: this.parcelPalette.match },
+        { label: "Already covenanted", color: this.parcelPalette.covenanted },
+        { label: "Parcel", color: this.parcelPalette.parcel },
+      ];
+    },
+
+    selectedParcelFilter() {
+      return ["in", ["get", "db_id"], ["literal", this.selectedParcelIds()]];
+    },
+
+    parcelResultFilter() {
+      // Selected parcels are drawn as selected, not as results
+      return [
+        "all",
+        ["in", ["get", "db_id"], ["literal", this.parcelResultIds()]],
+        ["!", ["in", ["get", "db_id"], ["literal", this.selectedParcelIds()]]],
+      ];
+    },
+
+    refreshParcelStyles() {
+      if (!this.map || !this.map.getLayer("parcel-fill")) return;
+      this.map.setPaintProperty("parcel-fill", "fill-color", this.parcelFillColor());
+      this.map.setFilter("parcel-selected-line", this.selectedParcelFilter());
+      this.map.setFilter("parcel-result-line", this.parcelResultFilter());
+    },
+
+    async loadParcelIndex() {
+      if (!this.parcelIndexUrl || this.indexLoading || this.indexReady) return;
+
+      this.indexLoading = true;
+      try {
+        const response = await fetch(this.parcelIndexUrl);
+        if (!response.ok) throw new Error(`Index request failed: ${response.status}`);
+
+        const data = JSON.parse(await this.readIndexBody(response));
+
+        data.fields.forEach((name, i) => (this.parcelIndexFields[name] = i));
+        this.parcelIndex = data.parcels;
+        this.buildSearchLookups();
+        this.indexReady = true;
+      } catch (err) {
+        console.error(err);
+        this.statusType = "error";
+        this.statusMessage = `Could not load the parcel search index: ${err.message}`;
+      } finally {
+        this.indexLoading = false;
+      }
+    },
+
+    async readIndexBody(response) {
+      const buffer = await response.arrayBuffer();
+      const bytes = new Uint8Array(buffer, 0, 2);
+
+      if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) {
+        return new TextDecoder().decode(buffer);
+      }
+
+      if (typeof DecompressionStream === "undefined") {
+        throw new Error("Index arrived gzipped and this browser cannot inflate it.");
+      }
+
+      const inflated = new Blob([buffer])
+        .stream()
+        .pipeThrough(new DecompressionStream("gzip"));
+      return await new Response(inflated).text();
+    },
+
+    buildSearchLookups() {
+      const f = this.parcelIndexFields;
+
+      this.parcelIndexById = new Map();
+      this.parcelHaystack = new Array(this.parcelIndex.length);
+
+      this.parcelIndex.forEach((row, i) => {
+        this.parcelIndexById.set(row[f.db_id], row);
+
+        this.parcelHaystack[i] = [
+          ...row[f.join_strings],
+          row[f.cnty_pin],
+          row[f.street_add],
+          row[f.city],
+          row[f.plat_name],
+          row[f.block],
+          row[f.lot],
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+      });
+    },
+
+    rowToParcel(row) {
+      const f = this.parcelIndexFields;
+      return {
+        db_id: row[f.db_id],
+        cnty_pin: row[f.cnty_pin],
+        street_add: row[f.street_add],
+        city: row[f.city],
+        plat_name: row[f.plat_name],
+        block: row[f.block],
+        lot: row[f.lot],
+        bool_cov: row[f.bool_cov],
+        join_strings: row[f.join_strings],
+        centroid: [row[f.lon], row[f.lat]],
+      };
+    },
+
+    onParcelQueryInput() {
+      clearTimeout(this.searchDebounce);
+      this.searchDebounce = setTimeout(() => this.runParcelSearch(), 150);
+    },
+
+    runParcelSearch() {
+      const q = this.parcelQuery.trim().toLowerCase();
+      if (!q || !this.indexReady) {
+        this.parcelResults = [];
+        this.parcelResultsTruncated = false;
+        this.refreshParcelStyles();
+        return;
+      }
+
+      const matches = [];
+      for (let i = 0; i < this.parcelHaystack.length; i++) {
+        if (this.parcelHaystack[i].includes(q)) {
+          matches.push(this.parcelIndex[i]);
+          if (matches.length > this.parcelResultLimit) break;
+        }
+      }
+
+      this.parcelResultsTruncated = matches.length > this.parcelResultLimit;
+      this.parcelResults = matches
+        .slice(0, this.parcelResultLimit)
+        .map((row) => this.rowToParcel(row));
+      this.refreshParcelStyles();
+      this.fitToResults(this.parcelResults);
+    },
+
+    searchParcelsForJoinString(joinString) {
+      this.parcelQuery = joinString;
+      clearTimeout(this.searchDebounce);
+      this.runParcelSearch();
+    },
+
+    fitToResults(results) {
+      if (!this.map || results.length === 0) return;
+
+      if (results.length === 1) {
+        this.map.flyTo({ center: results[0].centroid, zoom: 17 });
+        return;
+      }
+
+      const bounds = results.reduce(
+        (acc, r) => acc.extend(r.centroid),
+        new maplibregl.LngLatBounds(results[0].centroid, results[0].centroid)
+      );
+      this.map.fitBounds(bounds, { padding: 80, maxZoom: 17 });
+    },
+
+    // Selected parcels and search matches were two lists showing the same
+    // parcels twice. One list instead: everything selected, then anything else
+    // the search turned up, each row saying which it is.
+    parcelRows() {
+      const rows = this.selectedParcels.map((parcel) => ({
+        parcel,
+        selected: true,
+      }));
+      const selectedIds = new Set(this.selectedParcelIds());
+
+      for (const parcel of this.parcelResults) {
+        if (!selectedIds.has(parcel.db_id)) {
+          rows.push({ parcel, selected: false });
+        }
+      }
+      return rows;
+    },
+
+    unselectedResultCount() {
+      const selectedIds = new Set(this.selectedParcelIds());
+      return this.parcelResults.filter((p) => !selectedIds.has(p.db_id)).length;
+    },
+
+    isSelected(parcel) {
+      return this.selectedParcels.some((p) => p.db_id === parcel.db_id);
+    },
+
+    toggleParcel(parcel) {
+      if (this.isSelected(parcel)) {
+        this.selectedParcels = this.selectedParcels.filter(
+          (p) => p.db_id !== parcel.db_id
+        );
+      } else {
+        this.selectedParcels = [...this.selectedParcels, parcel];
+        this.map.flyTo({ center: parcel.centroid, zoom: 17 });
+      }
+      this.refreshParcelStyles();
+    },
+
+    selectAllResults() {
+      const additions = this.parcelResults.filter((p) => !this.isSelected(p));
+      this.selectedParcels = [...this.selectedParcels, ...additions];
+      this.refreshParcelStyles();
+      this.fitToResults(this.parcelResults);
+    },
+
+    handleEditClick(e) {
+      if (!this.map.getLayer("parcel-fill")) return false;
+
+      const features = this.map.queryRenderedFeatures(e.point, {
+        layers: ["parcel-fill"],
+      });
+      const isCtrlOrCmd = e.originalEvent.ctrlKey || e.originalEvent.metaKey;
+
+      if (features.length === 0) {
+        if (!isCtrlOrCmd) {
+          this.selectedParcels = [];
+          this.refreshParcelStyles();
+        }
+        return true;
+      }
+
+      const props = features[0].properties;
+      const alreadySelected = this.selectedParcels.some(
+        (p) => p.db_id === props.db_id
+      );
+
+      if (isCtrlOrCmd) {
+        this.selectedParcels = alreadySelected
+          ? this.selectedParcels.filter((p) => p.db_id !== props.db_id)
+          : [...this.selectedParcels, props];
+      } else {
+        this.selectedParcels = alreadySelected && this.selectedParcels.length === 1
+          ? []
+          : [props];
+      }
+
+      this.refreshParcelStyles();
+      return true;
+    },
+
+    selectCovenant(covenant) {
+      this.selectedCovenant = covenant;
+      this.statusMessage = "";
+      this.statusType = "";
+    },
+
+    clearCovenant() {
+      this.selectedCovenant = null;
+    },
+
+    clearParcelSelection() {
+      this.selectedParcels = [];
+      this.refreshParcelStyles();
+    },
+
+    clearDrawnFeatures() {
+      this.drawnFeatures = [];
+      this.drawnUnsupportedCount = 0;
+      try {
+        this.geoman?.features?.deleteAll?.();
+      } catch (err) {
+        console.warn("Could not clear drawn shapes from the map:", err);
+      }
+    },
+
+    clearParcelSearch() {
+      this.parcelQuery = "";
+      this.parcelResults = [];
+      this.parcelResultsTruncated = false;
+      this.refreshParcelStyles();
+    },
+
+    canSave() {
+      return Boolean(
+        this.selectedCovenant &&
+          (this.selectedParcels.length > 0 || this.drawnFeatures.length > 0) &&
+          !this.saving
+      );
+    },
+
+    async saveCovenant() {
+      if (!this.canSave()) return;
+
+      this.syncDrawnFeatures();
+
+      this.saving = true;
+      this.statusMessage = "";
+      this.statusType = "";
+
+      try {
+        const response = await fetch(this.saveUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": this.csrfToken,
+          },
+          body: JSON.stringify({
+            covenant_type: this.selectedCovenant.type,
+            covenant_id: this.selectedCovenant.id,
+            parcel_ids: this.selectedParcelIds(),
+            drawn_features: this.drawnFeatures,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          this.statusType = "error";
+          this.statusMessage = data.detail || "Could not save this covenant.";
+          return;
+        }
+
+        let message =
+          `Mapped to ${data.matched_parcel_count} parcel(s); ` +
+          `${data.covenanted_parcel_count} covenanted parcel record(s) now exist.`;
+        if (data.drawn_shapes_saved > 0) {
+          message +=
+            ` ${data.drawn_shapes_saved} drawn shape(s) saved` +
+            ` (${data.drawn_shape_count} on this covenant in total).`;
+        }
+        message += data.pmtiles_bake_dispatched
+          ? " A new PMTiles bake was dispatched — the map will show it once the Lambda reports back."
+          : " PMTILES_LAMBDA_NAME is not set, so no tile bake was dispatched.";
+        if (data.parcels_without_pin > 0) {
+          message += ` ${data.parcels_without_pin} selected parcel(s) had no primary PIN and were skipped.`;
+        }
+
+        this.statusType = "success";
+        this.statusMessage = message;
+        this.selectedCovenant = null;
+        this.clearParcelSelection();
+        this.clearParcelSearch();
+        this.clearDrawnFeatures();
+        this.hideMeasurementPopup();
+        // The covenant just mapped is no longer unmapped, so re-run the search
+        this.searchCovenants();
+      } catch (err) {
+        console.error(err);
+        this.statusType = "error";
+        this.statusMessage = "Could not reach the server to save this covenant.";
+      } finally {
+        this.saving = false;
+      }
+    },
+  });
+}
+</script>

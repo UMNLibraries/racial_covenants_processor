@@ -45,6 +45,9 @@ urlpatterns = [
 
     path('workflow/<int:workflow_id>/', views.workflow_summary, name='workflow'),
     path('workflow/<int:workflow_id>/matches/', views.covenant_matches, name='workflow_matches'),
+    path('workflow/<int:workflow_id>/edit/', views.workflow_map_edit, name='workflow_map_edit'),
+    path('workflow/<int:workflow_id>/edit/save/', views.workflow_link_covenant_parcels, name='workflow_link_covenant_parcels'),
+    path('workflow/<int:workflow_id>/covenants/search/', views.workflow_covenant_search, name='workflow_covenant_search'),
 
     path('workflow/<str:workflow_slug>/', views.workflow_summary_slug, name='workflow_slug'),
 
