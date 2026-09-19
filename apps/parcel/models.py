@@ -98,19 +98,6 @@ class CovenantsParcelManager(models.Manager):
                 default=Value(""),
                 output_field=CharField()
             )
-        # ).annotate(
-        #     cov_type=Case(
-        #         When(
-        #             Exists(oldest_deed),
-        #             then=Value("zooniverse")
-        #         ),
-        #         When(
-        #             Exists(oldest_deed_manual),
-        #             then=Value("manual")
-        #         ),
-        #         default=Value(""),
-        #         output_field=CharField()
-        #     )
         ).annotate(
             add_mod=F('plat_name')
         ).annotate(
@@ -140,28 +127,13 @@ class CovenantsParcelManager(models.Manager):
                 default=Value(None),
                 output_field=DateField()
             )
-        # ).annotate(
-        #     deed_date=Case(
-        #         When(
-        #             Exists(oldest_deed),
-        #             then=Subquery(oldest_deed.values('deed_date_final'))
-        #         ),
-        #         When(
-        #             Exists(oldest_deed_manual),
-        #             then=Subquery(oldest_deed_manual.values('deed_date'))
-        #         ),
-        #         default=Value(None),
-        #         output_field=DateField()
-        #     )
         ).annotate(
             cov_text=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('covenant_text_final'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('covenant_text'))
                 ),
@@ -171,7 +143,6 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             zn_subj_id=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('zoon_subject_id'))
                 ),
@@ -181,7 +152,6 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             image_ids=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('image_ids'))
                 ),
@@ -191,7 +161,6 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             image_links=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('image_links'))
                 ),
@@ -201,7 +170,6 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             deed_page_1=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('subject_1st_page__s3_lookup'))
                 ),
@@ -211,7 +179,6 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             deed_page_2=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('subject_2nd_page__s3_lookup'))
                 ),
@@ -221,7 +188,6 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             deed_page_3=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('subject_3rd_page__s3_lookup'))
                 ),
@@ -231,7 +197,6 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             zn_dt_ret=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('dt_retired'))
                 ),
@@ -241,7 +206,6 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             med_score=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('median_score'))
                 ),
@@ -251,12 +215,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             manual_cx=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('bool_manual_correction'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Value(True)
                 ),
@@ -266,12 +228,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             add_cov=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('addition_final'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('addition'))
                 ),
@@ -281,12 +241,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             block_cov=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('block_final'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('block'))
                 ),
@@ -296,12 +254,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             lot_cov=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('lot_final'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('lot'))
                 ),
@@ -311,12 +267,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             map_book=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('map_book_final'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('map_book'))
                 ),
@@ -326,12 +280,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             map_page=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('map_book_page_final'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('map_book_page'))
                 ),
@@ -341,12 +293,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             seller=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('seller_final'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('seller'))
                 ),
@@ -356,12 +306,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             buyer=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('buyer_final'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('buyer'))
                 ),
@@ -371,12 +319,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             match_type=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('match_type_final'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('cov_type'))
                 ),
@@ -386,12 +332,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             dt_updated=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('date_updated'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('date_updated'))
                 ),
@@ -401,12 +345,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             join_candidates=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('join_candidates'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('join_candidates'))
                 ),
@@ -416,12 +358,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             doc_num=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('deedpage_doc_num'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('doc_num'))
                 ),
@@ -431,12 +371,10 @@ class CovenantsParcelManager(models.Manager):
         ).annotate(
             main_image=Case(
                 When(
-                    # Exists(oldest_deed),
                     Q(cov_type='zooniverse'),
                     then=Subquery(oldest_deed.values('deedpage_s3_lookup'))
                 ),
                 When(
-                    # Exists(oldest_deed_manual),
                     Q(cov_type='manual'),
                     then=Subquery(oldest_deed_manual.values('doc_num'))
                 ),
