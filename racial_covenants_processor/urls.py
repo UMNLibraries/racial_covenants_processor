@@ -20,7 +20,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
 
 from apps.zoon import views
-from apps.zoon.serializers import SubjectNoGeoViewSet, SubjectGeoViewSet
+from apps.zoon.serializers import SubjectNoGeoViewSet
 from apps.parcel.serializers import CovenantNoGeoViewSet, CovenantGeoViewSet, ShpExportViewSet, GeoJSONExportViewSet, CSVExportViewSet
 
 from apps.deed.views import DeedPageViewSet, DeedSearchView
@@ -28,7 +28,6 @@ from apps.deed.views import DeedPageViewSet, DeedSearchView
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
 router.register(r'subjects', SubjectNoGeoViewSet)
-router.register(r'subjects-geo', SubjectGeoViewSet, basename='subjectsgeo')
 
 router.register(r'covenants', CovenantNoGeoViewSet)
 router.register(r'covenants-geo', CovenantGeoViewSet, basename='covenantsgeo')
