@@ -99,7 +99,6 @@ class Command(BaseCommand):
                 'join_candidates': 'join_candidates',
                 'parcel_addresses': 'parcel_addresses',
                 'parcel_city': 'parcel_city',
-                # 'geom_union_4326': 'geom_union_4326',
                 'date_updated': 'date_updated',
                 # 'workflow_name': 'workflow_name',
             }

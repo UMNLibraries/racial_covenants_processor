@@ -76,14 +76,13 @@ class Command(BaseCommand):
         matched_qs.update(bool_parcel_match=True)
 
         # Update geo union fields for final export
-        print("Updating geom_unions (Zooniverse)...")
+        print("Updating addresses (Zooniverse)...")
         update_objs = []
         for z in matched_qs:
-            z.set_geom_union()
             set_addresses(z)
             update_objs.append(z)
         ZooniverseSubject.objects.bulk_update(
-            update_objs, ['geom_union_4326', 'parcel_addresses', 'parcel_city'], batch_size=1000)
+            update_objs, ['parcel_addresses', 'parcel_city'], batch_size=1000)
         
     def match_parcels_bulk_manual(self, workflow, parcel_lookup):  # TODO: Same for ManualCovenant objects
 
@@ -104,7 +103,7 @@ class Command(BaseCommand):
         matched_qs.update(bool_parcel_match=True)
 
         # Update geo union fields for final export
-        print("Updating geom_unions (ManualCovenant)...")
+        print("Updating addresses (ManualCovenant)...")
         update_objs = []
         for m in matched_qs:
             set_addresses(m)
@@ -237,11 +236,10 @@ class Command(BaseCommand):
             if parcel_id:
                 m.zooniverse_subject.parcel_matches.add(parcel_id)
                 m.zooniverse_subject.bool_parcel_match = True
-                m.zooniverse_subject.set_geom_union()
                 set_addresses(m.zooniverse_subject)
                 update_objs.append(m.zooniverse_subject)
         ZooniverseSubject.objects.bulk_update(
-            update_objs, ['geom_union_4326', 'parcel_addresses', 'parcel_city', 'bool_parcel_match'], batch_size=1000)
+            update_objs, ['parcel_addresses', 'parcel_city', 'bool_parcel_match'], batch_size=1000)
     
     def match_parcel_pin_links_manual(self, workflow, workflow_pins_lookup):
         print("Attempting to join Parcel PIN matches on ManualCovenants...")

@@ -267,7 +267,6 @@ class SubjectAdmin(admin.ModelAdmin):
         }),
         ('Matching parcels', {
             'fields': (
-                #'geom_union_4326',
                 'get_parcel_match_count',
                 'parcel_matches',
             )
@@ -305,7 +304,6 @@ class SubjectAdmin(admin.ModelAdmin):
         'get_parcel_match_count',
         'parcel_matches',
         'bool_parcel_match',
-        'geom_union_4326',
         'zoon_subject_id',
         'join_strings',
         'bool_manual_correction',

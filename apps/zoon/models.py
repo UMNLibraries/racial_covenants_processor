@@ -300,10 +300,6 @@ class ZooniverseSubject(models.Model):
     parcel_addresses = models.JSONField(null=True, blank=True)
     parcel_city = models.CharField(max_length=50, null=True, blank=True, db_index=True)
 
-    # Union of any joined parcels
-    geom_union_4326 = models.MultiPolygonField(
-        srid=4326, null=True, blank=True)
-
     date_updated = models.DateTimeField(auto_now=True, null=True)
 
     # objects = models.Manager()
@@ -342,36 +338,6 @@ class ZooniverseSubject(models.Model):
         if self.join_candidates:
             return "; ".join([c['join_string'] for c in self.join_candidates])
         return None
-
-    def get_geom_union(self):
-        union = self.parcel_matches.all().aggregate(union=Union('geom_4326'))
-        if 'union' in union and union['union'] is not None:
-            union_final = union['union'].unary_union
-            # Force to multipolygon
-            if union_final and isinstance(union_final, geos.Polygon):
-                union_final = geos.MultiPolygon(union_final)
-            return union_final
-        return None
-
-    # def get_parcel_addresses(self):
-    #     return list(self.parcel_matches.all().values('street_address', 'city', 'state', 'zip_code'))
-
-    # def get_parcel_cities(self):
-    #     return self.parcel_matches.all().values_list('city', flat=True)
-
-    # def set_addresses(self):
-    #     if self.bool_parcel_match:
-    #         self.parcel_addresses = json.dumps(self.get_parcel_addresses())
-    #         cities = self.get_parcel_cities()
-    #         if len(cities) > 0:
-    #             # Assuming for the most part that we can generally take the first city we find. There will be edge cases, but those can be accessed via the address JSON object and this one is more of a shorthand
-    #             self.parcel_city = cities[0]
-
-    def set_geom_union(self):
-        if self.bool_parcel_match:
-            self.geom_union_4326 = self.get_geom_union()
-        else:
-            self.geom_union_4326 = None
 
     def check_bool_manual_update(self):
         if self.manualcorrection_set.count() > 0 or self.extraparcelcandidate_set.count() > 0 or self.manualparcelpinlink_set.count() > 0:
@@ -490,7 +456,6 @@ class ZooniverseSubject(models.Model):
             if 'parcel_lookup' in kwargs:
                 del kwargs['parcel_lookup']
 
-            self.set_geom_union()
             set_addresses(self)
 
         super(ZooniverseSubject, self).save(*args, **kwargs)
