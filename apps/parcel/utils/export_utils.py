@@ -179,9 +179,14 @@ def save_flat_covenanted_parcels(parcels):
             )
             cov_creation_objs.append(cp)
 
-        print(f'Creating {len(cov_creation_objs)} CovenantedParcel objects...')    
-        
+        print(f'Creating {len(cov_creation_objs)} CovenantedParcel objects...')
+
         CovenantedParcel.objects.bulk_create(cov_creation_objs)
+
+        workflow = parcels.first().workflow
+        if workflow is not None:
+            from apps.parcel.utils.pmtiles_utils import trigger_pmtiles_export
+            trigger_pmtiles_export(workflow)
 
         return CovenantedParcel.objects.filter(parcel__pk__in=parcel_pks)
 

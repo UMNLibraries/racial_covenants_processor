@@ -1,16 +1,19 @@
-import os
 import datetime
+import os
 import tempfile
-import subprocess
-import geopandas as gpd
 from zipfile import ZipFile
 
-from django.core.management.base import BaseCommand
-from django.core.files.base import File
+import geopandas as gpd
 from django.conf import settings
+from django.core.files.base import File
+from django.core.management.base import BaseCommand
 
-from apps.parcel.models import ShpExport, PMTilesExport
+from apps.parcel.models import ShpExport
 from apps.parcel.utils.export_utils import build_gdf
+from apps.parcel.utils.pmtiles_utils import (
+    save_pmtiles_local,
+    trigger_pmtiles_export,
+)
 from apps.zoon.utils.zooniverse_config import get_workflow_obj
 
 
@@ -54,81 +57,6 @@ class Command(BaseCommand):
 
         return out_shp
 
-    def convert_to_pmtiles(self, gdf, geojson_path, pmtiles_path, version_slug):
-        """Convert GeoDataFrame to PMTiles format using tippecanoe"""
-        # Ensure GeoDataFrame has proper CRS (EPSG:4326 required for PMTiles)
-        if gdf.crs is None or gdf.crs.to_epsg() != 4326:
-            gdf = gdf.to_crs(epsg=4326)
-
-        # Export to GeoJSON first
-        gdf.to_file(geojson_path, driver="GeoJSON")
-
-        try:
-            subprocess.run(
-                [
-                    "tippecanoe",
-                    "-o",
-                    pmtiles_path,
-                    "--force",
-                    "--drop-densest-as-needed",
-                    "--extend-zooms-if-still-dropping",
-                    "-Z",
-                    "0",  # min zoom
-                    "-z",
-                    "18",  # max zoom
-                    "-l",
-                    version_slug,  # layer name
-                    geojson_path,
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-
-            print(f"PMTiles created successfully: {pmtiles_path}")
-
-        except subprocess.CalledProcessError as e:
-            print(f"Error creating PMTiles: {e}")
-            print(f"stdout: {e.stdout}")
-            print(f"stderr: {e.stderr}")
-            raise
-        except FileNotFoundError:
-            print("Error: tippecanoe not found. Please install tippecanoe:")
-            print("  macOS: brew install tippecanoe")
-            print("  Linux: https://github.com/felt/tippecanoe")
-            raise
-
-    def save_pmtiles_local(self, gdf, version_slug):
-        """Export GeoDataFrame to PMTiles format and save locally"""
-
-        os.makedirs(
-            os.path.join(settings.BASE_DIR, "data", "main_exports", version_slug),
-            exist_ok=True,
-        )
-
-        geojson_path = os.path.join(
-            settings.BASE_DIR,
-            "data",
-            "main_exports",
-            version_slug,
-            f"{version_slug}.geojson",
-        )
-        out_pmtiles = os.path.join(
-            settings.BASE_DIR,
-            "data",
-            "main_exports",
-            version_slug,
-            f"{version_slug}.pmtiles",
-        )
-
-        self.convert_to_pmtiles(gdf, geojson_path, out_pmtiles, version_slug)
-
-        # Clean up temporary GeoJSON
-        if os.path.exists(geojson_path):
-            os.remove(geojson_path)
-
-        return out_pmtiles
-
     def generate_zip_tmp(self, gdf, version_slug, workflow, created_at, schema=None):
         # Convert to shapefile and serve it to the user
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -161,31 +89,20 @@ class Command(BaseCommand):
             shp_export_obj.save()
             return shp_export_obj
 
-    def generate_pmtiles_tmp(self, gdf, version_slug, workflow, created_at):
-        """Convert GeoDataFrame to PMTiles and save to S3"""
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            geojson_path = os.path.join(tmp_dir, f"{version_slug}.geojson")
-            pmtiles_path = os.path.join(tmp_dir, f"{version_slug}.pmtiles")
-
-            # Convert to PMTiles using shared method
-            self.convert_to_pmtiles(gdf, geojson_path, pmtiles_path, version_slug)
-
-            # Create PMTilesExport object and save to S3
-            pmtiles_export_obj = PMTilesExport(
-                workflow=workflow, covenant_count=gdf.shape[0], created_at=created_at
-            )
-
-            with open(pmtiles_path, "rb") as f:
-                pmtiles_export_obj.pmtiles.save(f"{version_slug}.pmtiles", File(f))
-            pmtiles_export_obj.save()
-            return pmtiles_export_obj
-
     def handle(self, *args, **kwargs):
         workflow_name = kwargs["workflow"]
         if not workflow_name:
             print("Missing workflow name. Please specify with --workflow.")
         else:
             workflow = get_workflow_obj(workflow_name)
+
+            if kwargs["pmtiles"] and not kwargs["local"]:
+                request_id = trigger_pmtiles_export(workflow)
+                if request_id:
+                    print(f"PMTiles bake dispatched to Lambda: {request_id}")
+                else:
+                    print("PMTILES_LAMBDA_NAME is not set, so no bake was dispatched.")
+                return
 
             covenants_geo_df = build_gdf(workflow)
 
@@ -196,15 +113,10 @@ class Command(BaseCommand):
             version_slug = f"{workflow.slug}_covenants_{timestamp}"
 
             if kwargs["pmtiles"]:
-                # Export to PMTiles format
-                if kwargs["local"]:
-                    pmtiles_path = self.save_pmtiles_local(covenants_geo_df, version_slug)
-                    print(f"PMTiles saved to: {pmtiles_path}")
-                else:
-                    pmtiles_export_obj = self.generate_pmtiles_tmp(
-                        covenants_geo_df, version_slug, workflow, now
-                    )
-                    print(f"PMTiles export object created: {pmtiles_export_obj}")
+                pmtiles_path = save_pmtiles_local(
+                    covenants_geo_df, version_slug, workflow.slug
+                )
+                print(f"PMTiles saved to: {pmtiles_path}")
             elif kwargs["local"]:
                 # Export to shapefile locally
                 try:
