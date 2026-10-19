@@ -282,6 +282,12 @@ AWS_ACCESS_KEY_ID = ""
 AWS_SECRET_ACCESS_KEY = ""
 AWS_S3_REGION_NAME = "us-east-2"
 
+# Blank disables the PMTiles bake trigger entirely, which is what we want in
+# tests and local dev.
+PMTILES_LAMBDA_NAME = ""
+# Shared secret the bake Lambda presents to the pmtiles callback view.
+PMTILES_CALLBACK_TOKEN = ""
+
 try:
     from .local_settings import *
 except:
