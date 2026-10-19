@@ -258,7 +258,7 @@ def connect_to_zooniverse(testing=False):
 def get_subject_set(project, workflow):
     try:
         subject_set = SubjectSet.where(project_id=project.id, display_name=workflow.workflow_name).next()
-        print(f"Found existing subjet set {workflow.workflow_name} ({subject_set.id}).")
+        print(f"Found existing subject set {workflow.workflow_name} ({subject_set.id}).")
 
     except StopIteration:
         print(f"No matching subject set found.")
@@ -269,7 +269,7 @@ def get_subject_set(project, workflow):
 def get_or_create_subject_set(project, workflow):
     try:
         subject_set = SubjectSet.where(project_id=project.id, display_name=workflow.workflow_name).next()
-        print(f"Found existing subjet set {workflow.workflow_name} ({subject_set.id}).")
+        print(f"Found existing subject set {workflow.workflow_name} ({subject_set.id}).")
 
     except StopIteration:
         print(f"No matching subject set found. Creating '{workflow.workflow_name}'...")
