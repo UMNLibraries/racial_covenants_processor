@@ -445,13 +445,21 @@ def unmapped_covenant_querysets(workflow_id):
     return subjects, manual_covs
 
 
-def search_unmapped_covenants(workflow_id, query="", limit=COVENANT_SEARCH_LIMIT):
+def search_unmapped_covenants(
+    workflow_id, query="", limit=COVENANT_SEARCH_LIMIT, covenant_id=None,
+    covenant_type=None,
+):
     """Search unmapped covenants. Runs here rather than in the browser: the
     largest workflow has thousands of them, and shipping them all made the
     editor slow to open. covenant_text is left out -- nothing displays it."""
     subjects, manual_covs = unmapped_covenant_querysets(workflow_id)
 
-    if query:
+    if covenant_id:
+        if covenant_type == "manual":
+            subjects, manual_covs = subjects.none(), manual_covs.filter(pk=covenant_id)
+        else:
+            subjects, manual_covs = subjects.filter(pk=covenant_id), manual_covs.none()
+    elif query:
         subjects = subjects.filter(
             Q(joins_text__icontains=query)
             | Q(addition_final__icontains=query)
@@ -519,7 +527,13 @@ def workflow_covenant_search(request, workflow_id):
     # not exist simply matches nothing
     query = request.GET.get("q", "").strip()
 
-    results, truncated = search_unmapped_covenants(workflow_id, query)
+    results, truncated = search_unmapped_covenants(
+        workflow_id,
+        query,
+        # Deep link from the admin: one covenant by id, no text search
+        covenant_id=request.GET.get("covenant_id"),
+        covenant_type=request.GET.get("covenant_type"),
+    )
 
     # Counting costs two more round trips, so it happens on the unfiltered
     # first load only -- that total is what the sidebar reports from then on

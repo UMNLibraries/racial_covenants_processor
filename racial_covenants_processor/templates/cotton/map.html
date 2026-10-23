@@ -12,7 +12,7 @@
         saveUrl: '{{ save_url }}',
         csrfToken: '{{ csrf_token }}',
         covenantSearchUrl: '{{ covenant_search_url }}'
-     })" x-init="initMap(); searchCovenants()" style="display: flex; height: {{ height }}">
+     })" x-init="initMap(); searchCovenants(); selectCovenantFromUrl()" style="display: flex; height: {{ height }}">
 {% else %}
 <div x-data="mapApp({ geoman: '{{ geoman }}' === 'true', pmtilesUrl: '{{ pmtiles_url }}' })" x-init="initMap()" style="display: flex; height: {{ height }}">
 {% endif %}
