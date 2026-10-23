@@ -543,6 +543,7 @@ function mapEditApp(options = {}) {
         .map((row) => this.rowToParcel(row));
       this.refreshParcelStyles();
       this.fitToResults(this.parcelResults);
+      this.scrollToParcels();
     },
 
     searchParcelsForJoinString(joinString) {
@@ -612,6 +613,8 @@ function mapEditApp(options = {}) {
       this.fitToResults(this.parcelResults);
     },
 
+    // Clicking shows a parcel's details as a match; it is only selected once
+    // the user presses Add on the row, same as a search result.
     handleEditClick(e) {
       if (!this.map.getLayer("parcel-fill")) return false;
 
@@ -621,30 +624,40 @@ function mapEditApp(options = {}) {
       const isCtrlOrCmd = e.originalEvent.ctrlKey || e.originalEvent.metaKey;
 
       if (features.length === 0) {
-        if (!isCtrlOrCmd) {
-          this.selectedParcels = [];
-          this.refreshParcelStyles();
-        }
+        // Clears what is being previewed, never what is already selected
+        if (!isCtrlOrCmd) this.clearParcelSearch();
         return true;
       }
 
-      const props = features[0].properties;
-      const alreadySelected = this.selectedParcels.some(
-        (p) => p.db_id === props.db_id
-      );
+      const indexed = this.parcelIndexById.get(features[0].properties.db_id);
+      const parcel = indexed ? this.rowToParcel(indexed) : features[0].properties;
+      const shown = this.parcelResults.some((p) => p.db_id === parcel.db_id);
 
       if (isCtrlOrCmd) {
-        this.selectedParcels = alreadySelected
-          ? this.selectedParcels.filter((p) => p.db_id !== props.db_id)
-          : [...this.selectedParcels, props];
+        this.parcelResults = shown
+          ? this.parcelResults.filter((p) => p.db_id !== parcel.db_id)
+          : [...this.parcelResults, parcel];
       } else {
-        this.selectedParcels = alreadySelected && this.selectedParcels.length === 1
-          ? []
-          : [props];
+        this.parcelResults = shown && this.parcelResults.length === 1 ? [] : [parcel];
       }
 
+      this.parcelResultsTruncated = false;
       this.refreshParcelStyles();
+      // The covenant list can be long; without this the preview lands below
+      // the fold and the click looks like it did nothing
+      this.scrollToParcels();
       return true;
+    },
+
+    scrollToParcels() {
+      const step = document.getElementById("parcel-step");
+      const sidebar = step?.closest(".map-sidebar");
+      if (!step || !sidebar) return;
+
+      // scrollIntoView would move the window too; scroll the sidebar alone
+      const delta =
+        step.getBoundingClientRect().top - sidebar.getBoundingClientRect().top;
+      sidebar.scrollTo({ top: sidebar.scrollTop + delta, behavior: "smooth" });
     },
 
     selectCovenant(covenant) {

@@ -50,18 +50,25 @@
                     <p class="muted size-2xs">Searching…</p>
                 </template>
 
-                <template x-if="!covenantSearchLoading && covenantResults.length === 0">
+                <!-- With thousands unmapped the first 50 are arbitrary, so the
+                     list stays hidden until there is something to narrow it -->
+                <template x-if="!covenantSearchLoading && !covenantQuery.trim()">
                     <p class="muted size-xs"
-                       x-text="covenantQuery.trim() ? 'No unmapped covenant matches that search.' : 'No unmapped covenants left in this workflow.'"></p>
+                       x-text="covenantTotal ? covenantTotal.toLocaleString() + ' unmapped covenants — search to narrow.' : 'No unmapped covenants left in this workflow.'"></p>
                 </template>
 
-                <template x-if="covenantResults.length > 0">
+                <template x-if="!covenantSearchLoading && covenantQuery.trim() && covenantResults.length === 0">
+                    <p class="muted size-xs">No unmapped covenant matches that search.</p>
+                </template>
+
+                <template x-if="covenantQuery.trim() && covenantResults.length > 0">
                     <div class="stack gap-s">
                         <p class="muted size-2xs">
-                            <span x-text="covenantResults.length"></span> shown<span
-                                x-text="covenantTotal !== null ? ' of ' + covenantTotal + ' unmapped' : ''"></span>.
+                            <span x-text="covenantResults.length"></span> match<span
+                                x-text="covenantResults.length === 1 ? '' : 'es'"></span><span
+                                x-text="covenantResultsTruncated ? ' (first ' + covenantLimit + ')' : ''"></span>.
                         </p>
-                        <div class="stack gap-2xs" style="max-height: 22em; overflow-y: auto;">
+                        <div class="stack gap-2xs" style="max-height: 13em; overflow-y: auto;">
                             <template x-for="covenant in covenantResults" :key="covenant.type + covenant.doc_num">
                                 <button type="button" @click="selectCovenant(covenant)" class="btn outline size-xs covenant-option">
                                     <template x-if="joinStrings(covenant).length > 0">
@@ -88,7 +95,7 @@
     <hr>
 
     <!-- Step 2: pick the parcels it covers -->
-    <div class="stack gap-s">
+    <div class="stack gap-s" id="parcel-step">
         <div class="split align-center">
             <strong class="size-s">2. Select parcels (<span x-text="selectedParcels.length"></span>)</strong>
             <template x-if="selectedParcels.length > 1">
@@ -126,7 +133,7 @@
         </template>
 
         <template x-if="parcelRows().length === 0">
-            <p class="muted size-xs">Click a parcel on the map to select it, or search for one above.</p>
+            <p class="muted size-xs">Click a parcel on the map to see its details, then Add it. Or search for one above.</p>
         </template>
 
         <div class="stack gap-2xs" style="max-height: 24em; overflow-y: auto;">
