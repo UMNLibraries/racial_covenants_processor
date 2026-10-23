@@ -142,6 +142,16 @@
                     <template x-for="joinString in row.parcel.join_strings" :key="joinString">
                         <code class="join-string" x-text="joinString"></code>
                     </template>
+                    <div class="split">
+                        <span class="muted">PIN</span>
+                        <span x-text="row.parcel.cnty_pin || 'None — cannot be linked'"></span>
+                    </div>
+                    <template x-if="row.parcel.ph_dsc">
+                        <div class="split gap-s">
+                            <span class="muted">Description</span>
+                            <span x-text="row.parcel.ph_dsc"></span>
+                        </div>
+                    </template>
                     <template x-if="row.parcel.bool_cov">
                         <span class="muted">Already carries a covenant</span>
                     </template>

@@ -1,5 +1,5 @@
-from django_elasticsearch_dsl import Document, fields
-from django_elasticsearch_dsl.registries import registry
+from django_opensearch_dsl import Document, fields
+from django_opensearch_dsl.registries import registry
 
 from apps.deed.models import DeedPage
 
@@ -44,6 +44,52 @@ class DeedPageDocument(Document):
         """Extract matched terms, using the prefetch_related optimization."""
         # This uses the prefetched data from get_queryset()
         return [{'term': term.term} for term in instance.matched_terms.all()]
+
+    def get_indexing_queryset(self, verbose=False, filter_=None, exclude=None,
+                              alias=None, count=None, action=None, stdout=None):
+        """Stream the indexing queryset using keyset (seek) pagination.
+
+        django-opensearch-dsl's default ``get_indexing_queryset`` paginates with
+        ``qs[i:i + chunk_size]`` (SQL OFFSET), which is O(offset) per chunk and so
+        degrades quadratically when indexing millions of rows. Its
+        ``Document.get_queryset`` also uses a plain ``model.objects.all()`` that
+        bypasses the ``Django.get_queryset`` optimization, causing N+1 queries in
+        ``prepare_workflow`` / ``prepare_matched_terms``.
+
+        This override fixes both: it seeks by primary key (``pk > last_pk``,
+        O(chunk_size) via the PK index, so throughput stays flat at any depth) over
+        a queryset that ``select_related`` the workflow and ``prefetch_related`` the
+        matched terms. ``--filter`` / ``--exclude`` are honored; ``--count`` (which
+        applies a global LIMIT) falls back to the library default.
+        """
+        if count is not None:
+            kwargs = {"verbose": verbose, "filter_": filter_, "exclude": exclude,
+                      "alias": alias, "count": count}
+            if action is not None:
+                kwargs["action"] = action
+            if stdout is not None:
+                kwargs["stdout"] = stdout
+            yield from super().get_indexing_queryset(**kwargs)
+            return
+
+        qs = self.django.model.objects
+        if alias:
+            qs = qs.using(alias)
+        qs = qs.select_related("workflow").prefetch_related("matched_terms")
+        if filter_:
+            qs = qs.filter(filter_)
+        if exclude:
+            qs = qs.exclude(exclude)
+        qs = qs.order_by("pk")
+
+        chunk_size = self.django.queryset_pagination
+        last_pk = None
+        while True:
+            chunk = list((qs.filter(pk__gt=last_pk) if last_pk is not None else qs)[:chunk_size])
+            if not chunk:
+                break
+            yield from chunk
+            last_pk = chunk[-1].pk
 
     class Index:
         name = "deed_pages"

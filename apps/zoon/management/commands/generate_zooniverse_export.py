@@ -2,6 +2,7 @@ import os
 import json
 import pandas as pd
 import subprocess
+from slugify import slugify
 
 from django.core.management.base import BaseCommand
 from django.core import management
@@ -19,6 +20,8 @@ class Command(BaseCommand):
     config_yaml = None
     workflow = None
     workflow_csv_path = None
+    import_workflow_slug = None
+    import_classifications_slug = None
 
     def add_arguments(self, parser):
         parser.add_argument('-w', '--workflow', type=str,
@@ -30,7 +33,7 @@ class Command(BaseCommand):
             f"Reducer_config_workflow_{self.zoon_workflow_id}_V{str(self.zoon_workflow_version)}_{extractor}_extractor.yaml")
         extractions_csv = os.path.join(self.batch_dir, f"{extractor}_extractor_extractions.csv")
 
-        process = subprocess.run(['panoptes_aggregation', 'reduce', '-d', self.batch_dir, '-o', self.workflow.slug, extractions_csv, extractor_yaml])
+        process = subprocess.run(['panoptes_aggregation', 'reduce', '-d', self.batch_dir, '-o', self.import_workflow_slug, extractions_csv, extractor_yaml])
 
     def generate_task_2_question_lookup(self):
         '''It's sometimes hard to parse out which task goes with one question, so this produces a somewhat more readable list of what question goes with each task. This can be used to facilitate filling out the zooniverse config for each workflow.'''
@@ -80,9 +83,19 @@ class Command(BaseCommand):
             self.zoon_workflow_id = str(self.batch_config['zoon_workflow_id'])
             self.zoon_workflow_version = self.batch_config['zoon_workflow_version']
 
+            if 'zooniverse_project_name' in self.batch_config:
+                self.import_workflow_slug = slugify(self.batch_config['zooniverse_project_name'])
+            else:
+                self.import_workflow_slug = self.workflow.slug
+
+            if 'zooniverse_workflow_name' in self.batch_config:
+                self.import_classifications_slug = slugify(self.batch_config['zooniverse_workflow_name'])
+            else:
+                self.import_classifications_slug = self.workflow.slug
+            
 
             self.workflow_csv_path = os.path.join(
-                self.batch_dir, f"{self.workflow.slug}-workflows.csv")
+                self.batch_dir, f"{self.import_workflow_slug}-workflows.csv")
 
             process = subprocess.run(['panoptes_aggregation', 'config', '-v', self.zoon_workflow_version, '-d', self.batch_dir, self.workflow_csv_path, self.zoon_workflow_id])
 
@@ -93,7 +106,7 @@ class Command(BaseCommand):
             self.config_yaml = os.path.join(
                 self.batch_dir, f"Extractor_config_workflow_{self.zoon_workflow_id}_V{self.zoon_workflow_version}.yaml")
             self.denested_class_path = os.path.join(
-                self.batch_dir, f"{self.workflow.slug}-denested.csv")
+                self.batch_dir, f"{self.import_classifications_slug}-denested.csv")
 
             # Aggregation extract - specific numbers may change with workflow updates
             process = subprocess.run(['panoptes_aggregation', 'extract', '-d', self.batch_dir, self.denested_class_path, self.config_yaml])

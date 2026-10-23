@@ -1,8 +1,10 @@
+import datetime
+
 from django.test import TestCase, override_settings
 from django.core import management
 
 from apps.zoon.models import ZooniverseWorkflow, ZooniverseSubject, ManualCovenant, ManualParcelPINLink, ManualCovenantParcelPINLink
-from apps.parcel.models import Parcel
+from apps.parcel.models import Parcel, CovenantedParcel
 from apps.deed.utils.deed_pagination import tag_prev_next_image_sql
 from apps.zoon.utils.zooniverse_load import build_zooniverse_manifest
 # from apps.zoon.management.commands import load_zooniverse_export
@@ -350,3 +352,33 @@ class ParcelMatchTests(TestCase):
         self.assertEqual(man_cov_4.bool_parcel_match, True)
         self.assertIn(parcel_lot_11, man_cov_4.parcel_matches.all())
         self.assertEqual(parcel_lot_11.bool_covenant, True)
+
+    def test_parcel_match_earliest_option_man_cov(self):
+        ''' Does match_parcels correctly join the earliest instance of a covenant on the same property? (ManualCovenant earliest) (Will likely fail)'''
+        parcel_lot = Parcel.objects.get(workflow_id=1, pin_primary='covenanted-parcel-earliest-test-1')
+        cp = CovenantedParcel.objects.get(parcel=parcel_lot)
+
+        man_cov = ManualCovenant.objects.get(workflow_id=1, pk=6) # Date: '2026-04-09'
+        zoon_sub = ZooniverseSubject.objects.get(workflow_id=1, pk=8) # Date: '2026-04-10'
+
+        self.assertIn(parcel_lot, man_cov.parcel_matches.all())
+        self.assertIn(parcel_lot, zoon_sub.parcel_matches.all())
+        self.assertEqual(man_cov.bool_parcel_match, True)
+        self.assertEqual(zoon_sub.bool_parcel_match, True)
+        self.assertEqual(cp.deed_date, man_cov.deed_date)
+        self.assertEqual(cp.deed_date, datetime.date(2026, 4, 9))
+
+    def test_parcel_match_earliest_option_zoon_sub(self):
+        ''' Does match_parcels correctly join the earliest instance of a covenant on the same property? (Zooniverse earliest) '''
+        parcel_lot = Parcel.objects.get(workflow_id=1, pin_primary='covenanted-parcel-earliest-test-2')
+        cp = CovenantedParcel.objects.get(parcel=parcel_lot)
+
+        man_cov = ManualCovenant.objects.get(workflow_id=1, pk=7) # Date: '2026-04-08'
+        zoon_sub = ZooniverseSubject.objects.get(workflow_id=1, pk=9) # Date: '2026-04-07'
+
+        self.assertIn(parcel_lot, man_cov.parcel_matches.all())
+        self.assertIn(parcel_lot, zoon_sub.parcel_matches.all())
+        self.assertEqual(man_cov.bool_parcel_match, True)
+        self.assertEqual(zoon_sub.bool_parcel_match, True)
+        self.assertEqual(cp.deed_date, zoon_sub.deed_date_final)
+        self.assertEqual(cp.deed_date, datetime.date(2026, 4, 7))

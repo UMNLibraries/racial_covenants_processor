@@ -1,1 +1,3 @@
 racial_covenants_processor/data
+.env
+racial_covenants_processor/settings/local_settings.py
