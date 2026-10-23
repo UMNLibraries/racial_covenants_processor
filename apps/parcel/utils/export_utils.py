@@ -733,6 +733,7 @@ PARCEL_SEARCH_INDEX_FIELDS = [
     'plat_name',
     'block',
     'lot',
+    'ph_dsc',
     'bool_cov',
     'lon',
     'lat',
@@ -766,6 +767,7 @@ def build_parcel_search_index(workflow):
         'plat_name',
         'block',
         'lot',
+        'phys_description',
         'bool_covenant',
         'centroid_json',
     ).iterator(chunk_size=5000)
@@ -780,6 +782,7 @@ def build_parcel_search_index(workflow):
             parcel['plat_name'] or '',
             parcel['block'] or '',
             parcel['lot'] or '',
+            parcel['phys_description'] or '',
             bool(parcel['bool_covenant']),
             # ~1m precision is plenty to fly the map to a parcel
             round(lon, 5),
