@@ -54,7 +54,7 @@
                      list stays hidden until there is something to narrow it -->
                 <template x-if="!covenantSearchLoading && !covenantQuery.trim()">
                     <p class="muted size-xs"
-                       x-text="covenantTotal ? covenantTotal.toLocaleString() + ' unmapped covenants — search to narrow.' : 'No unmapped covenants left in this workflow.'"></p>
+                       x-text="covenantTotal ? covenantTotal.toLocaleString() + ' unmapped covenants.' : 'No unmapped covenants left in this workflow.'"></p>
                 </template>
 
                 <template x-if="!covenantSearchLoading && covenantQuery.trim() && covenantResults.length === 0">
