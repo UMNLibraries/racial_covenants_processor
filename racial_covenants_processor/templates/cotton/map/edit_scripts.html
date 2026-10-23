@@ -228,22 +228,58 @@ function mapEditApp(options = {}) {
         : `${acres.toFixed(2)} acres`;
     },
 
+    formatFeet(meters) {
+      return `${Math.round(meters * 3.280839895).toLocaleString()} ft`;
+    },
+
+    measurePopup(lngLat, html) {
+      this.hideMeasurementPopup();
+      this.measurementPopup = new maplibregl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        className: "measurement-popup",
+      })
+        .setLngLat(lngLat)
+        .setHTML(`<div style="font-size: 12px; padding: 4px;">${html}</div>`)
+        .addTo(this.map);
+    },
+
+    // Overrides mapApp's metric version. Physical descriptions read "100 feet,
+    // then 25 feet", so the leg being drawn matters as much as the totals.
+    showLiveDrawingMeasurement(mouseCoords) {
+      if (!this.isDrawingMode || this.currentDrawingCoordinates.length === 0) return;
+
+      const placed = this.currentDrawingCoordinates;
+      const coords = [...placed, mouseCoords];
+      const line = (c) => ({
+        type: "Feature",
+        properties: {},
+        geometry: { type: "LineString", coordinates: c },
+      });
+      const feet = (c) => this.formatFeet(turf.length(line(c), { units: "meters" }));
+
+      const parts = [`Segment: ${feet([placed[placed.length - 1], mouseCoords])}`];
+      if (coords.length >= 2) parts.push(`Perimeter: ${feet(coords)}`);
+      if (coords.length >= 3) {
+        parts.push(
+          `Area: ${this.formatShapeArea({
+            type: "Feature",
+            properties: {},
+            geometry: { type: "Polygon", coordinates: [[...coords, coords[0]]] },
+          })}`
+        );
+      }
+
+      this.measurePopup(mouseCoords, parts.join("<br/>"));
+    },
+
     showShapeMeasurement(feature) {
       try {
-        const center = turf.centroid(feature).geometry.coordinates;
-        this.hideMeasurementPopup();
-        this.measurementPopup = new maplibregl.Popup({
-          closeButton: false,
-          closeOnClick: false,
-          className: "measurement-popup",
-        })
-          .setLngLat(center)
-          .setHTML(
-            `<div style="font-size: 12px; padding: 4px;">` +
-              `Area: ${this.formatShapeArea(feature)}<br/>` +
-              `Perimeter: ${this.formatShapePerimeter(feature)}</div>`
-          )
-          .addTo(this.map);
+        this.measurePopup(
+          turf.centroid(feature).geometry.coordinates,
+          `Area: ${this.formatShapeArea(feature)}<br/>` +
+            `Perimeter: ${this.formatShapePerimeter(feature)}`
+        );
       } catch (err) {
         console.warn("Could not measure the drawn shape:", err);
       }
