@@ -41,18 +41,23 @@ class Command(BaseCommand):
 
     def build_image_df(self, workflow, sample_pct):
 
-        all_pks = DeedPage.objects.filter(
-            workflow=workflow
-        ).values_list('pk', flat=True)
+        kwargs = {
+            'workflow': workflow
+        }
 
-        total_count = len(all_pks)
-        sample_count = round(sample_pct * total_count)
-        sample_pks = sample(list(all_pks), sample_count)
+        if sample_pct != 1:
+            
+            all_pks = DeedPage.objects.filter(
+                workflow=workflow
+            ).values_list('pk', flat=True)
 
-        images = DeedPage.objects.filter(
-            workflow=workflow,
-            pk__in=sample_pks
-        ).select_related(
+            total_count = len(all_pks)
+            sample_count = round(sample_pct * total_count)
+            sample_pks = sample(list(all_pks), sample_count)
+
+            kwargs['pk__in'] = sample_pks
+
+        images = DeedPage.objects.filter(**kwargs).select_related(
             'matched_terms__term',
         ).values(
             'pk',
@@ -73,6 +78,7 @@ class Command(BaseCommand):
             'page_image_web_highlighted',
         )
 
+        print('Data returned. Creating dataframe...')
         images_df = pd.DataFrame.from_dict(images)
         images_df.rename(columns={'matched_terms__term': 'term'}, inplace=True)
 

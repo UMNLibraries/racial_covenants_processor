@@ -221,8 +221,8 @@ class ZooniverseSubject(models.Model):
     lot = models.TextField(blank=True)
     block = models.CharField(max_length=502, blank=True)
 
-    map_book = models.CharField(max_length=255, null=True, blank=True)
-    map_book_page = models.CharField(max_length=255, null=True, blank=True)
+    map_book = models.CharField(max_length=1200, null=True, blank=True)
+    map_book_page = models.CharField(max_length=1200, null=True, blank=True)
 
     city = models.CharField(max_length=503, blank=True)
     seller = models.CharField(max_length=1200, blank=True)
@@ -268,14 +268,14 @@ class ZooniverseSubject(models.Model):
     covenant_text_final = models.TextField(
         null=True, blank=True, verbose_name="Covenant text")
     addition_final = models.CharField(
-        max_length=500, null=True, blank=True, verbose_name="Addition")
+        max_length=502, null=True, blank=True, verbose_name="Addition")
     lot_final = models.TextField(null=True, blank=True, verbose_name="Lot")
     block_final = models.CharField(
-        max_length=500, null=True, blank=True, verbose_name="Block")
+        max_length=503, null=True, blank=True, verbose_name="Block")
     map_book_final = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name="Map Book")
+        max_length=1200, null=True, blank=True, verbose_name="Map Book")
     map_book_page_final = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name="Map Book Page")
+        max_length=1200, null=True, blank=True, verbose_name="Map Book Page")
     seller_final = models.CharField(
         max_length=1200, null=True, blank=True, verbose_name="Seller name")
     buyer_final = models.CharField(
@@ -285,7 +285,7 @@ class ZooniverseSubject(models.Model):
 
     street_address_final = models.TextField(null=True, blank=True, verbose_name="Street address")
     city_final = models.CharField(
-        max_length=500, null=True, blank=True, verbose_name="City")
+        max_length=504, null=True, blank=True, verbose_name="City")
     match_type_final = models.CharField(choices=MATCH_TYPE_OPTIONS, max_length=4, null=True, blank=True, verbose_name="Match type")
     bool_handwritten_final = models.BooleanField(null=True, verbose_name="Handwritten?")
 
@@ -299,10 +299,6 @@ class ZooniverseSubject(models.Model):
     # Fields resulting from join to Parcel models
     parcel_addresses = models.JSONField(null=True, blank=True)
     parcel_city = models.CharField(max_length=50, null=True, blank=True, db_index=True)
-
-    # Union of any joined parcels
-    geom_union_4326 = models.MultiPolygonField(
-        srid=4326, null=True, blank=True)
 
     date_updated = models.DateTimeField(auto_now=True, null=True)
 
@@ -342,36 +338,6 @@ class ZooniverseSubject(models.Model):
         if self.join_candidates:
             return "; ".join([c['join_string'] for c in self.join_candidates])
         return None
-
-    def get_geom_union(self):
-        union = self.parcel_matches.all().aggregate(union=Union('geom_4326'))
-        if 'union' in union and union['union'] is not None:
-            union_final = union['union'].unary_union
-            # Force to multipolygon
-            if union_final and isinstance(union_final, geos.Polygon):
-                union_final = geos.MultiPolygon(union_final)
-            return union_final
-        return None
-
-    # def get_parcel_addresses(self):
-    #     return list(self.parcel_matches.all().values('street_address', 'city', 'state', 'zip_code'))
-
-    # def get_parcel_cities(self):
-    #     return self.parcel_matches.all().values_list('city', flat=True)
-
-    # def set_addresses(self):
-    #     if self.bool_parcel_match:
-    #         self.parcel_addresses = json.dumps(self.get_parcel_addresses())
-    #         cities = self.get_parcel_cities()
-    #         if len(cities) > 0:
-    #             # Assuming for the most part that we can generally take the first city we find. There will be edge cases, but those can be accessed via the address JSON object and this one is more of a shorthand
-    #             self.parcel_city = cities[0]
-
-    def set_geom_union(self):
-        if self.bool_parcel_match:
-            self.geom_union_4326 = self.get_geom_union()
-        else:
-            self.geom_union_4326 = None
 
     def check_bool_manual_update(self):
         if self.manualcorrection_set.count() > 0 or self.extraparcelcandidate_set.count() > 0 or self.manualparcelpinlink_set.count() > 0:
@@ -490,7 +456,6 @@ class ZooniverseSubject(models.Model):
             if 'parcel_lookup' in kwargs:
                 del kwargs['parcel_lookup']
 
-            self.set_geom_union()
             set_addresses(self)
 
         super(ZooniverseSubject, self).save(*args, **kwargs)
@@ -542,12 +507,12 @@ class ZooniverseResponseProcessed(models.Model):
 
     bool_covenant = models.CharField(max_length=100, null=True, blank=True)
     covenant_text = models.TextField(blank=True)
-    addition = models.CharField(max_length=500, null=True, blank=True)
+    addition = models.CharField(max_length=505, null=True, blank=True)
     lot = models.TextField(null=True, blank=True)
-    block = models.CharField(max_length=500, null=True, blank=True)
-    map_book = models.CharField(max_length=255, null=True, blank=True)
-    map_book_page = models.CharField(max_length=255, null=True, blank=True)
-    city = models.CharField(max_length=500, null=True, blank=True)  # When addition/block/lot not available in workflow
+    block = models.CharField(max_length=506, null=True, blank=True)
+    map_book = models.CharField(max_length=507, null=True, blank=True)
+    map_book_page = models.CharField(max_length=508, null=True, blank=True)
+    city = models.CharField(max_length=509, null=True, blank=True)  # When addition/block/lot not available in workflow
     seller = models.CharField(max_length=1200, null=True, blank=True)
     buyer = models.CharField(max_length=1200, null=True, blank=True)
     match_type = models.CharField(max_length=100, null=True, blank=True)
@@ -616,13 +581,13 @@ class ManualCorrection(models.Model):
 
     bool_covenant = models.BooleanField(null=True)
     covenant_text = models.TextField(null=True, blank=True)
-    addition = models.CharField(max_length=500, null=True, blank=True)
+    addition = models.CharField(max_length=510, null=True, blank=True)
     lot = models.TextField(null=True, blank=True)
-    block = models.CharField(max_length=500, null=True, blank=True)
-    map_book = models.CharField(max_length=255, null=True, blank=True)
-    map_book_page = models.CharField(max_length=255, null=True, blank=True)
-    seller = models.CharField(max_length=500, null=True, blank=True)
-    buyer = models.CharField(max_length=500, null=True, blank=True)
+    block = models.CharField(max_length=511, null=True, blank=True)
+    map_book = models.CharField(max_length=1200, null=True, blank=True)
+    map_book_page = models.CharField(max_length=1200, null=True, blank=True)
+    seller = models.CharField(max_length=512, null=True, blank=True)
+    buyer = models.CharField(max_length=513, null=True, blank=True)
     deed_date = models.DateField(null=True, blank=True)
 
     street_address = models.CharField(max_length=255, null=True, blank=True)
@@ -667,9 +632,9 @@ class ExtraParcelCandidate(models.Model):
     zoon_workflow_id = models.IntegerField(
         db_index=True, null=True, blank=True)
 
-    addition = models.CharField(max_length=500, null=True, blank=True)
+    addition = models.CharField(max_length=514, null=True, blank=True)
     lot = models.TextField(null=True, blank=True)
-    block = models.CharField(max_length=500, null=True, blank=True)
+    block = models.CharField(max_length=515, null=True, blank=True)
 
     date_added = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)

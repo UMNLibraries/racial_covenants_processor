@@ -41,6 +41,7 @@ class Command(BaseCommand):
             'doc_type',
             'book_id',
             'page_num',
+            'split_page_num',
             'batch_id',
             'doc_date',
             'bool_match',
@@ -51,6 +52,19 @@ class Command(BaseCommand):
 
         images_df = pd.DataFrame.from_dict(images)
         images_df.rename(columns={'matched_terms__term': 'term'}, inplace=True)
+
+        # Move matched_terms to list to de-dedupe
+        images_term_aggregation = images_df[[
+            's3_lookup',
+            'term'
+        ]].groupby('s3_lookup')['term'].agg(list).reset_index()
+
+        images_df = images_df.drop(columns=['term']).drop_duplicates()
+        images_df = images_df.merge(
+            images_term_aggregation,
+            how='left',
+            on='s3_lookup'
+        )
 
         first_image_url = images_df['page_image_web'].iloc[0]
         url_prefix = get_image_url_prefix(first_image_url)

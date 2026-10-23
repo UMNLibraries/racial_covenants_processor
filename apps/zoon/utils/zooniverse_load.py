@@ -244,9 +244,13 @@ def build_zooniverse_manifest(workflow, exclude_ids=[], num_rows=None):
     return pd.DataFrame()
 
 
-def connect_to_zooniverse():
+def connect_to_zooniverse(testing=False):
+    if testing:
+        project_slug = settings.ZOONIVERSE_TESTING_PROJECT_SLUG
+    else:
+        project_slug = settings.ZOONIVERSE_PROJECT_SLUG
     Panoptes.connect(username=settings.ZOONIVERSE_USERNAME, password=settings.ZOONIVERSE_PASSWORD)
-    project = Project.find(slug=settings.ZOONIVERSE_PROJECT_SLUG)
+    project = Project.find(slug=project_slug)
 
     return project
 
@@ -254,7 +258,7 @@ def connect_to_zooniverse():
 def get_subject_set(project, workflow):
     try:
         subject_set = SubjectSet.where(project_id=project.id, display_name=workflow.workflow_name).next()
-        print(f"Found existing subjet set {workflow.workflow_name} ({subject_set.id}).")
+        print(f"Found existing subject set {workflow.workflow_name} ({subject_set.id}).")
 
     except StopIteration:
         print(f"No matching subject set found.")
@@ -265,7 +269,7 @@ def get_subject_set(project, workflow):
 def get_or_create_subject_set(project, workflow):
     try:
         subject_set = SubjectSet.where(project_id=project.id, display_name=workflow.workflow_name).next()
-        print(f"Found existing subjet set {workflow.workflow_name} ({subject_set.id}).")
+        print(f"Found existing subject set {workflow.workflow_name} ({subject_set.id}).")
 
     except StopIteration:
         print(f"No matching subject set found. Creating '{workflow.workflow_name}'...")
