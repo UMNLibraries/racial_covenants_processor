@@ -267,6 +267,7 @@ class SubjectAdmin(admin.ModelAdmin):
         }),
         ('Matching parcels', {
             'fields': (
+                'get_map_editor_link',
                 'get_parcel_match_count',
                 'parcel_matches',
             )
@@ -301,6 +302,7 @@ class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = [
         'workflow',
         'get_permalink',
+        'get_map_editor_link',
         'get_parcel_match_count',
         'parcel_matches',
         'bool_parcel_match',
@@ -345,6 +347,15 @@ class SubjectAdmin(admin.ModelAdmin):
     def get_parcel_match_count(self, obj):
         return obj.parcel_matches.count()
     get_parcel_match_count.short_description = 'Parcel match count'
+
+    def get_map_editor_link(self, obj):
+        """Jump to the map editor with this subject already chosen."""
+        if not obj.workflow_id:
+            return ''
+        url = reverse('workflow_map_edit', kwargs={'workflow_id': obj.workflow_id})
+        url = f'{url}?covenant_id={obj.pk}&covenant_type=zooniverse'
+        return mark_safe(f'<a href="{url}" target="_blank">Map this covenant</a>')
+    get_map_editor_link.short_description = 'Map editor'
 
     def get_permalink(self, obj):
         try:
