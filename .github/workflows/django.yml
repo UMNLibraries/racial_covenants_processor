@@ -39,9 +39,7 @@ jobs:
         sudo apt update
         sudo apt install gdal-bin libgdal-dev
     - name: Install Dependencies with pipenv
-      run: |
-        pip install pipenv==2024.0.1
-        pipenv install
+      run: pipenv sync --dev
     - name: Run Tests
       env:
           AWS_ACCESS_KEY_ID: foo
