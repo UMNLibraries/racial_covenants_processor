@@ -59,4 +59,4 @@ django-compressor = "*"
 django-libsass = "*"
 
 [requires]
-python_version = "3.15"
+python_version = "3.12"
