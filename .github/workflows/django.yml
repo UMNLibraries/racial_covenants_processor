@@ -42,7 +42,7 @@ jobs:
     - name: Install Pipenv
       run: python -m pip install pipenv==2026.10.5
     - name: Install Dependencies with pipenv
-      run: pipenv install --dev --skip-lock
+      run: pipenv sync --dev
     - name: Run Tests
       env:
           AWS_ACCESS_KEY_ID: foo
