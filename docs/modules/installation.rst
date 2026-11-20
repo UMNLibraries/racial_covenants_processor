@@ -5,7 +5,7 @@ Django installation process
 ---------------------------
 
 These steps assume you already have `the repo<https://github.com/UMNLibraries/racial_covenants_processor/tree/main>`__ cloned and the following installed:
-* Python 3.12
+* Python 3.15
 * pipenv
 * gdal
 * PostgreSQL

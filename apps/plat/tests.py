@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.core.management import call_command
 
 from .models import Plat, Subdivision, SubdivisionAlternateName
@@ -30,7 +30,7 @@ class PlatTests(TestCase):
         print(standardize_addition(s.plat_name))
         self.assertEqual(s.plat_name_standardized,
                           standardize_addition(s.plat_name))
-        
+    @override_settings(PMTILES_LAMBDA_NAME="")
     def test_subdivision_parcel_match(self):
         """Does an addition-wide covenant match all parcels in a subdivision"""
 
@@ -64,7 +64,7 @@ class PlatTests(TestCase):
                 parcels_count -= 1
 
         self.assertEqual(parcels_count, 0)
-
+    @override_settings(PMTILES_LAMBDA_NAME="")
     def test_subdivision_alternate_parcel_match(self):
         """Does an addition-wide covenant match all parcels in a subdivision with alternate name"""
 

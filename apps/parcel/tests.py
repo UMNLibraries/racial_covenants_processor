@@ -345,7 +345,7 @@ class ParcelCandidateTests(TestCase):
         self.assertEqual(parcel.parceljoincandidate_set.all().count(), 1)
 
 
-@override_settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS)
+@override_settings(ZOONIVERSE_QUESTION_LOOKUP=TEST_ZOON_SETTINGS, PMTILES_LAMBDA_NAME="")
 class CovenantedParcelTests(TestCase):
     fixtures = ["zoon", "plat", "parcel"]
 

@@ -23,10 +23,10 @@ RUN apt-get update
 RUN apt install -y gdal-bin libgdal-dev
 
 # Install py311 from deadsnakes repository
-# RUN apt-get install -y python3.12
-RUN apt-get install -y python3.12-dev
+# RUN apt-get install -y python3.15
+RUN apt-get install -y python3.15-dev
 # RUN apt-get install -y python3-pip
-RUN apt-get install -y python3.12-venv
+RUN apt-get install -y python3.15-venv
 
 # Virtual python environment
 ENV VIRTUAL_ENV=/opt/venv
