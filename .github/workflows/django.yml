@@ -52,6 +52,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: foo
           AWS_DEFAULT_REGION: us-east-2
       run: |
+        unset PMTILES_LAMBDA_NAME
         pipenv run python manage.py test apps.plat
         pipenv run python manage.py test apps.parcel
         pipenv run python manage.py test apps.deed
